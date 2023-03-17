@@ -17,6 +17,10 @@
 ### Совместимость
 ESP8266, ESP32
 
+### Зависимости
+- [GyverPortal v3.6.3+](https://github.com/GyverLibs/GyverPortal)
+- [PubSubClient](https://github.com/knolleary/pubsubclient)
+
 ## Как это работает?
 *Подключить библиотеку -> Добавить в свой проект -> Скачать приложение -> Пользоваться*  
 
