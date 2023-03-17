@@ -159,9 +159,9 @@ void addTime(имя, подпись, GPtime значение);                //
 void addSelect(имя, подпись, список, int выбранный);        // выбор из списка
 
 void addUpdate(const String& names, uint16_t prd = 1000);
-label как угодно
-switch как bool
-LED как int
+//label как угодно (updateInt(), updateString()...)
+//switch как updateBool()
+//LED как updateColor()
 ```
 
 <a id="usage"></a>
