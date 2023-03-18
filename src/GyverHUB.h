@@ -79,11 +79,11 @@ public:
             uint8_t type = buildAnswer(answ, (char*)str);
             sendMQTT(answ);
             switch (type) {
-                case 0: stat = GH_MQ_UNKNOWN; break;
-                case 1: stat = GH_MQ_FIND; break;
-                case 2:
-                case 3: stat = GH_MQ_CLICK; break;
-                case 4: stat = GH_MQ_UPDATE; break;
+            case 0: stat = GH_MQ_UNKNOWN; break;
+            case 1: stat = GH_MQ_FIND; break;
+            case 2:
+            case 3: stat = GH_MQ_CLICK; break;
+            case 4: stat = GH_MQ_UPDATE; break;
             }
         });
         #endif
@@ -143,18 +143,18 @@ public:
             uint8_t type = buildAnswer(answ, req);
             if (type) {
                 client.print(F("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n"
-                   "Access-Control-Allow-Origin:*\r\n"
-                   "Access-Control-Allow-Private-Network: true\r\n"
-                   "Access-Control-Allow-Methods:*\r\n\r\n"));
+                "Access-Control-Allow-Origin:*\r\n"
+                "Access-Control-Allow-Private-Network: true\r\n"
+                "Access-Control-Allow-Methods:*\r\n\r\n"));
                 client.print(answ);
             } else client.print(F("HTTP/1.1 404 Not Found\r\n"));
             
             switch (type) {
-                case 0: stat = GH_TCP_UNKNOWN; break;
-                case 1: stat = GH_TCP_FIND; break;
-                case 2:
-                case 3: stat = GH_TCP_CLICK; break;
-                case 4: stat = GH_TCP_UPDATE; break;
+            case 0: stat = GH_TCP_UNKNOWN; break;
+            case 1: stat = GH_TCP_FIND; break;
+            case 2:
+            case 3: stat = GH_TCP_CLICK; break;
+            case 4: stat = GH_TCP_UPDATE; break;
             }
         }
         
@@ -377,20 +377,20 @@ private:
     }
     
     void urldecode(const String& s, String& dest) {
-    dest.reserve(s.length());
-    char c;
-    for (uint16_t i = 0; i < s.length(); i++) {
-        c = s[i];
-        if (c != '%') dest += (c == '+') ? ' ' : c;
-        else {
-            c = s[++i];
-            uint8_t v1 = c - ((c <= '9') ? 48 : ((c <= 'F') ? 55 : 87));
-            c = s[++i];
-            uint8_t v2 = c - ((c <= '9') ? 48 : ((c <= 'F') ? 55 : 87));
-            dest += char(v2 | (v1 << 4));
+        dest.reserve(s.length());
+        char c;
+        for (uint16_t i = 0; i < s.length(); i++) {
+            c = s[i];
+            if (c != '%') dest += (c == '+') ? ' ' : c;
+            else {
+                c = s[++i];
+                uint8_t v1 = c - ((c <= '9') ? 48 : ((c <= 'F') ? 55 : 87));
+                c = s[++i];
+                uint8_t v2 = c - ((c <= '9') ? 48 : ((c <= 'F') ? 55 : 87));
+                dest += char(v2 | (v1 << 4));
+            }
         }
     }
-}
 
     // vars
     const char* name = nullptr;
