@@ -36,12 +36,12 @@ public:
     GyverHUB() : server(80) {}
 
     // конструктор, настроить сеть, название, иконку
-    GyverHUB(const char* nID, const char* nname = "", const char* nicon = "") : server(80) {
+    GyverHUB(const char* nID, const char* nname = "", const char* nicon = "") : server(80) {
         config(nID, nname, nicon);
     }
 
     // настроить девайс (сеть, название, иконку https://fontawesome.com/v5/cheatsheet/free/solid)
-    void config(const char* nID, const char* nname = "", const char* nicon = "") {
+    void config(const char* nID, const char* nname = "", const char* nicon = "") {
         net_ID = nID;
         name = nname;
         icon = nicon;
@@ -76,7 +76,7 @@ public:
             str[len] = 0;
 
             String answ;
-            uint8_t type = buildAnswer(answ, (char*)str);
+            uint8_t type = buildAnswer(answ, (char*)str, true);
             sendMQTT(answ);
             switch (type) {
             case 0: stat = GH_MQ_UNKNOWN; break;
@@ -140,7 +140,7 @@ public:
             req.remove(end, req.length() - end);
             
             String answ;
-            uint8_t type = buildAnswer(answ, req);
+            uint8_t type = buildAnswer(answ, req, false);
             if (type) {
                 client.print(F("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n"
                 "Access-Control-Allow-Origin:*\r\n"
@@ -218,14 +218,14 @@ public:
     }
 
 private:
-    void buildFind(String& answ) {
+    void buildFind(String& answ, bool mqtt) {
         String ip;
         if (WiFi.getMode() == WIFI_AP) ip = WiFi.softAPIP().toString();
         else ip = WiFi.localIP().toString();
         String status;
-        status.reserve(20);
+        status.reserve(10);
         sptr = &answ;
-        answ.reserve(200);
+        answ.reserve(500);
         answ += '{';
         
         if (build_cb) {
@@ -240,11 +240,12 @@ private:
         addStr(F("net_id"), net_ID);
         addStr(F("dev_id"), dev_ID);
         addStr(F("type"), F("find"));
-        if (status.length()) addStr(F("status"), status);
+        addStr(F("status"), status);
         addStr(F("ip"), ip);
-        if (portal) addBool(F("portal"), portal);
-        if (name) addStr(F("name"), name);
-        if (icon) addStr(F("icon"), icon);
+        addBool(F("portal"), portal);
+        addBool(F("mqtt"), mqtt);
+        addStr(F("name"), name);
+        addStr(F("icon"), icon);
         addVal(F("rssi"), (constrain(2 * (WiFi.RSSI() + 100), 0, 100)));
         
         answ[answ.length() - 1] = '}';  // ',' = '}'
@@ -293,10 +294,10 @@ private:
         #endif
     }
     
-    uint8_t buildAnswer(String& answ, const String& req) {
+    uint8_t buildAnswer(String& answ, const String& req, bool mqtt) {
         uint8_t type = 0;
         if (req.startsWith(net_ID)) {                       // find
-            buildFind(answ);
+            buildFind(answ, mqtt);
             return 1;
         } else if (req.startsWith("GH_click?")) type = 2;   // click
         else if (req.startsWith("GH_press?")) type = 3;     // press
@@ -321,7 +322,7 @@ private:
                 if (action_cb) action_cb();
                 click_f = 0;
                 _holdF = 0;
-                if (send_f) buildFind(answ);
+                if (send_f) buildFind(answ, mqtt);
                 else answ = "OK";
                 
             } else {            // update

@@ -6,6 +6,12 @@ public:
         if (!sstat_p) return;
         *sstat_p = label;
     }
+    void addCustom(const String& text) {
+        if (!sptr) return;
+        *sptr += '{';
+        *sptr += text;
+        *sptr += "},";
+    }
     void addButtons(const String& names, const String& labels) {
         if (!sptr) return;
         *sptr += F("{'type':'buttons','name':[");
@@ -38,7 +44,7 @@ public:
         *sptr += name;
         *sptr += F("'],'label':['");
         *sptr += label;
-        *sptr += F("'],size:");
+        *sptr += F("'],'size':");
         *sptr += size;
         *sptr += F("},");
     }
@@ -92,6 +98,10 @@ public:
         *sptr += size;
         *sptr += F("},");
     }
+    
+    void addLine() {
+        addSpacer(2);
+    }
     void addTabs(const String& name, const String& labels, int selected) {
         if (!sptr) return;
         *sptr += F("{'type':'tabs','name':'");
@@ -99,7 +109,7 @@ public:
         *sptr += F("','label':[");
         addWithQuote(labels);
         *sptr += F("],'sel':");
-        *sptr += (selected + 1);
+        *sptr += selected;
         *sptr += F("},");
     }
 
@@ -145,9 +155,9 @@ public:
         *sptr += name;
         *sptr += F("','label':'");
         *sptr += label;
-        *sptr += F("','value':'");
+        *sptr += F("','value':");
         *sptr += value ? F("true") : F("false");
-        *sptr += F("'},");
+        *sptr += F("},");
     }
     void addDate(const String& name, const String& label, GPdate value) {
         if (!sptr) return;
@@ -178,7 +188,7 @@ public:
         *sptr += F("','value':'");
         *sptr += values;
         *sptr += F("','sel':");
-        *sptr += (selected + 1);
+        *sptr += selected;
         *sptr += F("},");
     }
     void addUpdate(const String& names, uint16_t prd = 1000) {
