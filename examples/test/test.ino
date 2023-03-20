@@ -1,4 +1,4 @@
-#define AP_SSID "Alex"
+#define AP_SSID ""
 #define AP_PASS ""
 
 #include <GyverHUB.h>
@@ -49,7 +49,10 @@ void action_app() {
     if (device.click("b1")) Serial.println("click b1");
     device.clickStr("inp", inp);
     device.clickInt("sld", sld);
-    if (device.click("sw")) sw = device.getBool();
+    if (device.click("sw")) {
+      sw = device.getBool();
+      Serial.println(String("switch ") + sw);
+    }
     device.clickDate("date", gdate);
     device.clickTime("time", gtime);
     device.clickInt("sel", sel);
@@ -78,7 +81,7 @@ void action() {
 
 void setup() {
   startup();
-  device.setupMQTT("broker.mqttdashboard.com", 1883);
+  //device.setupMQTT("broker.mqttdashboard.com", 1883);
   device.begin();
 
   device.attachBuild(build_app);
