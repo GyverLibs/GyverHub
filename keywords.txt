@@ -28,6 +28,7 @@ online	KEYWORD2
 statusChanged	KEYWORD2
 refresh	KEYWORD2
 
+addCustom	KEYWORD2
 addUpdate	KEYWORD2
 addStatus	KEYWORD2
 addButtons	KEYWORD2
@@ -35,6 +36,7 @@ addButton	KEYWORD2
 addButtonIcon	KEYWORD2
 addButtonsIcons	KEYWORD2
 addSpacer	KEYWORD2
+addLine	KEYWORD2
 addTabs	KEYWORD2
 addLabel	KEYWORD2
 addTitle	KEYWORD2

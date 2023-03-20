@@ -47,7 +47,12 @@ public:
         icon = nicon;
         uint8_t mac[6];
         WiFi.macAddress(mac);
-        ultoa(*((uint32_t*)(mac + 2)), dev_ID, HEX);    // ID это 8 цифр MAC адреса
+        #ifdef ESP8266
+        dev_ID[0] = '8';    // 8266
+        #else
+        dev_ID[0] = '3';    // 32
+        #endif
+        ultoa(*((uint32_t*)(mac + 2)), dev_ID + 1, HEX);    // ID это версия есп + 8 цифр MAC адреса
     }
 
     // настроить TCP порт (умолч. 50000)
@@ -406,7 +411,7 @@ private:
     void (*build_cb)() = nullptr;
     void (*action_cb)() = nullptr;
     uint32_t tcp_tmr = 0, mqtt_tmr = 0;
-    char dev_ID[9];
+    char dev_ID[10];
     bool portal = 0;
     uint8_t stat = GH_STOP, p_stat = GH_STOP;
     bool running_f = 0;
