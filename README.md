@@ -18,33 +18,35 @@
     - По Bluetooth
     - В ручном режиме - любой символьный интерфейс (GSM, GPRS, радио...)
 - Простая сборка графического интерфейса управления прямо в скетче
+- Стильный дизайн ;) светлая и тёмная темы
 - Удобный парсинг действий с приложения или сайта
-- Безопасность и независимость (GyverHUB работает в браузере)
+- Безопасность и независимость: у GyverHUB нет своего сервера
 - 20 активных компонентов интерфейса (кнопки, слайдеры, выбор...) + оформление и навигация
 - Доп. модули: загрузка и скачивание файлов из Flash, информация о плате, OTA обновление
 - 1000 FontAwesome иконок оформления для кнопок и списка устройств
-- Простая интеграция в системы умного дома (Алиса, Home Assistant...)
+- Быстрая и простая интеграция проекта в системы умного дома (Алиса, Home Assistant...)
+- Библиотека асинхронная (опционально для ESP8266/ESP32)
 
 ### Совместимость
-- Все Arduino: Serial и ручной режим
+- Все Arduino: Serial, Bluetooth (Serial) и ручной режим
 - ESP8266 и ESP32: + WebSocket и MQTT
 
 ### Зависимости
-Для синхронного режима
+Общие:
+- Stamp (пока не опубликована)
+
+Для синхронной работы (ESP8266/ESP32):
 - [PubSubClient](https://github.com/knolleary/pubsubclient)
 - [arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets)
 
-Для асинхронного режима
+Для асинхронной работы (ESP8266/ESP32):
 - [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer)
 - [ESPAsyncTCP](https://github.com/me-no-dev/ESPAsyncTCP)
 - [AsyncTCP](https://github.com/me-no-dev/AsyncTCP)
 - [async-mqtt-client](https://github.com/marvinroger/async-mqtt-client)
 
 ## Как это работает?
-*Подключить библиотеку -> Добавить в свой проект -> Скачать приложение -> Пользоваться*  
-
-1. Каждому устройству задаётся "ID сети" - текстовый идентификатор
-
+Пока что никак =)
 - Список бесплатных MQTT брокеров https://kotyara12.ru/iot/cloud_services/
 
 ## Содержание
@@ -76,11 +78,6 @@
 <a id="init"></a>
 ## Инициализация
 ```cpp
-GyverHUB device;
-GyverHUB device(имя сети);                      // с указанием имени сети
-GyverHUB device(имя сети, название);            // + название устройства
-GyverHUB device(имя сети, название, иконка);    // + икнока
-
 // иконки Font Awesome v5 Solid, бесплатный пак
 // https://fontawesome.com/v5/cheatsheet/free/solid - список иконок
 // https://fontawesome.com/v5/search?o=r&m=free&s=solid - поиск иконок
@@ -90,103 +87,6 @@ GyverHUB device(имя сети, название, иконка);    // + икн
 <a id="docs"></a>
 ## Документация
 ```cpp
-// ====================== DEVICE ======================
-// настроить девайс (сеть, название, иконку)
-void config(char* ID);
-void config(char* ID, char* name);
-void config(char* ID, char* name, char* icon);
-
-void setupTCP(uint16_t port);                   // настроить TCP порт (умолч. 50000)
-void setupMQTT();                               // отключить MQTT
-void setupMQTT(char* host, uint16_t port);      // настроить MQTT (хост, порт)
-void setupMQTT(char* host, uint16_t port, char* login, char* pass);     // + логин, пароль
-
-void usePortal(bool v);     // открывать веб-интерфейс в браузере по IP устройства по долгому клику (умолч. false)
-void begin();               // начать работу
-void stop();                // остановить работу
-void attachBuild(функция);  // подключить функцию для сборки интерфейса
-void attach(функция);       // подключить функцию-обработчик действий с приложения
-void refresh();             // отправить интерфейс (вызывать внутри обработчика действия)
-
-bool tick();                // тикер, вызывать в loop
-
-bool online();              // проверка онлайн (mqtt подключен?)
-bool running();             // запущен?
-bool statusChanged();       // статус изменился
-uint8_t status();           // получить статус (см. коды статусов)
-
-// коды статусов
-GH_IDLE         0
-GH_TCP_UNKNOWN  1
-GH_TCP_FIND     2
-GH_TCP_CLICK    3
-GH_TCP_UPDATE   4
-GH_MQ_CONNECTED 5
-GH_MQ_ERROR     6
-GH_MQ_UNKNOWN   7
-GH_MQ_FIND      8
-GH_MQ_CLICK     9
-GH_MQ_UPDATE    10
-GH_START        11
-GH_STOP         12
-
-// ======================== APP ========================
-// далее по тексту:
-// имя/текст/подпись: строка в любом виде ("строка", F("строка"), String, char*)
-// имя: УНИКАЛЬНОЕ внутреннее имя компонента в рамках данного интерфейса
-// текст: текст на компоненте
-// подпись: подпись слева от компонента
-// тип данных Т: любой (например у слайдера и текста)
-// список: строка, разделитель - запятая, без пробелов вокруг запятой, например "значение 1,имя2,кнопка 2,STOP"
-
-// ОФОРМЛЕНИЕ И ВЁРСТКА
-
-void addStatus(текст);                      // добавить статус (отображается под сигналом WiFi)
-
-void addTabs(имя, список текстов, int выбранный);   // вкладки
-void addSpacer();                           // отступ по вертикали
-void addSpacer(int размер);                 // + высота (умолч. 20)
-void addLine();                             // добавить полосу-разделитель
-
-void addTitle(текст);                       // заголовок
-void addLabel(имя, подпись, текст);         // информационный лейбл
-void addLabel(имя, подпись, текст, цвет);   // цвет GPcolor или из GyverPortal вида GP_RED, GP_GREEN...
-
-void addLED(имя, подпись, цвет);
-void addLED(имя, подпись, цвет, иконка)     // + иконка "строкой"
-// цвет GPcolor или из GyverPortal вида GP_RED, GP_GREEN...
-
-// КНОПКИ
-
-void addButton(имя, текст);                 // добавить кнопку
-void addButtons(имена, тексты);             // добавить кнопки - список надписей на кнопках
-
-void addButtonIcon(имя, текст);             // добавить кнопку с иконкой
-void addButtonsIcons(имя, текст, размер);   // + размер (умолч. 45)
-
-void addButtonsIcons(имена, тексты);        // добавить кнопки с иконками - список иконок (например ",,")
-void addButtonsIcons(имена, тексты, размер);// + размер (умолч. 45)
-
-// ВВОД
-
-void addInput(имя, подпись, T текст);       // ввод текста
-void addPass(имя, подпись, текст);          // ввод пароля
-
-// НАСТРОЙКА И ВЫБОР
-
-void addSlider(имя, подпись, T значение, T мин, T макс);    // слайдер
-void addSwitch(имя, подпись, bool значение);                // выключатель
-void addDate(имя, подпись, GPdate значение);                // выбор даты
-void addTime(имя, подпись, GPtime значение);                // выбор времени
-void addSelect(имя, подпись, список, int выбранный);        // выбор из списка
-
-void addUpdate(const String& names, uint16_t prd = 1000);
-//label как угодно (updateInt(), updateString()...)
-//switch как updateBool()
-//LED как updateColor()
-
-// кастом
-void addCustom(строка);
 ```
 
 <a id="usage"></a>
@@ -196,7 +96,6 @@ void addCustom(строка);
 <a id="versions"></a>
 ## Версии
 - v1.0
-
 
 <a id="feedback"></a>
 ## Баги и обратная связь
