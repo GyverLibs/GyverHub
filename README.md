@@ -47,7 +47,7 @@ GyverHUB - это программный комплекс, включающий 
 - Библиотека асинхронная (опционально для ESP8266/ESP32)
 - Оптимальное использование памяти для работы на слабых МК
 
-Ближайшие аналоги:
+Аналоги:
 - Приложение RemoteXY
 - Сервис Blynk
 
@@ -57,49 +57,18 @@ GyverHUB - это программный комплекс, включающий 
 - Все Arduino: Serial, Bluetooth (Serial) и ручной режим
 - ESP8266 и ESP32: + WebSocket и MQTT
 
-### Зависимости
-Общие:
-- [Stamp](https://github.com/GyverLibs/Stamp)
-
-Для синхронной работы (ESP8266/ESP32):
-- [PubSubClient](https://github.com/knolleary/pubsubclient)
-- [arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets)
-
-Для асинхронной работы (ESP8266/ESP32):
-- [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer)
-- [ESPAsyncTCP](https://github.com/me-no-dev/ESPAsyncTCP)
-- [AsyncTCP](https://github.com/me-no-dev/AsyncTCP)
-- [async-mqtt-client](https://github.com/marvinroger/async-mqtt-client)
-
-## Содержание
-- [Установка](#install)
-- [Версии](#versions)
-- [Баги и обратная связь](#feedback)
-
-<a id="install"></a>
 ## Установка
-- Библиотеку можно найти по названию **GyverHUB** и установить через менеджер библиотек в:
-    - Arduino IDE
-    - Arduino IDE v2
-    - PlatformIO
-- [Скачать библиотеку](https://github.com/GyverLibs/GyverHUB/archive/refs/heads/main.zip) .zip архивом для ручной установки:
-    - Распаковать и положить в *C:\Program Files (x86)\Arduino\libraries* (Windows x64)
-    - Распаковать и положить в *C:\Program Files\Arduino\libraries* (Windows x32)
-    - Распаковать и положить в *Документы/Arduino/libraries/*
-    - (Arduino IDE) автоматическая установка из .zip: *Скетч/Подключить библиотеку/Добавить .ZIP библиотеку…* и указать скачанный архив
-- Читай более подробную инструкцию по установке библиотек [здесь](https://alexgyver.ru/arduino-first/#%D0%A3%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0_%D0%B1%D0%B8%D0%B1%D0%BB%D0%B8%D0%BE%D1%82%D0%B5%D0%BA)
+- Зависимости: [Stamp](https://github.com/GyverLibs/Stamp), [PubSubClient](https://github.com/knolleary/pubsubclient), [arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets), [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer), [ESPAsyncTCP](https://github.com/me-no-dev/ESPAsyncTCP), [AsyncTCP](https://github.com/me-no-dev/AsyncTCP), [async-mqtt-client](https://github.com/marvinroger/async-mqtt-client)
+- Подробнее читай [в документации](https://github.com/GyverLibs/GyverHUB/wiki/%D0%9D%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B)
 
 ### Обновление
 - Рекомендую всегда обновлять библиотеку: в новых версиях исправляются ошибки и баги, а также проводится оптимизация и добавляются новые фичи
 - Через менеджер библиотек IDE: найти библиотеку как при установке и нажать "Обновить"
 - Вручную: **удалить папку со старой версией**, а затем положить на её место новую. "Замену" делать нельзя: иногда в новых версиях удаляются файлы, которые останутся при замене и могут привести к ошибкам!
 
-
-<a id="versions"></a>
 ## Версии
 - v1.0
 
-<a id="feedback"></a>
 ## Баги и обратная связь
 При нахождении багов создавайте **Issue**, а лучше сразу пишите на почту [alex@alexgyver.ru](mailto:alex@alexgyver.ru)  
 Библиотека открыта для доработки и ваших **Pull Request**'ов!
