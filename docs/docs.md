@@ -40,13 +40,18 @@ void end();                 // остановить
 bool tick();                // тикер, вызывать в loop
 
 // ================== MODULES =================
-void modules.on(GHmodule_t mod);    // включить модуль
-void modules.off(GHmodule_t mod);   // выключить модуль
-bool modules.read(GHmodule_t mod);  // включен ли модуль
-
-void modules.set(модули);           // настроить модули, разделитель |
-// например modules.set(GH_MOD_LOCAL | GH_MOD_DOWNLOAD | GH_MOD_UPLOAD)
+// по умолчанию все модули включены
 // модули, отвечающие за связь, нужно настраивать перед вызовом begin()!
+void modules.set(uint16_t mods);    // включить модули
+void modules.unset(uint16_t mods);  // выключить модули
+
+// можно выбрать несколько модулей с разделителем | 
+// modules.set(GH_MOD_LOCAL | GH_MOD_DOWNLOAD | GH_MOD_UPLOAD);
+// modules.clear(GH_MOD_LOCAL | GH_MOD_DOWNLOAD | GH_MOD_UPLOAD);
+
+bool modules.read(GHmodule_t mod);  // включен ли модуль
+void setAll();      // установить все
+void unsetAll();    // выключить все
 
 // ==================== PIN ===================
 void setPIN(uint32_t npin); // установить пин-код устройства (больше 1000, не может начинаться с 0)

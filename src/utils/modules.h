@@ -26,13 +26,17 @@ struct GHmodule {
     uint16_t mods = 0xffff;
 
     void set(uint16_t nmods) {
-        mods = nmods;
+        mods |= nmods;
     }
-    void on(GHmodule_t m) {
-        mods |= m;
+    void unset(uint16_t nmods) {
+        mods &= ~nmods;
     }
-    void off(GHmodule_t m) {
-        mods &= ~m;
+
+    void setAll() {
+        mods = 0xffff;
+    }
+    void unsetAll() {
+        mods = 0;
     }
     bool read(GHmodule_t m) {
         return mods & m;
