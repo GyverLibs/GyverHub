@@ -2,428 +2,1170 @@
 #define _GyverHUB_h
 
 #include <Arduino.h>
-#include <GyverPortal.h>
-#include "components.h"
+#include <Stamp.h>
 
-#ifndef GH_NO_MQTT
-#include <PubSubClient.h>
-#endif
+#include "builder.h"
+#include "config.h"
+#include "macro.h"
+#include "stream.h"
+#include "utils/build.h"
+#include "utils/cmd_p.h"
+#include "utils/color.h"
+#include "utils/datatypes.h"
+#include "utils/flags.h"
+#include "utils/log.h"
+#include "utils/misc.h"
+#include "utils/modules.h"
+#include "utils/stats.h"
+#include "utils/stats_p.h"
+#include "utils/timer.h"
+
+#ifdef GH_ESP_BUILD
+#include <FS.h>
 
 #ifdef ESP8266
 #include <ESP8266WiFi.h>
-#include <WiFiServer.h>
+#ifndef GH_NO_OTA
+#include <ESP8266httpUpdate.h>
+#endif
 #else
+#ifndef GH_NO_OTA
+#include <HTTPUpdate.h>
+#include <Update.h>
+#endif
 #include <WiFi.h>
 #endif
 
-#define GH_IDLE         0
-#define GH_TCP_UNKNOWN  1
-#define GH_TCP_FIND     2
-#define GH_TCP_CLICK    3
-#define GH_TCP_UPDATE   4
-#define GH_MQ_CONNECTED 5
-#define GH_MQ_ERROR     6
-#define GH_MQ_UNKNOWN   7
-#define GH_MQ_FIND      8
-#define GH_MQ_CLICK     9
-#define GH_MQ_UPDATE    10
-#define GH_START        11
-#define GH_STOP         12
+#ifndef GH_NO_FS
+#if (GH_FS == LittleFS)
+#include <LittleFS.h>
+#elif (GH_FS == SPIFFS)
+#include <SPIFFS.h>
+#endif
+#endif
 
-class GyverHUB : public Components, public ArgParser {
-public:
-    // конструктор
-    GyverHUB() : server(80) {}
+#ifdef GH_ASYNC
+#include "async/http.h"
+#include "async/mqtt.h"
+#include "async/ws.h"
+#else
+#include "sync/http.h"
+#include "sync/mqtt.h"
+#include "sync/ws.h"
+#endif
+// #include "http.h"
 
-    // конструктор, настроить сеть, название, иконку
-    GyverHUB(const char* nID, const char* nname = "", const char* nicon = "") : server(80) {
-        config(nID, nname, nicon);
+#endif
+
+// ========================== CLASS ==========================
+#ifdef GH_ESP_BUILD
+class GyverHUB : public HubBuilder, public HubStream, public HubHTTP, public HubMQTT, public HubWS {
+#else
+class GyverHUB : public HubBuilder, public HubStream {
+#endif
+   public:
+    // ========================== CONSTRUCT ==========================
+
+    // настроить префикс, название и иконку. Опционально задать свой ID устройства (для esp он генерируется автоматически)
+    GyverHUB(const char* prefix = "", const char* name = "", const char* icon = "", uint32_t id = 0) {
+        config(prefix, name, icon, id);
     }
 
-    // настроить девайс (сеть, название, иконку https://fontawesome.com/v5/cheatsheet/free/solid)
-    void config(const char* nID, const char* nname = "", const char* nicon = "") {
-        net_ID = nID;
+    // настроить префикс, название и иконку. Опционально задать свой ID устройства (для esp он генерируется автоматически)
+    void config(const char* nprefix, const char* nname, const char* nicon, uint32_t nid = 0) {
+        prefix = nprefix;
         name = nname;
         icon = nicon;
-        uint8_t mac[6];
-        WiFi.macAddress(mac);
-        #ifdef ESP8266
-        dev_ID[0] = '8';    // 8266
-        #else
-        dev_ID[0] = '3';    // 32
-        #endif
-        ultoa(*((uint32_t*)(mac + 2)), dev_ID + 1, HEX);    // ID это версия есп + 8 цифр MAC адреса
-    }
-
-    // настроить TCP порт (умолч. 50000)
-    void setupTCP(uint16_t port) {
-        tcp_port = port;
-        if (running_f) {
-            server.stop();
-            server.begin(tcp_port);
+#ifdef GH_ESP_BUILD
+        if (nid) ultoa((nid <= 0xfffff) ? (nid + 0xfffff) : nid, id, HEX);
+        else {
+            uint8_t mac[6];
+            WiFi.macAddress(mac);
+            ultoa(*((uint32_t*)(mac + 2)), id, HEX);
         }
+#else
+        ultoa((nid <= 0x100000) ? (nid + 0x100000) : nid, id, HEX);
+#endif
     }
 
-    // настроить MQTT (хост брокера, порт, логин, пароль)
-    void setupMQTT(const char* mq_host = "", uint16_t port = 0, const char* nmq_login = nullptr, const char* nmq_pass = nullptr) {
-        #ifndef GH_NO_MQTT
-        mq_login = nmq_login;
-        mq_pass = nmq_pass;
-        mq_configured = (bool)mq_host;
-        mq_conn = 0;
-        if (mqtt.connected()) mqtt.disconnect();
+    // ========================== SETUP ==========================
 
-        mqtt.setClient(mclient);
-        mqtt.setServer(mq_host, port);
-        mqtt.setCallback([this](__attribute__((unused)) char* topic, uint8_t* str, uint16_t len) {
-            if (!mq_configured) return;             // этого вообще не могло произойти
-            if (millis() - tcp_tmr < 2000) return;  // игнорируем, если был запрос по TCP
-            str[len] = 0;
-
-            String answ;
-            uint8_t type = buildAnswer(answ, (char*)str, true);
-            sendMQTT(answ);
-            switch (type) {
-            case 0: stat = GH_MQ_UNKNOWN; break;
-            case 1: stat = GH_MQ_FIND; break;
-            case 2:
-            case 3: stat = GH_MQ_CLICK; break;
-            case 4: stat = GH_MQ_UPDATE; break;
-            }
-        });
-        #endif
-    }
-    
-    // открывать веб-интерфейс в браузере по IP устройства по долгому клику
-    void usePortal(bool v) {
-        portal = v;
-    }
-
-    // начать работу
+    // запустить
     void begin() {
-        if (running_f) stop();
-        server.begin(tcp_port);
-        stat = GH_START;
-        running_f = 1;
+#ifdef GH_ESP_BUILD
+#ifndef GH_NO_LOCAL
+        if (modules.read(GH_MOD_LOCAL)) beginHTTP();
+        if (modules.read(GH_MOD_LOCAL)) beginWS();
+#endif
+#ifndef GH_NO_MQTT
+        if (modules.read(GH_MOD_MQTT)) beginMQTT();
+#endif
+#ifndef GH_NO_FS
+        GH_FS.begin();
+#endif
+#endif
+        running_f = true;
+        setStatus(GH_START, GH_SYSTEM);
     }
 
-    // остановить работу
-    void stop() {
-        if (running_f) {
-            running_f = 0;
-            server.stop();
-            #ifndef GH_NO_MQTT
-            mqtt.disconnect();
-            #endif
-        }
-        stat = GH_STOP;
-        mq_conn = 0;
+    // остановить
+    void end() {
+#ifdef GH_ESP_BUILD
+#ifndef GH_NO_LOCAL
+        endHTTP();
+        endWS();
+#endif
+#ifndef GH_NO_MQTT
+        endMQTT();
+#endif
+#endif
+        running_f = false;
+        setStatus(GH_STOP, GH_SYSTEM);
     }
 
-    // подключить функцию для сборки интерфейса
-    void attachBuild(void (*handler)()) {
+    // установить версию прошивки для отображения в Info и OTA
+    void setVersion(FSTR v) {
+        firmware = v;
+    }
+
+    // установить размер буфера строки для сборки интерфейса в режиме MANUAL и SERIAL
+    // 0 - интерфейс будет собран и отправлен цельной строкой
+    // >0 - пакет будет отправляться частями
+    void setBufferSize(uint16_t size) {
+        buf_size = size;
+    }
+
+    // включение/отключение системных модулей
+    GHmodule modules;
+
+    // ========================== PIN ==========================
+
+    // установить пин-код для открытия устройства (значение больше 1000, не может начинаться с 000..)
+    void setPIN(uint32_t npin) {
+        PIN = npin;
+    }
+
+    // прочитать пин-код
+    uint32_t getPIN() {
+        return PIN;
+    }
+
+    // ========================= ATTACH =========================
+
+    // подключить функцию-сборщик интерфейса
+    void onBuild(void (*handler)()) {
         build_cb = *handler;
     }
 
-    // подключить функцию-обработчик действий с приложения
-    void attach(void (*handler)()) {
-        action_cb = *handler;
+    // подключить функцию-обработчик запроса при ручном соединении
+    void onManual(void (*handler)(const String& s)) {
+        manual_cb = *handler;
     }
+
+    // ========================= CLI =========================
+
+    // подключить обработчик входящих сообщений с веб-консоли
+    void onCLI(void (*handler)(String& s)) {
+        cli_cb = *handler;
+    }
+
+    // отправить текст в веб-консоль. Опционально цвет
+    void print(const String& s, uint32_t color = GH_DEFAULT) {
+        if (!focused()) return;
+        String answ;
+        answ += '\n';
+        answ += '{';
+        _jsID(answ);
+        _jsStr(answ, F("type"), F("print"));
+        _jsStr(answ, F("text"), s);
+        if (color != GH_DEFAULT) _jsVal(answ, F("color"), color);
+        answ[answ.length() - 1] = '}';
+        answ += '\n';
+        send(answ);
+    }
+
+    // ========================== STATUS ==========================
+
+    // подключить обработчик изменения статуса
+    void onStatus(void (*handler)(GHstatus status)) {
+        status_cb = *handler;
+    }
+
+    // вернёт true, если система запущена
+    bool running() {
+        return running_f;
+    }
+
+    // ========================== MISC ==========================
+
+    // получить свойства текущего билда. Вызывать внутри обработчика
+    GHbuild getBuild() {
+        return bptr ? *bptr : GHbuild();
+    }
+
+    // true - интерфейс устройства сейчас открыт на сайте или в приложении
+    bool focused() {
+        if (!running_f) return 0;
+        for (uint8_t i = 0; i < GH_CONN_AMOUNT; i++) {
+            if (focus_arr[i]) return 1;
+        }
+        return 0;
+    }
+
+    // обновить веб-интерфейс. Вызывать внутри обработчика build
+    void refresh() {
+        send_f = true;
+    }
+
+    // ========================= NOTIF ==========================
+
+    // отправить уведомление
+    void sendPush(const String& text) {
+        if (!running_f) return;
+        String answ;
+        answ += '\n';
+        answ += '{';
+        _jsID(answ);
+        _jsStr(answ, F("type"), F("push"));
+        _jsStr(answ, F("text"), text);
+        answ[answ.length() - 1] = '}';
+        answ += '\n';
+        send(answ, true);
+    }
+
+    // ========================= UPDATE ==========================
+
+    // отправить update вручную с указанием значения
+    void sendUpdate(const String& name, const String& value) {
+        if (!running_f) return;
+        String answ;
+        _updateBegin(answ);
+        answ += '\'';
+        answ += name;
+        answ += F("':'");
+        answ += value;
+        answ += F("'}}\n");
+        send(answ);
+    }
+
+    // отправить update по имени компонента (значение будет прочитано в build). Имена можно передать списком через запятую
+    void sendUpdate(const String& name) {
+        if (!running_f) return;
+        if (!build_cb) return;
+        GHbuild build(GH_BUILD_READ);
+        bptr = &build;
+
+        String answ;
+        sptr = &answ;
+        _updateBegin(answ);
+
+        char* str = (char*)name.c_str();
+        char* p = str;
+        GHsplitter(NULL);
+        while ((p = GHsplitter(str)) != NULL) {
+            build.type = GH_BUILD_READ;
+            build.action.name = p;
+            answ += '\'';
+            answ += p;
+            answ += F("':'");
+            answ.reserve(answ.length() + 64);
+            build_cb();
+            answ += F("',");
+        }
+        bptr = nullptr;
+        sptr = nullptr;
+        answ[answ.length() - 1] = '}';
+        answ += '}';
+        answ += '\n';
+        send(answ);
+    }
+    void _updateBegin(String& answ) {
+        answ += '\n';
+        answ += '{';
+        _jsID(answ);
+        _jsStr(answ, F("type"), F("update"));
+        answ += F("'updates':{");
+    }
+
+    // ======================== SEND GET =========================
+
+    // автоматически отправлять новое состояние на get-топик при изменении через set (умолч. false)
+    void sendGetAuto(bool v) {
+#ifdef GH_ESP_BUILD
+        auto_f = v;
+#endif
+    }
+
+    // отправить имя-значение на get-топик (MQTT)
+    void sendGet(const String& name, const String& value) {
+        if (!running_f) return;
+#ifdef GH_ESP_BUILD
+#ifndef GH_NO_MQTT
+        String topic(prefix);
+        topic += F("/hub/");
+        topic += id;
+        topic += F("/get/");
+        topic += name;
+        sendMQTT(topic, value);
+#endif
+#endif
+    }
+
+    // отправить значение по имени компонента на get-топик (MQTT) (значение будет прочитано в build). Имена можно передать списком через запятую
+    void sendGet(const String& name) {
+#ifdef GH_ESP_BUILD
+#ifndef GH_NO_MQTT
+        if (!running_f || !build_cb) return;
+        GHbuild build(GH_BUILD_READ);
+        bptr = &build;
+
+        String value;
+        sptr = &value;
+
+        char* str = (char*)name.c_str();
+        char* p = str;
+        GHsplitter(NULL);
+        while ((p = GHsplitter(str)) != NULL) {
+            build.type = GH_BUILD_READ;
+            build.action.name = p;
+            build_cb();
+            if (build.type == GH_BUILD_NONE) sendGet(p, value);
+        }
+        bptr = nullptr;
+        sptr = nullptr;
+#endif
+#endif
+    }
+
+    // ========================== ON/OFF ==========================
+
+    // отправить MQTT LWT команду на включение
+    void turnOn() {
+        _power(F("online"));
+    }
+
+    // отправить MQTT LWT команду на выключение
+    void turnOff() {
+        _power(F("offline"));
+    }
+
+    // ========================== PARSER ==========================
+
+    // парсить строку вида PREFIX/ID/HUB_ID/CMD/NAME=VALUE
+    void parse(char* url, GHconn_t conn = GH_MANUAL) {
+        if (!running_f) return;
+        char* eq = strchr(url, '=');
+        char val[1] = "";
+        if (eq) *eq = 0;
+        parse(url, eq ? (eq + 1) : val, conn);
+        if (eq) *eq = '=';
+    }
+
+    // парсить строку вида PREFIX/ID/HUB_ID/CMD/NAME с отдельным value
+    void parse(char* url, char* value, GHconn_t conn = GH_MANUAL) {
+        if (!running_f) return;
+        if (conn == GH_MQTT && !modules.read(GH_MOD_MQTT)) return;
+        if (conn == GH_WS && !modules.read(GH_MOD_LOCAL)) return;
+        if (conn == GH_MANUAL && !modules.read(GH_MOD_MANUAL)) return;
+        if (conn == GH_SERIAL && !modules.read(GH_MOD_SERIAL)) return;
+
+        if (strncmp(url, prefix, strlen(prefix))) return setStatus(GH_UNKNOWN, conn);
+
+        if (!strcmp(url, prefix)) {  // == prefix
+            GHhub hub(conn, value);
+            hub_ptr = &hub;
+            answerDiscover();
+            return setStatus(GH_DISCOVER_ALL, conn);
+        }
+
+        GHparser<5> p(url);
+
+        if (strcmp(p.str[1], id)) return;  // wrong id
+
+        if (p.size == 2) {
+            GHhub hub(conn, value);
+            hub_ptr = &hub;
+            answerDiscover();
+            return setStatus(GH_DISCOVER, conn);
+        }
+
+        if (p.size == 3) return setStatus(GH_UNKNOWN, conn);
+
+        GHhub hub(conn, p.str[2]);
+        hub_ptr = &hub;
+
+        if (p.size == 4) {
+#ifdef GH_ESP_BUILD
+#ifndef GH_NO_MQTT
+            // MQTT HOOK
+            if (conn == GH_MQTT && build_cb) {
+                if (!strcmp_P(p.str[2], PSTR("read"))) {
+                    if (modules.read(GH_MOD_READ)) sendGet(p.str[3]);
+                    hub_ptr = nullptr;
+                    return setStatus(GH_READ_HOOK, conn);
+                } else if (!strcmp_P(p.str[2], PSTR("set"))) {
+                    if (modules.read(GH_MOD_SET)) {
+                        GHbuild build(GH_BUILD_ACTION, GH_ACTION_SET, p.str[3], value, hub);
+                        bptr = &build;
+                        build_cb();
+                        bptr = nullptr;
+                        hub_ptr = nullptr;
+                        if (auto_f) sendGet(p.str[3], value);
+                    }
+                    return setStatus(GH_SET_HOOK, conn);
+                }
+            }
+#endif
+#endif
+            setFocus(conn);
+
+            switch (GH_getCmd(p.str[3])) {
+                case 0:  // focus
+                    answerUI();
+                    return setStatus(GH_FOCUS, conn);
+
+                case 1:  // ping
+                    answerType();
+                    return setStatus(GH_PING, conn);
+
+                case 2:  // unfocus
+                    clearFocus(conn);
+                    return setStatus(GH_UNFOCUS, conn);
+
+#ifdef GH_ESP_BUILD
+                case 3:  // info
+#ifndef GH_NO_INFO
+                    if (modules.read(GH_MOD_INFO)) answerInfo();
+                    else answerType(F("ERR"));
+#else
+                    answerType(F("ERR"));
+#endif
+                    return setStatus(GH_INFO, conn);
+
+                case 4:  // fsbr
+#ifndef GH_NO_FS
+                    if (modules.read(GH_MOD_FSBR)) answerFsbr();
+                    else answerType(F("ERR"));
+#else
+                    answerType(F("ERR"));
+#endif
+                    return setStatus(GH_FSBR, conn);
+
+                case 5:  // reboot
+                    if (modules.read(GH_MOD_REBOOT)) reboot_f = 1;
+                    answerType();
+                    return setStatus(GH_REBOOT, conn);
+
+                case 6:  // fetch_chunk
+#ifndef GH_NO_FS
+                    fs_tmr = millis();
+                    if (!file_d || fs_hub != hub || !modules.read(GH_MOD_DOWNLOAD)) {
+                        answerType(F("fetch_err"));
+                        return setStatus(GH_DOWNLOAD_ERROR, conn);
+                    } else {
+                        answerChunk();
+                        dwn_chunk_count++;
+                        if (dwn_chunk_count >= dwn_chunk_amount) {
+                            file_d.close();
+                            return setStatus(GH_DOWNLOAD_FINISH, conn);
+                        }
+                        return setStatus(GH_DOWNLOAD_CHUNK, conn);
+                    }
+#endif
+                    break;
+#endif
+                default:  // unknown
+                    clearFocus(conn);
+                    return setStatus(GH_UNKNOWN, conn);
+            }
+            return;
+        }
+
+        // p.size == 5
+        char* name = p.str[4];
+        switch (GH_getCmdN(p.str[3])) {
+            // set
+            case 0:
+                if (!build_cb || !modules.read(GH_MOD_SET)) {
+                    answerType();
+                } else {
+                    GHbuild build(GH_BUILD_ACTION, GH_ACTION_SET, name, value, hub);
+                    bptr = &build;
+                    send_f = 0;
+                    build_cb();
+                    bptr = nullptr;
+#ifdef GH_ESP_BUILD
+                    if (auto_f) sendGet(name, value);
+#endif
+                    if (send_f) answerUI();
+                    else answerType();
+                }
+                return setStatus(GH_SET, conn);
+
+            // click
+            case 1:
+                if (!build_cb || !modules.read(GH_MOD_CLICK)) {
+                    answerType();
+                } else {
+                    GHbuild build(GH_BUILD_ACTION, (value[0] == '1') ? GH_ACTION_PRESS : GH_ACTION_RELEASE, name, 0, hub);
+                    send_f = 0;
+                    bptr = &build;
+                    build_cb();
+                    bptr = nullptr;
+                    if (send_f) answerUI();
+                    else answerType();
+                }
+                return setStatus(GH_CLICK, conn);
+
+            // cli
+            case 2:
+                answerType();
+                if (cli_cb) {
+                    String str(value);
+                    cli_cb(str);
+                }
+                return setStatus(GH_CLI, conn);
+
+#ifdef GH_ESP_BUILD
+            // delete
+            case 3:
+#ifndef GH_NO_FS
+                if (modules.read(GH_MOD_DELETE) && GH_FS.remove(name)) answerFsbr();
+                else answerType(F("ERR"));
+#else
+                answerType(F("ERR"));
+#endif
+                return setStatus(GH_DELETE, conn);
+
+            // rename
+            case 4:
+#ifndef GH_NO_FS
+                if (modules.read(GH_MOD_RENAME) && GH_FS.rename(name, value)) answerFsbr();
+                else answerType(F("ERR"));
+#else
+                answerType(F("ERR"));
+#endif
+                return setStatus(GH_RENAME, conn);
+
+            // fetch
+            case 5:
+#ifndef GH_NO_FS
+                if (!file_d && !file_u && !ota_f && modules.read(GH_MOD_DOWNLOAD)) {
+                    file_d = GH_FS.open(name, "r");
+                    if (file_d) {
+                        fs_hub = hub;
+                        fs_tmr = millis();
+                        dwn_chunk_count = 0;
+                        dwn_chunk_amount = (file_d.size() + GH_DOWN_CHUNK_SIZE - 1) / GH_DOWN_CHUNK_SIZE;  // round up
+                        answerType(F("fetch_start"));
+                        return setStatus(GH_DOWNLOAD, conn);
+                    }
+                }
+#endif
+                answerType(F("fetch_err"));
+                return setStatus(GH_DOWNLOAD_ERROR, conn);
+
+            // upload
+            case 6:
+#ifndef GH_NO_FS
+                if (!file_d && !file_u && !ota_f && !fs_buffer && modules.read(GH_MOD_UPLOAD)) {
+                    file_u = GH_FS.open(name, "w");
+                    if (file_u) {
+                        fs_buffer = (char*)malloc(GH_UPL_CHUNK_SIZE + 10);
+                        if (fs_buffer) {
+                            fs_hub = hub;
+                            fs_tmr = millis();
+                            answerType(F("upload_start"));
+                            setStatus(GH_UPLOAD, conn);
+                            return;
+                        }
+                    }
+                }
+#endif
+                answerType(F("upload_err"));
+                return setStatus(GH_UPLOAD_ERROR, conn);
+
+            // upload_chunk
+            case 7:
+#ifndef GH_NO_FS
+                if (file_u && fs_hub == hub && fs_buffer) {
+                    if (!strcmp_P(name, PSTR("next"))) {
+                        fs_state = GH_UPLOAD_CHUNK;
+                        strcpy(fs_buffer, value);
+                        return;
+                    } else if (!strcmp_P(name, PSTR("last"))) {
+                        fs_state = GH_UPLOAD_FINISH;
+                        strcpy(fs_buffer, value);
+                        return;
+                    }
+                }
+#endif
+                answerType(F("upload_err"));
+                return setStatus(GH_UPLOAD_ERROR, conn);
+
+            // ota
+            case 8:
+#if !defined(GH_NO_FS) && !defined(GH_NO_OTA)
+                if (!file_d && !file_u && !ota_f && !fs_buffer && modules.read(GH_MOD_OTA)) {
+                    int ota_type = 0;
+                    if (!strcmp_P(name, PSTR("flash"))) ota_type = 1;
+                    else if (!strcmp_P(name, PSTR("fs"))) ota_type = 2;
+
+                    if (ota_type) {
+                        size_t ota_size;
+                        if (ota_type == 1) {
+                            ota_type = U_FLASH;
+                            ota_size = (size_t)((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000);
+                        } else {
+#ifdef ESP8266
+                            ota_type = U_FS;
+                            close_all_fs();
+                            ota_size = (size_t)&_FS_end - (size_t)&_FS_start;
+#else
+                            ota_type = U_SPIFFS;
+                            ota_size = UPDATE_SIZE_UNKNOWN;
+#endif
+                        }
+                        if (Update.begin(ota_size, ota_type)) {
+                            fs_buffer = (char*)malloc(GH_UPL_CHUNK_SIZE + 10);
+                            if (fs_buffer) {
+                                fs_hub = hub;
+                                ota_f = true;
+                                fs_tmr = millis();
+                                answerType(F("ota_start"));
+                                return setStatus(GH_OTA, conn);
+                            }
+                        }
+                    }
+                }
+#endif
+                answerType(F("ota_err"));
+                return setStatus(GH_OTA_ERROR, conn);
+
+            // ota_chunk
+            case 9:
+#if !defined(GH_NO_FS) && !defined(GH_NO_OTA)
+                if (ota_f && fs_hub == hub && fs_buffer) {
+                    if (!strcmp_P(name, PSTR("next"))) {
+                        fs_state = GH_OTA_CHUNK;
+                        strcpy(fs_buffer, value);
+                        return;
+                    } else if (!strcmp_P(name, PSTR("last"))) {
+                        fs_state = GH_OTA_FINISH;
+                        strcpy(fs_buffer, value);
+                        return;
+                    }
+                }
+#endif
+                answerType(F("ota_err"));
+                return setStatus(GH_OTA_ERROR, conn);
+
+            // ota_url
+            case 10:
+#if !defined(GH_NO_FS) && !defined(GH_NO_OTA)
+                if (!file_d && !file_u && !ota_f && !fs_buffer && modules.read(GH_MOD_OTA_URL)) {
+                    ota_url = value;
+                    answerType();
+                    fs_state = GH_OTA_URL;
+                    return setStatus(GH_OTA_URL, conn);
+                }
+#endif
+                answerType(F("ERR"));
+                return setStatus(GH_OTA_URL, conn);
+
+#endif
+            default:
+                clearFocus(conn);
+                return setStatus(GH_UNKNOWN, conn);
+        }
+    }
+
+    // ========================== TICK ==========================
 
     // тикер, вызывать в loop
     bool tick() {
         if (!running_f) return 0;
-        stat = GH_IDLE;
-        
-        WiFiClient client = server.available(); // accept() in 3+
-        if (client) {
-            String req = client.readStringUntil('/');   // "GET /"
-            req = client.readStringUntil('\r');
-            while (client.available()) client.read();
-            int end = req.indexOf(F(" HTTP/"));
-            if (end < 0) return 1;
-            req.remove(end, req.length() - end);
-            
-            String answ;
-            uint8_t type = buildAnswer(answ, req, false);
-            if (type) {
-                client.print(F("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n"
-                "Access-Control-Allow-Origin:*\r\n"
-                "Access-Control-Allow-Private-Network: true\r\n"
-                "Access-Control-Allow-Methods:*\r\n\r\n"));
-                client.print(answ);
-            } else client.print(F("HTTP/1.1 404 Not Found\r\n"));
-            
-            switch (type) {
-            case 0: stat = GH_TCP_UNKNOWN; break;
-            case 1: stat = GH_TCP_FIND; break;
-            case 2:
-            case 3: stat = GH_TCP_CLICK; break;
-            case 4: stat = GH_TCP_UPDATE; break;
-            }
-        }
-        
-        #ifndef GH_NO_MQTT
-        if (mq_configured) {
-            mq_conn = mqtt.connected();
-            if (!mq_conn && millis() - mqtt_tmr > 5000) {
-                stat = GH_MQ_ERROR;
-                String m_id("GH-");
-                m_id += String(random(0xffffff), HEX);
-                bool conn = 0;
-                if (mq_login) conn = mqtt.connect(m_id.c_str(), mq_login, mq_pass);
-                else conn = mqtt.connect(m_id.c_str());
 
-                if (conn) {
-                    mqtt.subscribe(net_ID);
-                    String id_topic(net_ID);
-                    id_topic += '/';
-                    id_topic += dev_ID;
-                    mqtt.subscribe(id_topic.c_str());
-                    stat = GH_MQ_CONNECTED;
-                }
-                mqtt_tmr = millis();
+        if ((uint16_t)millis() - focus_tmr >= 1000) {
+            focus_tmr = millis();
+            for (uint8_t i = 0; i < GH_CONN_AMOUNT; i++) {
+                if (focus_arr[i]) focus_arr[i]--;
             }
-            mqtt.loop();
         }
-        #endif
+
+#ifndef GH_NO_SERIAL
+        if (modules.read(GH_MOD_SERIAL)) tickStream();
+#endif
+#ifdef GH_ESP_BUILD
+#ifndef GH_NO_LOCAL
+        if (modules.read(GH_MOD_LOCAL)) tickHTTP();
+        if (modules.read(GH_MOD_LOCAL)) tickWS();
+#endif
+#ifndef GH_NO_MQTT
+        if (modules.read(GH_MOD_MQTT)) tickMQTT();
+#endif
+
+#ifndef GH_NO_FS
+        if ((file_d || file_u || ota_f) && (uint16_t)millis() - fs_tmr >= (GH_CONN_TOUT * 1000)) {
+            if (file_d) fs_state = GH_DOWNLOAD_ABORTED;
+            if (file_u) fs_state = GH_UPLOAD_ABORTED;
+            if (ota_f) fs_state = GH_OTA_ABORTED;
+            if (fs_buffer) {
+                delete fs_buffer;
+                fs_buffer = nullptr;
+            }
+        }
+
+        if (fs_state != GH_IDLE) {
+            switch (fs_state) {
+                case GH_OTA_URL: {
+                    bool ok = 0;
+#ifdef ESP8266
+                    ESPhttpUpdate.rebootOnUpdate(true);
+                    BearSSL::WiFiClientSecure client;
+                    client.setInsecure();
+                    ok = ESPhttpUpdate.update(client, ota_url);
+#else
+                    httpUpdate.rebootOnUpdate(true);
+                    WiFiClientSecure client;
+                    client.setInsecure();
+                    ok = httpUpdate.update(client, ota_url);
+#endif
+                    answerType(ok ? F("ota_url_ok") : F("ota_url_err"));
+                } break;
+
+                case GH_DOWNLOAD_ABORTED:
+                    file_d.close();
+                    setStatus(GH_DOWNLOAD_ABORTED, fs_hub.conn);
+                    break;
+
+                case GH_UPLOAD_CHUNK:
+                    B64toFile(file_u, fs_buffer);
+                    hub_ptr = &fs_hub;
+                    answerType(F("upload_next_chunk"));
+                    fs_tmr = millis();
+                    setStatus(GH_UPLOAD_CHUNK, fs_hub.conn);
+                    break;
+
+                case GH_UPLOAD_FINISH:
+                    B64toFile(file_u, fs_buffer);
+                    delete fs_buffer;
+                    fs_buffer = nullptr;
+                    file_u.close();
+                    hub_ptr = &fs_hub;
+                    answerType(F("upload_end"));
+                    setStatus(GH_UPLOAD_FINISH, fs_hub.conn);
+                    break;
+
+                case GH_UPLOAD_ABORTED:
+                    file_u.close();
+                    setStatus(GH_UPLOAD_ABORTED, fs_hub.conn);
+                    break;
+#ifndef GH_NO_OTA
+                case GH_OTA_CHUNK:
+                    B64toUpdate(fs_buffer);
+                    hub_ptr = &fs_hub;
+                    answerType(F("ota_next_chunk"));
+                    fs_tmr = millis();
+                    setStatus(GH_OTA_CHUNK, fs_hub.conn);
+                    break;
+
+                case GH_OTA_FINISH:
+                    B64toUpdate(fs_buffer);
+                    delete fs_buffer;
+                    fs_buffer = nullptr;
+                    ota_f = false;
+                    reboot_f = true;
+                    hub_ptr = &fs_hub;
+                    if (Update.end(true)) answerType(F("ota_end"));
+                    else answerType(F("ota_err"));
+                    setStatus(GH_OTA_FINISH, fs_hub.conn);
+                    break;
+
+                case GH_OTA_ABORTED:
+                    Update.end();
+                    ota_f = false;
+                    setStatus(GH_OTA_ABORTED, fs_hub.conn);
+                    break;
+#endif
+                default:
+                    break;
+            }
+            fs_state = GH_IDLE;
+        }
+#endif
+        if (reboot_f) {
+            delay(2000);
+            ESP.restart();
+        }
+#endif
         return 1;
     }
 
-    // получить статус (см. коды статусов)
-    uint8_t status() {
-        return stat;
+    // =========================================================================================
+    // ======================================= PRIVATE =========================================
+    // =========================================================================================
+   private:
+    const char* getPrefix() {
+        return prefix;
     }
-    
-    // проверка онлайн (mqtt подключен?)
-    bool online() {
-        #ifndef GH_NO_MQTT
-        return mqtt.connected();
-        #endif
-        return 0;
+    const char* getID() {
+        return id;
     }
-    
-    // запущен ли?
-    bool running() {
-        return running_f;
+    void setStatus(GHstate_t state, GHconn_t conn) {
+        if (status_cb) status_cb((GHstatus){conn, state});
     }
-    
-    // статус изменился
-    bool statusChanged() {
-        if (p_stat != stat) {
-            p_stat = stat;
-            if (stat) return 1;
-        }
-        return 0;
-    }
-    
-    // отправить интерфейс
-    void refresh() {
-        send_f = 1;
-    }
+    void _afterComponent() {
+        switch (buf_mode) {
+            case GH_NORMAL:
+                break;
 
-private:
-    void buildFind(String& answ, bool mqtt) {
-        String ip;
-        if (WiFi.getMode() == WIFI_AP) ip = WiFi.softAPIP().toString();
-        else ip = WiFi.localIP().toString();
-        String status;
-        status.reserve(10);
-        sptr = &answ;
-        answ.reserve(500);
-        answ += '{';
-        
-        if (build_cb) {
-            sstat_p = &status;
-            answ += F("'controls':[");
-            build_cb();
-            answ[answ.length() - 1] = ']';  // ',' = ']'
-            answ += ',';
-            sstat_p = nullptr;
-        }
-        
-        addStr(F("net_id"), net_ID);
-        addStr(F("dev_id"), dev_ID);
-        addStr(F("type"), F("find"));
-        addStr(F("status"), status);
-        addStr(F("ip"), ip);
-        addBool(F("portal"), portal);
-        addBool(F("mqtt"), mqtt);
-        addStr(F("name"), name);
-        addStr(F("icon"), icon);
-        addVal(F("rssi"), (constrain(2 * (WiFi.RSSI() + 100), 0, 100)));
-        
-        answ[answ.length() - 1] = '}';  // ',' = '}'
-        sptr = nullptr;
-    }
-    
-    void buildUpdate(String& answ, String& name) {
-        sptr = &answ;
-        answ += '{';
-        
-        addStr(F("net_id"), net_ID);
-        addStr(F("dev_id"), dev_ID);
-        addStr(F("type"), F("update"));
-        answ += F("'updates':['");
-        
-        _answPtr = &answ;
-        
-        if (name.indexOf(',') < 0) {            // один компонент
-            _updPtr = &name;
-            if (action_cb) action_cb();
-        } else {
-            GP_parser n(name);                  // парсер
-            _updPtr = &n.str;                   // указатель на имя (в парсинге)
-            while (n.parse()) {                 // парсим
-                if (action_cb) action_cb();
-                answ += "','";
-                yield();
-            }
-            answ.remove(answ.length() - 3);     // удаляем последний разделитель
-        }
-        
-        _answPtr = nullptr;
-        _updPtr = nullptr;
-        
-        answ += F("']}");
-        sptr = nullptr;
-    }
-    
-    void sendMQTT(const String& answ) {
-        #ifndef GH_NO_MQTT
-        String out_topic(net_ID);
-        out_topic += F("_app");
-        mqtt.beginPublish(out_topic.c_str(), answ.length(), 0);
-        mqtt.write((byte*)answ.c_str(), answ.length());
-        mqtt.endPublish();
-        #endif
-    }
-    
-    uint8_t buildAnswer(String& answ, const String& req, bool mqtt) {
-        uint8_t type = 0;
-        if (req.startsWith(net_ID)) {                       // find
-            buildFind(answ, mqtt);
-            return 1;
-        } else if (req.startsWith("GH_click?")) type = 2;   // click
-        else if (req.startsWith("GH_press?")) type = 3;     // press
-        else if (req.startsWith("GH_update?")) type = 4;    // update
-        
-        int eq = req.indexOf('=');
-        if (type && eq > 0) {
-            String name = req.substring(req.indexOf('?') + 1, eq);
-            String value;
-            urldecode(req.substring(eq + 1, req.length()), value);
-            _argNamePtr = &name;
-            _argValPtr = &value;
-            
-            if (type != 4) {    // click/press
-                send_f = 0;
-                if (type == 2) click_f = 1;     // click
-                else {                          // press
-                    _holdF = value[0] - '0';
-                    if (_holdF == 1) _hold = name;
-                    else _hold = "";
+            case GH_COUNT:
+                buf_count += sptr->length();
+                *sptr = "";
+                break;
+
+            case GH_CHUNKED:
+                if (sptr->length() >= buf_size) {
+                    answer(*sptr, false);
+                    *sptr = "";
                 }
-                if (action_cb) action_cb();
-                click_f = 0;
-                _holdF = 0;
-                if (send_f) buildFind(answ, mqtt);
-                else answ = "OK";
-                
-            } else {            // update
-                buildUpdate(answ, name);
+                break;
+        }
+    }
+    void _power(FSTR mode) {
+        if (!running_f) return;
+
+#ifdef GH_ESP_BUILD
+#ifndef GH_NO_MQTT
+        if (!modules.read(GH_MOD_MQTT)) return;
+        String topic(prefix);
+        topic += F("/hub/");
+        topic += id;
+        topic += F("/status");
+        sendMQTT(topic, mode);
+#endif
+#endif
+    }
+
+    // ======================= ANSWER ========================
+    void answer(String& answ, bool close = true) {
+        if (!hub_ptr) return;
+        switch (hub_ptr->conn) {
+            case GH_SERIAL:
+#ifndef GH_NO_SERIAL
+                if (modules.read(GH_MOD_SERIAL))
+                    ;
+#endif
+                break;
+            case GH_MANUAL:
+                if (manual_cb && modules.read(GH_MOD_MANUAL)) manual_cb(answ);
+                break;
+#ifdef GH_ESP_BUILD
+            case GH_WS:
+#ifndef GH_NO_LOCAL
+                if (modules.read(GH_MOD_LOCAL)) answerWS(answ);
+#endif
+                break;
+            case GH_MQTT:
+#ifndef GH_NO_MQTT
+                if (modules.read(GH_MOD_MQTT)) answerMQTT(hub_ptr->id, answ);
+#endif
+                break;
+#endif
+            default:
+                break;
+        }
+        if (close) hub_ptr = nullptr;
+    }
+
+    // ======================= SEND ========================
+    void send(const String& answ, bool broadcast = false) {
+        if (modules.read(GH_MOD_MANUAL) && focus_arr[0]) {  // GH_MANUAL
+            if (manual_cb) manual_cb(answ);
+        }
+        if (modules.read(GH_MOD_SERIAL) && focus_arr[1]) {  // GH_SERIAL
+#ifndef GH_NO_SERIAL
+#endif
+        }
+#ifdef GH_ESP_BUILD
+#ifndef GH_NO_LOCAL
+        if (modules.read(GH_MOD_LOCAL) && focus_arr[2]) {  // GH_WS
+            sendWS(answ);
+        }
+#endif
+#ifndef GH_NO_MQTT
+        if (modules.read(GH_MOD_MQTT) && (focus_arr[3] || broadcast)) {  // GH_MQTT
+            sendMQTT(answ);                                              // broadcast!
+        }
+#endif
+#endif
+    }
+
+    // ======================= INFO ========================
+    void answerInfo() {
+#ifdef GH_ESP_BUILD
+#ifndef GH_NO_INFO
+        String answ;
+        answ.reserve(250);
+        answ += '\n';
+        answ += '{';
+        _jsID(answ);
+        _jsStr(answ, F("type"), F("info"));
+        answ += F("'info':[");
+        _jsArr(answ, WiFi.getMode() == WIFI_AP ? F("AP") : (WiFi.getMode() == WIFI_STA ? F("STA") : F("AP_STA")));
+        _jsArr(answ, WiFi.SSID());
+        _jsArr(answ, WiFi.localIP().toString());
+        _jsArr(answ, WiFi.softAPIP().toString());
+        _jsArr(answ, WiFi.macAddress());
+        _jsArr(answ, "📶 " + String(constrain(2 * (WiFi.RSSI() + 100), 0, 100)) + '%');
+        _jsArr(answ, GH_uptime());
+        _jsArr(answ, String(ESP.getFreeHeap() / 1000.0, 3) + " kB");
+        _jsArr(answ, String(ESP.getSketchSize() / 1000.0, 1) + " kB (" + String(ESP.getFreeSketchSpace() / 1000.0, 1) + ")");
+        _jsArr(answ, String(ESP.getFlashChipSize() / 1000.0, 1) + " kB");
+        _jsArr(answ, String(ESP.getCpuFreqMHz()) + F(" MHz"));
+        _jsArr(answ, firmware ? firmware : F(""));
+        _jsArr(answ, GH_VERSION);
+        _jsArr(answ, id);
+        answ[answ.length() - 1] = ']';  // ',' = ']'
+        answ += '}';
+        answ += '\n';
+        answer(answ);
+#endif
+#endif
+    }
+
+    // ======================= UI ========================
+    void answerUI() {
+        if (!build_cb) return answerType();
+        GHbuild build;
+        build.hub = *hub_ptr;
+        bptr = &build;
+        bool chunked = buf_size;
+
+#ifdef GH_ESP_BUILD
+        if (build.hub.conn == GH_WS || build.hub.conn == GH_MQTT) chunked = false;
+#endif
+
+        if (!chunked) {
+            build.type = GH_BUILD_COUNT;
+            buf_mode = GH_COUNT;
+            buf_count = 0;
+            String count;
+            sptr = &count;
+            build_cb();
+        }
+
+        String answ;
+        answ.reserve((chunked ? buf_size : buf_count) + 100);
+        answ = F("\n{'controls':[");
+        buf_mode = chunked ? GH_CHUNKED : GH_NORMAL;
+        build.type = GH_BUILD_UI;
+        sptr = &answ;
+        build_cb();
+        sptr = nullptr;
+        bptr = nullptr;
+
+        if (answ[answ.length() - 1] == ',') answ[answ.length() - 1] = ']';  // ',' = ']'
+        else answ += ']';
+        answ += ',';
+        _jsID(answ);
+        _jsStr(answ, F("type"), F("ui"));
+        answ[answ.length() - 1] = '}';  // ',' = '}'
+        answ += '\n';
+        answer(answ);
+    }
+
+    // ======================= TYPE ========================
+    void answerType(FSTR type = nullptr) {
+        if (!type) type = F("OK");
+        String answ;
+        answ.reserve(50);
+        answ += '\n';
+        answ += '{';
+        _jsID(answ);
+        _jsStr(answ, F("type"), type);
+        answ[answ.length() - 1] = '}';  // ',' = '}'
+        answ += '\n';
+        answer(answ);
+    }
+
+    // ======================= FSBR ========================
+    void answerFsbr() {
+#ifdef GH_ESP_BUILD
+#ifndef GH_NO_FS
+        uint16_t count = 0;
+        String answ;
+        answ.reserve(100);
+        showFiles(answ, "/", GH_FS_DEPTH, &count);
+        answ.reserve(count + 50);
+        answ = F("\n{'fs':{'/':0,");
+        showFiles(answ, "/", GH_FS_DEPTH);
+        answ[answ.length() - 1] = '}';  // ',' = '}'
+        answ += ',';
+
+        _jsID(answ);
+        _jsStr(answ, F("type"), F("fsbr"));
+
+#ifdef ESP8266
+        FSInfo fs_info;
+        GH_FS.info(fs_info);
+        _jsVal(answ, F("total"), fs_info.totalBytes);
+        _jsVal(answ, F("used"), fs_info.usedBytes);
+#else
+        _jsVal(answ, F("total"), GH_FS.totalBytes());
+        _jsVal(answ, F("used"), GH_FS.usedBytes());
+#endif
+        answ[answ.length() - 1] = '}';  // ',' = '}'
+        answ += '\n';
+        answer(answ);
+#endif
+#else
+        answerType(F("ERR"));
+#endif
+    }
+
+    // ======================= DISCOVER ========================
+    String answerDiscover() {
+        uint32_t hash = 0;
+        if (PIN > 999) {
+            char pin_s[11];
+            ultoa(PIN, pin_s, 10);
+            uint16_t len = strlen(pin_s);
+            for (uint16_t i = 0; i < len; i++) {
+                hash = (((uint32_t)hash << 5) - hash) + pin_s[i];
             }
-            
-            _argNamePtr = nullptr;
-            _argValPtr = nullptr;
         }
-        return type;
+
+        String ip(F("unset"));
+#ifdef GH_ESP_BUILD
+        if (WiFi.getMode() == WIFI_AP) ip = WiFi.softAPIP().toString();
+        else if (WiFi.getMode() == WIFI_STA) ip = WiFi.localIP().toString();
+        else if (WiFi.getMode() == WIFI_AP_STA) {
+            if (WiFi.status() == WL_CONNECTED) ip = WiFi.localIP().toString();
+            else ip = WiFi.softAPIP().toString();
+        }
+#endif
+
+        String answ;
+        answ.reserve(120);
+        answ += '\n';
+        answ += '{';
+        _jsID(answ);
+        _jsStr(answ, F("type"), F("discover"));
+        _jsStr(answ, F("name"), name);
+        _jsStr(answ, F("icon"), icon);
+        _jsStr(answ, F("ip"), ip);
+        _jsVal(answ, F("PIN"), hash);
+        _jsStr(answ, F("firmware"), firmware);
+        _jsVal(answ, F("max_upl"), GH_UPL_CHUNK_SIZE);
+        answ[answ.length() - 1] = '}';  // ',' = '}'
+        answ += '\n';
+        answer(answ);
+        return answ;
     }
 
-    // ArgParser
-    const String arg(const String& n) {
-        if (_argNamePtr && _argValPtr) {
-            if (n.equals(*_argNamePtr)) return *_argValPtr;
-        }
-        return _GP_empty_str;
+    // ======================= CHUNK ========================
+    void answerChunk() {
+#ifdef GH_ESP_BUILD
+#ifndef GH_NO_FS
+        String answ;
+        answ.reserve(GH_DOWN_CHUNK_SIZE + 100);
+        answ += '\n';
+        answ += '{';
+        _jsID(answ);
+        _jsStr(answ, F("type"), F("fetch_next_chunk"));
+        _jsVal(answ, F("chunk"), dwn_chunk_count);
+        _jsVal(answ, F("amount"), dwn_chunk_amount);
+        answ += F("'data':'");
+        fileToB64(file_d, answ);
+        answ += F("'}\n");
+        answer(answ);
+#endif
+#endif
     }
-    bool hasArg(const String& n) {
-        return _argNamePtr ? (_argNamePtr -> equals(n)) : 0;
-    }
-    bool clickF() {
-        return click_f;
-    }
-    int args() {
-        return (bool)_argNamePtr;
-    }
-    
 
-    // json build
-    void addStr(const String & key, const String & value) {
-        *sptr += '\'';
-        *sptr += key;
-        *sptr += "':'";
-        *sptr += value;
-        *sptr += "',";
+    // ========================== MISC ==========================
+    void setFocus(GHconn_t conn) {
+        focus_arr[conn] = GH_CONN_TOUT;
     }
-    void addBool(const String & key, bool value) {
-        *sptr += '\'';
-        *sptr += key;
-        *sptr += "':";
-        *sptr += value ? "true" : "false";
-        *sptr += ',';
+    void clearFocus(GHconn_t conn) {
+        focus_arr[conn] = 0;
+        hub_ptr = nullptr;
+    }
+
+    // ========================== ADDER ==========================
+    template <typename T>
+    void _jsVal(String& s, FSTR key, T value) {
+        s += '\'';
+        s += key;
+        s += F("':");
+        s += value;
+        s += F(",");
     }
     template <typename T>
-    void addVal(const String & key, T value) {
-        *sptr += '\'';
-        *sptr += key;
-        *sptr += "':";
-        *sptr += value;
-        *sptr += ',';
+    void _jsStr(String& s, FSTR key, T value) {
+        s += '\'';
+        s += key;
+        s += F("':'");
+        s += value;
+        s += F("',");
     }
-    
-    void urldecode(const String& s, String& dest) {
-        dest.reserve(s.length());
-        char c;
-        for (uint16_t i = 0; i < s.length(); i++) {
-            c = s[i];
-            if (c != '%') dest += (c == '+') ? ' ' : c;
-            else {
-                c = s[++i];
-                uint8_t v1 = c - ((c <= '9') ? 48 : ((c <= 'F') ? 55 : 87));
-                c = s[++i];
-                uint8_t v2 = c - ((c <= '9') ? 48 : ((c <= 'F') ? 55 : 87));
-                dest += char(v2 | (v1 << 4));
-            }
-        }
+    void _jsArr(String& s, const String& value) {
+        s += '\'';
+        s += value;
+        s += F("',");
+    }
+    void _jsID(String& s) {
+        s += F("'id':'");
+        s += id;
+        s += F("',");
     }
 
-    // vars
+    // ========================== VARS ==========================
+    const char* prefix = nullptr;
     const char* name = nullptr;
     const char* icon = nullptr;
-    const char* net_ID = nullptr;
-    
-    const char* mq_login = nullptr;
-    const char* mq_pass = nullptr;
+    FSTR firmware = nullptr;
+    uint32_t PIN = 0;
+    char id[9];
 
-    uint16_t tcp_port = 50000;
-    
     void (*build_cb)() = nullptr;
-    void (*action_cb)() = nullptr;
-    uint32_t tcp_tmr = 0, mqtt_tmr = 0;
-    char dev_ID[10];
-    bool portal = 0;
-    uint8_t stat = GH_STOP, p_stat = GH_STOP;
-    bool running_f = 0;
-    bool mq_conn = 0;
-    bool mq_configured = 0;
-    bool send_f = 0;
-    bool click_f = 0;
+    void (*cli_cb)(String& str) = nullptr;
+    void (*manual_cb)(const String& s) = nullptr;
+    void (*status_cb)(GHstatus status) = nullptr;
+    GHhub* hub_ptr = nullptr;
 
-    WiFiServer server;
-    #ifndef GH_NO_MQTT
-    WiFiClient mclient;
-    PubSubClient mqtt;
-    #endif
+    bool running_f = 0;
+    bool send_f = 0;
+
+    enum GHbuildmode_t {
+        GH_NORMAL,
+        GH_COUNT,
+        GH_CHUNKED,
+    };
+    GHbuildmode_t buf_mode = GH_NORMAL;
+    uint16_t buf_size = 0;
+    uint16_t buf_count = 0;
+
+    uint16_t focus_tmr = 0;
+    int8_t focus_arr[GH_CONN_AMOUNT] = {};
+
+#ifdef GH_ESP_BUILD
+    bool auto_f = 0;
+    bool reboot_f = false;
+
+#ifndef GH_NO_FS
+    String ota_url;
+    GHhub fs_hub;
+    GHstate_t fs_state = GH_IDLE;
+    char* fs_buffer = nullptr;
+    File file_d, file_u;
+    bool ota_f = false;
+    uint16_t dwn_chunk_count = 0;
+    uint16_t dwn_chunk_amount = 0;
+    uint16_t fs_tmr = 0;
+#endif
+#endif
 };
 #endif

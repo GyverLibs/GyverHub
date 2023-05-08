@@ -6,63 +6,12 @@
 # Datatypes (KEYWORD1)
 #######################################
 GyverHUB	KEYWORD1
-GH_NO_MQTT	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
-config	KEYWORD2
-usePortal	KEYWORD2
-setupTCP	KEYWORD2
-setupMQTT	KEYWORD2
-begin	KEYWORD2
-stop	KEYWORD2
-attachBuild	KEYWORD2
-attach	KEYWORD2
-tick	KEYWORD2
-send	KEYWORD2
-status	KEYWORD2
-running	KEYWORD2
-online	KEYWORD2
-statusChanged	KEYWORD2
-refresh	KEYWORD2
-
-addCustom	KEYWORD2
-addUpdate	KEYWORD2
-addStatus	KEYWORD2
-addButtons	KEYWORD2
-addButton	KEYWORD2
-addButtonIcon	KEYWORD2
-addButtonsIcons	KEYWORD2
-addSpacer	KEYWORD2
-addLine	KEYWORD2
-addTabs	KEYWORD2
-addLabel	KEYWORD2
-addTitle	KEYWORD2
-addInput	KEYWORD2
-addPass	KEYWORD2
-addSlider	KEYWORD2
-addSwitch	KEYWORD2
-addDate	KEYWORD2
-addTime	KEYWORD2
-addSelect	KEYWORD2
-addLED	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
 #######################################
-
-GH_IDLE	LITERAL1
-GH_TCP_UNKNOWN	LITERAL1
-GH_TCP_FIND	LITERAL1
-GH_TCP_CLICK	LITERAL1
-GH_TCP_UPDATE	LITERAL1
-GH_MQ_CONNECTED	LITERAL1
-GH_MQ_ERROR	LITERAL1
-GH_MQ_UNKNOWN	LITERAL1
-GH_MQ_FIND	LITERAL1
-GH_MQ_CLICK	LITERAL1
-GH_MQ_UPDATE	LITERAL1
-GH_START	LITERAL1
-GH_STOP	LITERAL1
