@@ -217,6 +217,21 @@ class GyverHUB : public HubBuilder, public HubStream {
         send_f = true;
     }
 
+    // true - если билдер вызван для set или read операций
+    bool buildRead() {
+        return (bptr && (bptr->type == GH_BUILD_ACTION || bptr->type == GH_BUILD_READ));
+    }
+
+    // вернёт имя компонента в текущем действии
+    const char* actionName() {
+        return (bptr) ? bptr->action.name : nullptr;
+    }
+
+    // вернёт значение компонента в текущем действии
+    const char* actionValue() {
+        return (bptr) ? bptr->action.value : nullptr;
+    }
+
     // ========================= NOTIF ==========================
 
     // отправить уведомление

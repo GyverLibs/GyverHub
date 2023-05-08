@@ -40,7 +40,7 @@
 
 ### Зависимости
 Общие:
-- Stamp (пока не опубликована)
+- [Stamp](https://github.com/GyverLibs/Stamp)
 
 Для синхронной работы (ESP8266/ESP32):
 - [PubSubClient](https://github.com/knolleary/pubsubclient)

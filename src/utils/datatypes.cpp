@@ -111,7 +111,7 @@ void GHtypeToStr(String* s, void* val, GHdata_t type) {
             *s += ((GHflags*)val)->flags;
             break;
         case GH_STAMP:
-            *s += ((Stamp*)val)->getUnix();
+            *s += ((Stamp*)val)->toSeconds();
             break;
 
         case GH_NULL:

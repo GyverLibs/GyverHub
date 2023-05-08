@@ -14,7 +14,7 @@ class HubBuilder {
     // ========================== WIDGET ==========================
     void BeginWidgets(int height = 0) {
         if (_isUI()) {
-            tab_width = 1;
+            tab_width = 100;
             _add(F("{'type':'widget_b','height':"));
             *sptr += height;
             _end();
