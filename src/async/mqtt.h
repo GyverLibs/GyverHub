@@ -92,7 +92,7 @@ class HubMQTT {
     }
 
     void sendMQTT(const String& topic, const String& msg) {
-        mqtt.publish(topic.c_str(), qos, ret, msg.c_str(), msg.length());
+        if (mqtt.connected()) mqtt.publish(topic.c_str(), qos, ret, msg.c_str(), msg.length());
     }
 
     void sendMQTT(const String& msg) {

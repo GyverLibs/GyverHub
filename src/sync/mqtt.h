@@ -66,6 +66,7 @@ class HubMQTT {
     }
 
     void sendMQTT(const String& topic, const String& msg) {
+        if (!mqtt.connected()) return;
         mqtt.beginPublish(topic.c_str(), msg.length(), ret);
         mqtt.write((uint8_t*)msg.c_str(), msg.length());
         mqtt.endPublish();

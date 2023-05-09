@@ -263,10 +263,9 @@ class GyverHUB : public HubBuilder, public HubStream {
         send(answ);
     }
 
-    // отправить update по имени компонента (значение будет прочитано в build). Имена можно передать списком через запятую
+    // отправить update по имени компонента (значение будет прочитано в build). Нельзя вызывать из build. Имена можно передать списком через запятую
     void sendUpdate(const String& name) {
-        if (!running_f) return;
-        if (!build_cb) return;
+        if (!running_f || !build_cb || bptr) return;
         GHbuild build(GH_BUILD_READ);
         bptr = &build;
 
@@ -330,7 +329,7 @@ class GyverHUB : public HubBuilder, public HubStream {
     void sendGet(const String& name) {
 #ifdef GH_ESP_BUILD
 #ifndef GH_NO_MQTT
-        if (!running_f || !build_cb) return;
+        if (!running_f || !build_cb || bptr) return;
         GHbuild build(GH_BUILD_READ);
         bptr = &build;
 
@@ -701,7 +700,7 @@ class GyverHUB : public HubBuilder, public HubStream {
     bool tick() {
         if (!running_f) return 0;
 
-        if ((uint16_t)millis() - focus_tmr >= 1000) {
+        if ((uint16_t)((uint16_t)millis() - focus_tmr) >= 1000) {
             focus_tmr = millis();
             for (uint8_t i = 0; i < GH_CONN_AMOUNT; i++) {
                 if (focus_arr[i]) focus_arr[i]--;
@@ -869,8 +868,7 @@ class GyverHUB : public HubBuilder, public HubStream {
         switch (hub_ptr->conn) {
             case GH_SERIAL:
 #ifndef GH_NO_SERIAL
-                if (modules.read(GH_MOD_SERIAL))
-                    ;
+                if (modules.read(GH_MOD_SERIAL)) sendStream(answ);
 #endif
                 break;
             case GH_MANUAL:
@@ -901,6 +899,7 @@ class GyverHUB : public HubBuilder, public HubStream {
         }
         if (modules.read(GH_MOD_SERIAL) && focus_arr[1]) {  // GH_SERIAL
 #ifndef GH_NO_SERIAL
+            sendStream(answ);
 #endif
         }
 #ifdef GH_ESP_BUILD

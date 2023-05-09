@@ -1,9 +1,16 @@
 #pragma once
+#include "config.h"
+#include "macro.h"
+
+#ifdef GH_NO_SERIAL
+class HubStream {
+   public:
+};
+#else
+
 #include <Arduino.h>
 #include <Stream.h>
 
-#include "config.h"
-#include "macro.h"
 #include "utils/stats.h"
 
 class HubStream {
@@ -16,20 +23,21 @@ class HubStream {
 
     // ============ PROTECTED =============
    protected:
-
     virtual void parse(char* url, GHconn_t conn) = 0;
 
     void tickStream() {
         if (stream && stream->available()) {
             String s = stream->readStringUntil('\n');
+            parse((char*)s.c_str(), GH_SERIAL);
         }
     }
 
     void sendStream(const String& answ) {
-      if (stream) stream->println(answ);
+        if (stream) stream->print(answ);
     }
 
     // ============ PRIVATE =============
    private:
     Stream* stream = nullptr;
 };
+#endif
