@@ -133,7 +133,7 @@ class GyverHUB : public HubBuilder, public HubStream {
 
     // установить версию прошивки для отображения в Info и OTA
     void setVersion(FSTR v) {
-        firmware = v;
+        version = v;
     }
 
     // установить размер буфера строки для сборки интерфейса в режиме MANUAL и STREAM
@@ -914,7 +914,7 @@ class GyverHUB : public HubBuilder, public HubStream {
         _jsArr(answ, String(ESP.getSketchSize() / 1000.0, 1) + " kB (" + String(ESP.getFreeSketchSpace() / 1000.0, 1) + ")");
         _jsArr(answ, String(ESP.getFlashChipSize() / 1000.0, 1) + " kB");
         _jsArr(answ, String(ESP.getCpuFreqMHz()) + F(" MHz"));
-        _jsArr(answ, firmware ? firmware : F(""));
+        _jsArr(answ, version ? version : F(""));
         _jsArr(answ, GH_VERSION);
         _jsArr(answ, id);
         answ[answ.length() - 1] = ']';  // ',' = ']'
@@ -1047,7 +1047,7 @@ class GyverHUB : public HubBuilder, public HubStream {
         _jsStr(answ, F("icon"), icon);
         _jsStr(answ, F("ip"), ip);
         _jsVal(answ, F("PIN"), hash);
-        _jsStr(answ, F("firmware"), firmware);
+        _jsStr(answ, F("version"), version);
         _jsVal(answ, F("max_upl"), GH_UPL_CHUNK_SIZE);
         answ[answ.length() - 1] = '}';  // ',' = '}'
         answ += '\n';
@@ -1170,7 +1170,7 @@ class GyverHUB : public HubBuilder, public HubStream {
     const char* prefix = nullptr;
     const char* name = nullptr;
     const char* icon = nullptr;
-    FSTR firmware = nullptr;
+    FSTR version = nullptr;
     uint32_t PIN = 0;
     char id[9];
 
