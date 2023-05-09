@@ -6,13 +6,14 @@
 [![Foo](https://img.shields.io/badge/ПОДПИСАТЬСЯ-НА%20ОБНОВЛЕНИЯ-brightgreen.svg?style=social&logo=telegram&color=blue)](https://t.me/GyverLibs)
 
 # GyverHUB
-Система взаимодействия с микроконтроллером из приложения и веб-сервиса GyverHUB, конструктор интерфейса
+Система взаимодействия с микроконтроллером из приложения GyverHUB, конструктор интерфейса
 
-## Документация
-Находится в [Wiki репозитория](https://github.com/GyverLibs/GyverHUB/wiki)
-> [English docs](https://github-com.translate.goog/GyverLibs/GyverHUB/wiki?_x_tr_sl=ru&_x_tr_tl=en)
+> <br>**Документация находится в [Wiki репозитория](https://github.com/GyverLibs/GyverHUB/wiki). English docs - [translate](https://github-com.translate.goog/GyverLibs/GyverHUB/wiki?_x_tr_sl=ru&_x_tr_tl=en)**<br><br>
 
 |⚠️⚠️⚠️<br>**Бета-версия! Проект пока что тестируется. Особенности, обсуждение и всё остальное - [вот тут](https://github.com/GyverLibs/GyverHUB/issues/3)**<br>⚠️⚠️⚠️|
+| --- |
+
+|☕☕☕<br>**Библиотека разработана на народные пожертвования [на Boosty](https://boosty.to/alexgyvershow). Также есть другие способы [поддержать автора](https://alexgyver.ru/support_alex/)**<br>☕☕☕|
 | --- |
 
 ![promo](/docs/promo.jpg)
