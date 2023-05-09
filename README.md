@@ -12,7 +12,7 @@
 Находится в [Wiki репозитория](https://github.com/GyverLibs/GyverHUB/wiki)
 > [English docs](https://github-com.translate.goog/GyverLibs/GyverHUB/wiki?_x_tr_sl=ru&_x_tr_tl=en)
 
-|⚠️⚠️⚠️<br> Бета-версия! <br> Проект пока что тестируется. Особенности, обсуждение и всё остальное - [вот тут](https://github.com/GyverLibs/GyverHUB/issues/3)<br>⚠️⚠️⚠️ |
+|⚠️⚠️⚠️<br> Бета-версия! Проект пока что тестируется. Особенности, обсуждение и всё остальное - [вот тут](https://github.com/GyverLibs/GyverHUB/issues/3)<br>⚠️⚠️⚠️ |
 | --- |
 
 ![promo](/docs/promo.jpg)
