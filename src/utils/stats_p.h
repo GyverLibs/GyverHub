@@ -17,3 +17,6 @@ FSTR GHreadAction(GHaction_t n);
 
 // получить текстовое значение типа GHbuild_t для вывода в порт
 FSTR GHreadBuild(GHbuild_t n);
+
+// получить текстовое значение типа GHreason_t для вывода в порт
+FSTR GHreadReason(GHreason_t n);

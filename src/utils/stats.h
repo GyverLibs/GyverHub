@@ -7,10 +7,18 @@
 #define GH_CONN_AMOUNT 2
 #endif
 
+// причина перезагрузки
+enum GHreason_t {
+    GH_REB_NONE,
+    GH_REB_BUTTON,
+    GH_REB_OTA,
+    GH_REB_OTA_URL,
+};
+
 // тип подключения
 enum GHconn_t {
     GH_MANUAL,
-    GH_SERIAL,
+    GH_STREAM,
     GH_WS,
     GH_MQTT,
     GH_HTTP,

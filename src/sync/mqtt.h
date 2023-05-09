@@ -30,6 +30,7 @@ class HubMQTT {
         _setupMQTT(login, pass, nqos, nret);
     }
 
+    // MQTT подключен
     bool online() {
         return mqtt.connected();
     }

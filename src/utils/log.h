@@ -6,6 +6,7 @@
 class GHlog : public Print {
    public:
 
+    // начать и указать размер буфера
     void begin(int n = 64) {
         end();
         len = head = 0;
@@ -17,6 +18,7 @@ class GHlog : public Print {
         end();
     }
 
+    // остановить
     void end() {
         if (buffer) {
             delete[] buffer;
@@ -29,6 +31,7 @@ class GHlog : public Print {
         return 1;
     }
 
+    // прочитать в строку
     void read(String* s) {
         if (!buffer) return;
         bool start = 0;
@@ -39,6 +42,7 @@ class GHlog : public Print {
         }
     }
 
+    // прочитать строкой
     String read() {
         String s;
         s.reserve(len);
@@ -46,18 +50,22 @@ class GHlog : public Print {
         return s;
     }
 
+    // очистить
     void clear() {
         len = head = 0;
     }
 
+    // есть данные
     bool available() {
         return (buffer && len);
     }
 
+    // запущен
     bool state() {
         return buffer;
     }
 
+    // длина
     int length() {
         return len;
     }

@@ -5,7 +5,7 @@
 
 enum GHmodule_t {
     GH_MOD_MANUAL = 0b1,
-    GH_MOD_SERIAL = 0b10,
+    GH_MOD_STREAM = 0b10,
     GH_MOD_LOCAL = 0b100,
     GH_MOD_MQTT = 0b1000,
     GH_MOD_INFO = 0b10000,

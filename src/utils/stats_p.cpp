@@ -1,5 +1,14 @@
 #include "stats_p.h"
 
+GH_PGM(_GH_RES0, "NONE");
+GH_PGM(_GH_RES1, "BUTTON");
+GH_PGM(_GH_RES2, "OTA");
+GH_PGM(_GH_RES3, "OTA_URL");
+GH_PGM_LIST(_GH_res_list, _GH_RES0, _GH_RES1, _GH_RES2, _GH_RES3);
+FSTR GHreadReason(GHreason_t n) {
+    return (FSTR)_GH_res_list[n];
+}
+
 GH_PGM(_GH_BLD0, "NONE");
 GH_PGM(_GH_BLD1, "ACTION");
 GH_PGM(_GH_BLD2, "COUNT");
@@ -21,7 +30,7 @@ FSTR GHreadAction(GHaction_t n) {
 }
 
 GH_PGM(_GH_CON0, "MANUAL");
-GH_PGM(_GH_CON1, "SERIAL");
+GH_PGM(_GH_CON1, "STREAM");
 GH_PGM(_GH_CON2, "WS");
 GH_PGM(_GH_CON3, "MQTT");
 GH_PGM(_GH_CON4, "HTTP");

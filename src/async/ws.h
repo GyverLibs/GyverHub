@@ -43,11 +43,7 @@ class HubWS {
                     AwsFrameInfo* ws_info = (AwsFrameInfo*)arg;
                     if (ws_info->final && ws_info->index == 0 && ws_info->len == len && ws_info->opcode == WS_TEXT) {
                         clientID = client->id();
-                        char data_c[len + 1];
-                        if (len) strcpy(data_c, (char*)data);
-                        data_c[len] = 0;
-                        parse(data_c, GH_WS);
-                        //parse((char*)data, GH_WS);
+                        parse((char*)data, GH_WS);
                     }
                 } break;
 
@@ -71,7 +67,7 @@ class HubWS {
         ws.textAll(answ.c_str());
     }
 
-    void answerWS(const String& answ) {
+    void answerWS(String& answ) {
         ws.text(clientID, answ.c_str());
     }
 

@@ -9,12 +9,13 @@
 #define GH_ASYNC          // использовать ASYNC библиотеки
 
 // отключение модулей
-//#define GH_NO_SERIAL
+//#define GH_NO_STREAM
 //#define GH_NO_LOCAL
 //#define GH_NO_MQTT
 //#define GH_NO_FS
 //#define GH_NO_INFO
 //#define GH_NO_OTA
+//#define GH_NO_OTA_URL
 // =================================
 
 #include <Arduino.h>
@@ -188,6 +189,11 @@ void setup() {
         Serial.print(GHreadConn(s.conn));
         Serial.print(": ");
         Serial.println(GHreadState(s.state));
+    });
+    
+    // вывести причину перезагрузки
+    hub.onReboot([](GHreason_t r) {
+        Serial.println(GHreadReason(r));
     });
 
     hub.begin();    // запустить

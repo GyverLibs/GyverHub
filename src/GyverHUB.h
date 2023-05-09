@@ -26,11 +26,15 @@
 #ifdef ESP8266
 #include <ESP8266WiFi.h>
 #ifndef GH_NO_OTA
+#ifndef GH_NO_OTA_URL
 #include <ESP8266httpUpdate.h>
+#endif
 #endif
 #else
 #ifndef GH_NO_OTA
+#ifndef GH_NO_OTA_URL
 #include <HTTPUpdate.h>
+#endif
 #include <Update.h>
 #endif
 #include <WiFi.h>
@@ -92,6 +96,10 @@ class GyverHUB : public HubBuilder, public HubStream {
 
     // запустить
     void begin() {
+#ifndef GH_NO_OTA_URL
+
+#endif
+
 #ifdef GH_ESP_BUILD
 #ifndef GH_NO_LOCAL
         if (modules.read(GH_MOD_LOCAL)) beginHTTP();
@@ -128,7 +136,7 @@ class GyverHUB : public HubBuilder, public HubStream {
         firmware = v;
     }
 
-    // установить размер буфера строки для сборки интерфейса в режиме MANUAL и SERIAL
+    // установить размер буфера строки для сборки интерфейса в режиме MANUAL и STREAM
     // 0 - интерфейс будет собран и отправлен цельной строкой
     // >0 - пакет будет отправляться частями
     void setBufferSize(uint16_t size) {
@@ -196,7 +204,12 @@ class GyverHUB : public HubBuilder, public HubStream {
         return running_f;
     }
 
-    // ========================== MISC ==========================
+    // подключить функцию-обработчик перезагрузки. Будет вызвана перед перезагрузкой
+    void onReboot(void (*handler)(GHreason_t r)) {
+#ifdef GH_ESP_BUILD
+        reboot_cb = *handler;
+#endif
+    }
 
     // получить свойства текущего билда. Вызывать внутри обработчика
     GHbuild getBuild() {
@@ -377,11 +390,14 @@ class GyverHUB : public HubBuilder, public HubStream {
 
     // парсить строку вида PREFIX/ID/HUB_ID/CMD/NAME с отдельным value
     void parse(char* url, char* value, GHconn_t conn = GH_MANUAL) {
+#if defined(GH_ESP_BUILD) && !defined(GH_NO_FS) && !defined(GH_NO_OTA) && !defined(GH_NO_OTA_URL)
+        if (ota_url_f) return;
+#endif
         if (!running_f) return;
         if (conn == GH_MQTT && !modules.read(GH_MOD_MQTT)) return;
         if (conn == GH_WS && !modules.read(GH_MOD_LOCAL)) return;
         if (conn == GH_MANUAL && !modules.read(GH_MOD_MANUAL)) return;
-        if (conn == GH_SERIAL && !modules.read(GH_MOD_SERIAL)) return;
+        if (conn == GH_STREAM && !modules.read(GH_MOD_STREAM)) return;
 
         if (strncmp(url, prefix, strlen(prefix))) return setStatus(GH_UNKNOWN, conn);
 
@@ -466,7 +482,7 @@ class GyverHUB : public HubBuilder, public HubStream {
                     return setStatus(GH_FSBR, conn);
 
                 case 5:  // reboot
-                    if (modules.read(GH_MOD_REBOOT)) reboot_f = 1;
+                    if (modules.read(GH_MOD_REBOOT)) reboot_f = GH_REB_BUTTON;
                     answerType();
                     return setStatus(GH_REBOOT, conn);
 
@@ -676,9 +692,9 @@ class GyverHUB : public HubBuilder, public HubStream {
 
             // ota_url
             case 10:
-#if !defined(GH_NO_FS) && !defined(GH_NO_OTA)
+#if !defined(GH_NO_FS) && !defined(GH_NO_OTA) && !defined(GH_NO_OTA_URL)
                 if (!file_d && !file_u && !ota_f && !fs_buffer && modules.read(GH_MOD_OTA_URL)) {
-                    ota_url = value;
+                    ota_url = name;
                     answerType();
                     fs_state = GH_OTA_URL;
                     return setStatus(GH_OTA_URL, conn);
@@ -707,8 +723,8 @@ class GyverHUB : public HubBuilder, public HubStream {
             }
         }
 
-#ifndef GH_NO_SERIAL
-        if (modules.read(GH_MOD_SERIAL)) tickStream();
+#ifndef GH_NO_STREAM
+        if (modules.read(GH_MOD_STREAM)) tickStream();
 #endif
 #ifdef GH_ESP_BUILD
 #ifndef GH_NO_LOCAL
@@ -732,21 +748,34 @@ class GyverHUB : public HubBuilder, public HubStream {
 
         if (fs_state != GH_IDLE) {
             switch (fs_state) {
+#ifndef GH_NO_OTA_URL
                 case GH_OTA_URL: {
                     bool ok = 0;
+                    ota_url_f = 1;
 #ifdef ESP8266
-                    ESPhttpUpdate.rebootOnUpdate(true);
+                    ESPhttpUpdate.rebootOnUpdate(false);
+                    ESPhttpUpdate.setClientTimeout(3000);
                     BearSSL::WiFiClientSecure client;
                     client.setInsecure();
                     ok = ESPhttpUpdate.update(client, ota_url);
 #else
-                    httpUpdate.rebootOnUpdate(true);
+                    httpUpdate.rebootOnUpdate(false);
+                    httpUpdate.setClientTimeout(3000);
                     WiFiClientSecure client;
                     client.setInsecure();
                     ok = httpUpdate.update(client, ota_url);
 #endif
-                    answerType(ok ? F("ota_url_ok") : F("ota_url_err"));
+                    hub_ptr = &fs_hub;
+                    if (ok) {
+                        reboot_f = GH_REB_OTA_URL;
+                        answerType(F("ota_url_ok"));
+                    } else {
+                        ota_url = "";
+                        ota_url_f = 0;
+                        answerType(F("ota_url_err"));
+                    }
                 } break;
+#endif
 
                 case GH_DOWNLOAD_ABORTED:
                     file_d.close();
@@ -789,7 +818,7 @@ class GyverHUB : public HubBuilder, public HubStream {
                     delete fs_buffer;
                     fs_buffer = nullptr;
                     ota_f = false;
-                    reboot_f = true;
+                    reboot_f = GH_REB_OTA;
                     hub_ptr = &fs_hub;
                     if (Update.end(true)) answerType(F("ota_end"));
                     else answerType(F("ota_err"));
@@ -809,6 +838,7 @@ class GyverHUB : public HubBuilder, public HubStream {
         }
 #endif
         if (reboot_f) {
+            if (reboot_cb) reboot_cb(reboot_f);
             delay(2000);
             ESP.restart();
         }
@@ -1045,13 +1075,13 @@ class GyverHUB : public HubBuilder, public HubStream {
 #endif
     }
 
-        // ======================= ANSWER ========================
+    // ======================= ANSWER ========================
     void answer(String& answ, bool close = true) {
         if (!hub_ptr) return;
         switch (hub_ptr->conn) {
-            case GH_SERIAL:
-#ifndef GH_NO_SERIAL
-                if (modules.read(GH_MOD_SERIAL)) sendStream(answ);
+            case GH_STREAM:
+#ifndef GH_NO_STREAM
+                if (modules.read(GH_MOD_STREAM)) sendStream(answ);
 #endif
                 break;
             case GH_MANUAL:
@@ -1080,8 +1110,8 @@ class GyverHUB : public HubBuilder, public HubStream {
         if (modules.read(GH_MOD_MANUAL) && focus_arr[0]) {  // GH_MANUAL
             if (manual_cb) manual_cb(answ);
         }
-        if (modules.read(GH_MOD_SERIAL) && focus_arr[1]) {  // GH_SERIAL
-#ifndef GH_NO_SERIAL
+        if (modules.read(GH_MOD_STREAM) && focus_arr[1]) {  // GH_STREAM
+#ifndef GH_NO_STREAM
             sendStream(answ);
 #endif
         }
@@ -1166,11 +1196,15 @@ class GyverHUB : public HubBuilder, public HubStream {
     int8_t focus_arr[GH_CONN_AMOUNT] = {};
 
 #ifdef GH_ESP_BUILD
+    void (*reboot_cb)(GHreason_t r) = nullptr;
     bool auto_f = 0;
-    bool reboot_f = false;
+    GHreason_t reboot_f = GH_REB_NONE;
 
 #ifndef GH_NO_FS
+#ifndef GH_NO_OTA_URL
     String ota_url;
+    bool ota_url_f = 0;
+#endif
     GHhub fs_hub;
     GHstate_t fs_state = GH_IDLE;
     char* fs_buffer = nullptr;

@@ -2,7 +2,7 @@
 #include "config.h"
 #include "macro.h"
 
-#ifdef GH_NO_SERIAL
+#ifdef GH_NO_STREAM
 class HubStream {
    public:
 };
@@ -28,7 +28,7 @@ class HubStream {
     void tickStream() {
         if (stream && stream->available()) {
             String s = stream->readStringUntil('\n');
-            parse((char*)s.c_str(), GH_SERIAL);
+            parse((char*)s.c_str(), GH_STREAM);
         }
     }
 
