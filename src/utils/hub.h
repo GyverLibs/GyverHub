@@ -14,7 +14,7 @@ struct GHhub {
     GHconn_t conn = GH_SYSTEM;
 
     // id клиента
-    char id[9] = "";
+    char id[9] = {'\0'};
 
     bool eq(GHhub& hub) {
         return (hub.conn == conn && !strcmp(hub.id, id));

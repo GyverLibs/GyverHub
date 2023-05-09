@@ -31,6 +31,23 @@ class HubBuilder {
         tab_width = width;
     }
 
+    // ========================== DUMMY ===========================
+    bool Dummy(FSTR name, void* value = nullptr, GHdata_t type = GH_NULL) {
+        return _dummy(true, name, value, type);
+    }
+    bool Dummy(CSREF name, void* value = nullptr, GHdata_t type = GH_NULL) {
+        return _dummy(false, name.c_str(), value, type);
+    }
+    
+    bool _dummy(bool fstr, VSPTR name, void* value, GHdata_t type) {
+        if (_isRead()) {
+            if (_checkName(name, fstr)) GHtypeToStr(sptr, value, type);
+        } else if (bptr->type == GH_BUILD_ACTION) {
+            return bptr->parseSet(name, value, type, fstr);
+        }
+        return 0;
+    }
+
     // ========================== BUTTON ==========================
     uint8_t Button(FSTR name, bool* value = nullptr, FSTR label = nullptr, uint32_t color = GH_DEFAULT, int size = 22) {
         return _button(true, F("button"), name, value, label, color, size);
