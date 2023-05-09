@@ -426,46 +426,25 @@ class HubBuilder {
     }
 
     // ========================== LED ==========================
-    void LED(FSTR name, bool value = 0, FSTR label = nullptr) {
-        _led(true, name, value, label);
+    void LED(FSTR name, bool value = 0, FSTR label = nullptr, FSTR icon = nullptr) {
+        _led(true, name, value, label, icon);
     }
-    void LED(CSREF name, bool value = 0, CSREF label = "") {
-        _led(false, name.c_str(), value, label.c_str());
+    void LED(CSREF name, bool value = 0, CSREF label = "", CSREF icon = "") {
+        _led(false, name.c_str(), value, label.c_str(), icon.c_str());
     }
 
-    void _led(bool fstr, VSPTR name, bool value, VSPTR label) {
+    void _led(bool fstr, VSPTR name, bool value, VSPTR label, VSPTR text) {
         if (_isUI()) {
             _begin(F("led"));
             _name(name, fstr);
             _value();
             *sptr += value;
             _label(label, fstr);
+            _text(text, fstr);
             _tabw();
             _end();
         } else if (_isRead()) {
             if (_checkName(name, fstr)) *sptr += value;
-        }
-    }
-
-    // ========================== LED ==========================
-    void Icon(FSTR name, FSTR label = nullptr, FSTR text = nullptr, uint32_t color = GH_DEFAULT) {
-        _icon(true, name, label, text, color);
-    }
-    void Icon(CSREF name, CSREF label = "", CSREF text = "", uint32_t color = GH_DEFAULT) {
-        _icon(false, name.c_str(), label.c_str(), text.c_str(), color);
-    }
-
-    void _icon(bool fstr, VSPTR name, VSPTR label, VSPTR text, uint32_t color) {
-        if (_isUI()) {
-            _begin(F("icon"));
-            _name(name, fstr);
-            _label(label, fstr);
-            _text(text, fstr);
-            _color(color);
-            _tabw();
-            _end();
-        } else if (_isRead()) {
-            if (_checkName(name, fstr)) *sptr += color;
         }
     }
 

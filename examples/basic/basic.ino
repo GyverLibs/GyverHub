@@ -9,6 +9,9 @@
 // подключаем библиотеку и настраиваем девайс
 #include <GyverHUB.h>
 GyverHUB hub("MyDevices", "ESP8266", "");
+// иконки
+// https://fontawesome.com/v5/cheatsheet/free/solid
+// https://fontawesome.com/v5/search?o=r&m=free&s=solid
 
 // переменные для интерфейса
 bool b2;
@@ -80,6 +83,9 @@ void build() {
 
     // добавим заголовок. Он также закроет предыдущую строку виджетов
     hub.Title(F("Input"));
+    
+    // кстати, установка ненулевого значения ширины также 
+    // автоматически создаст виджет после заголовка
     hub.WidgetSize(50);
 
     // Компонент Input может работать переменнми любых типов и автоматически переписывать в них значение!
@@ -88,6 +94,17 @@ void build() {
     hub.Input(F("inp_s"), &inp_str, GH_STR, F("String input"));
     hub.Input(F("inp_c"), &inp_cstr, GH_CSTR, F("cstring input"), 10);      // <- 10 - макс. длина строки
     hub.Input(F("inp_i"), &inp_int, GH_INT16, F("int input"), 0, GH_BLUE);  // 0 - лимит отключен. И добавим цвет
+
+    // что будет, если не создавать строку виджетов через BeginWidgets()?
+    // закончим отрисовку виджетов
+    hub.EndWidgets();
+    
+    // и выведем пару компонентов
+    hub.Slider(F("sld_n"));
+    hub.Input(F("inp_n"));
+    hub.Switch(F("sw_n"));
+    
+    // они выведутся вертикальным списком!
 }
 
 void setup() {

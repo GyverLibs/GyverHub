@@ -20,6 +20,9 @@
 #include <Arduino.h>
 #include <GyverHUB.h>
 GyverHUB hub("MyDevices", "ESP8266", "");
+// иконки
+// https://fontawesome.com/v5/cheatsheet/free/solid
+// https://fontawesome.com/v5/search?o=r&m=free&s=solid
 
 uint8_t tab = 0;
 bool b1, b2;
@@ -91,7 +94,7 @@ void build() {
 
     hub.WidgetSize(25);
     hub.LED(F("myled"), 0, F("Status"));
-    hub.Icon(F("icon"), F("My icon"), F(""), GH_RED);
+    hub.LED(F("myicn"), 0, F("Icon"), F(""));
     // hub.EndWidgets();
 
     // INPUTS

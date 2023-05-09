@@ -862,60 +862,6 @@ class GyverHUB : public HubBuilder, public HubStream {
 #endif
     }
 
-    // ======================= ANSWER ========================
-    void answer(String& answ, bool close = true) {
-        if (!hub_ptr) return;
-        switch (hub_ptr->conn) {
-            case GH_SERIAL:
-#ifndef GH_NO_SERIAL
-                if (modules.read(GH_MOD_SERIAL)) sendStream(answ);
-#endif
-                break;
-            case GH_MANUAL:
-                if (manual_cb && modules.read(GH_MOD_MANUAL)) manual_cb(answ);
-                break;
-#ifdef GH_ESP_BUILD
-            case GH_WS:
-#ifndef GH_NO_LOCAL
-                if (modules.read(GH_MOD_LOCAL)) answerWS(answ);
-#endif
-                break;
-            case GH_MQTT:
-#ifndef GH_NO_MQTT
-                if (modules.read(GH_MOD_MQTT)) answerMQTT(hub_ptr->id, answ);
-#endif
-                break;
-#endif
-            default:
-                break;
-        }
-        if (close) hub_ptr = nullptr;
-    }
-
-    // ======================= SEND ========================
-    void send(const String& answ, bool broadcast = false) {
-        if (modules.read(GH_MOD_MANUAL) && focus_arr[0]) {  // GH_MANUAL
-            if (manual_cb) manual_cb(answ);
-        }
-        if (modules.read(GH_MOD_SERIAL) && focus_arr[1]) {  // GH_SERIAL
-#ifndef GH_NO_SERIAL
-            sendStream(answ);
-#endif
-        }
-#ifdef GH_ESP_BUILD
-#ifndef GH_NO_LOCAL
-        if (modules.read(GH_MOD_LOCAL) && focus_arr[2]) {  // GH_WS
-            sendWS(answ);
-        }
-#endif
-#ifndef GH_NO_MQTT
-        if (modules.read(GH_MOD_MQTT) && (focus_arr[3] || broadcast)) {  // GH_MQTT
-            sendMQTT(answ);                                              // broadcast!
-        }
-#endif
-#endif
-    }
-
     // ======================= INFO ========================
     void answerInfo() {
 #ifdef GH_ESP_BUILD
@@ -1095,6 +1041,60 @@ class GyverHUB : public HubBuilder, public HubStream {
         fileToB64(file_d, answ);
         answ += F("'}\n");
         answer(answ);
+#endif
+#endif
+    }
+
+        // ======================= ANSWER ========================
+    void answer(String& answ, bool close = true) {
+        if (!hub_ptr) return;
+        switch (hub_ptr->conn) {
+            case GH_SERIAL:
+#ifndef GH_NO_SERIAL
+                if (modules.read(GH_MOD_SERIAL)) sendStream(answ);
+#endif
+                break;
+            case GH_MANUAL:
+                if (manual_cb && modules.read(GH_MOD_MANUAL)) manual_cb(answ);
+                break;
+#ifdef GH_ESP_BUILD
+            case GH_WS:
+#ifndef GH_NO_LOCAL
+                if (modules.read(GH_MOD_LOCAL)) answerWS(answ);
+#endif
+                break;
+            case GH_MQTT:
+#ifndef GH_NO_MQTT
+                if (modules.read(GH_MOD_MQTT)) answerMQTT(hub_ptr->id, answ);
+#endif
+                break;
+#endif
+            default:
+                break;
+        }
+        if (close) hub_ptr = nullptr;
+    }
+
+    // ======================= SEND ========================
+    void send(const String& answ, bool broadcast = false) {
+        if (modules.read(GH_MOD_MANUAL) && focus_arr[0]) {  // GH_MANUAL
+            if (manual_cb) manual_cb(answ);
+        }
+        if (modules.read(GH_MOD_SERIAL) && focus_arr[1]) {  // GH_SERIAL
+#ifndef GH_NO_SERIAL
+            sendStream(answ);
+#endif
+        }
+#ifdef GH_ESP_BUILD
+#ifndef GH_NO_LOCAL
+        if (modules.read(GH_MOD_LOCAL) && focus_arr[2]) {  // GH_WS
+            sendWS(answ);
+        }
+#endif
+#ifndef GH_NO_MQTT
+        if (modules.read(GH_MOD_MQTT) && (focus_arr[3] || broadcast)) {  // GH_MQTT
+            sendMQTT(answ);                                              // broadcast!
+        }
 #endif
 #endif
     }
