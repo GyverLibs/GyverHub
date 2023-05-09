@@ -79,13 +79,13 @@ class HubBuilder {
     }
 
     // ========================== LABEL ==========================
-    void Label(FSTR name, const String& value, FSTR label = nullptr, uint32_t color = GH_DEFAULT) {
-        _label(true, name, value, label, color);
+    void Label(FSTR name, const String& value = "", FSTR label = nullptr, uint32_t color = GH_DEFAULT, int size = 40) {
+        _label(true, name, value, label, color, size);
     }
-    void Label(CSREF name, const String& value, CSREF label = "", uint32_t color = GH_DEFAULT) {
-        _label(false, name.c_str(), value, label.c_str(), color);
+    void Label(CSREF name, const String& value = "", CSREF label = "", uint32_t color = GH_DEFAULT, int size = 40) {
+        _label(false, name.c_str(), value, label.c_str(), color, size);
     }
-    void _label(bool fstr, VSPTR name, const String& value, VSPTR label, uint32_t color) {
+    void _label(bool fstr, VSPTR name, const String& value, VSPTR label, uint32_t color, int size) {
         if (_isUI()) {
             _begin(F("label"));
             _name(name, fstr);
@@ -95,6 +95,7 @@ class HubBuilder {
             _quot();
             _label(label, fstr);
             _color(color);
+            _size(size);
             _tabw();
             _end();
         } else if (_isRead()) {
@@ -141,10 +142,10 @@ class HubBuilder {
     }
 
     // ========================== DISPLAY ==========================
-    void Display(FSTR name, const String& value, FSTR label = nullptr, uint32_t color = GH_DEFAULT, int rows = 2, int size = 40) {
+    void Display(FSTR name, const String& value = "", FSTR label = nullptr, uint32_t color = GH_DEFAULT, int rows = 2, int size = 40) {
         _display(true, name, value, label, color, rows, size);
     }
-    void Display(CSREF name, const String& value, CSREF label = "", uint32_t color = GH_DEFAULT, int rows = 2, int size = 40) {
+    void Display(CSREF name, const String& value = "", CSREF label = "", uint32_t color = GH_DEFAULT, int rows = 2, int size = 40) {
         _display(true, name.c_str(), value, label.c_str(), color, rows, size);
     }
     void _display(bool fstr, VSPTR name, const String& value, VSPTR label, uint32_t color, int rows, int size) {
@@ -168,10 +169,10 @@ class HubBuilder {
     }
 
     // ========================== HTML ==========================
-    void HTML(FSTR name, const String& value, FSTR label = nullptr) {
+    void HTML(FSTR name, const String& value = "", FSTR label = nullptr) {
         _html(true, name, value, label);
     }
-    void HTML(CSREF name, const String& value, CSREF label = "") {
+    void HTML(CSREF name, const String& value = "", CSREF label = "") {
         _html(false, name.c_str(), value, label.c_str());
     }
     void _html(bool fstr, VSPTR name, const String& value, VSPTR label) {
@@ -447,10 +448,10 @@ class HubBuilder {
     }
 
     // ========================== LED ==========================
-    void Icon(FSTR name, FSTR label, FSTR text = nullptr, uint32_t color = GH_DEFAULT) {
+    void Icon(FSTR name, FSTR label = nullptr, FSTR text = nullptr, uint32_t color = GH_DEFAULT) {
         _icon(true, name, label, text, color);
     }
-    void Icon(CSREF name, CSREF label, CSREF text = "", uint32_t color = GH_DEFAULT) {
+    void Icon(CSREF name, CSREF label = "", CSREF text = "", uint32_t color = GH_DEFAULT) {
         _icon(false, name.c_str(), label.c_str(), text.c_str(), color);
     }
 
