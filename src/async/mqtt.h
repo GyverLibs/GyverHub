@@ -102,12 +102,15 @@ class HubMQTT {
         sendMQTT(topic, msg);
     }
 
-    void answerMQTT(const char* hubID, const String& msg) {
+    void answerMQTT(const char* hubID, const String& msg, bool broadcast = false) {
         String topic(getPrefix());
-        topic += F("/hub/");
-        topic += hubID;
-        topic += '/';
-        topic += getID();
+        topic += F("/hub");
+        if (!broadcast) {
+            topic += '/';
+            topic += hubID;
+            topic += '/';
+            topic += getID();
+        }
         sendMQTT(topic, msg);
     }
 

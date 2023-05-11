@@ -132,7 +132,7 @@ class GyverHUB : public HubBuilder, public HubStream {
     }
 
     // установить версию прошивки для отображения в Info и OTA
-    void setVersion(FSTR v) {
+    void setVersion(const char* v) {
         version = v;
     }
 
@@ -166,7 +166,7 @@ class GyverHUB : public HubBuilder, public HubStream {
     }
 
     // подключить функцию-обработчик запроса при ручном соединении
-    void onManual(void (*handler)(const String& s)) {
+    void onManual(void (*handler)(String& s)) {
         manual_cb = *handler;
     }
 
@@ -404,7 +404,7 @@ class GyverHUB : public HubBuilder, public HubStream {
         if (!strcmp(url, prefix)) {  // == prefix
             GHhub hub(conn, value);
             hub_ptr = &hub;
-            answerDiscover();
+            answerDiscover(true);
             return setStatus(GH_DISCOVER_ALL, conn);
         }
 
@@ -482,8 +482,10 @@ class GyverHUB : public HubBuilder, public HubStream {
                     return setStatus(GH_FSBR, conn);
 
                 case 5:  // reboot
-                    if (modules.read(GH_MOD_REBOOT)) reboot_f = GH_REB_BUTTON;
-                    answerType();
+                    if (modules.read(GH_MOD_REBOOT)) {
+                        reboot_f = GH_REB_BUTTON;
+                        answerType();
+                    } else answerType(F("ERR"));
                     return setStatus(GH_REBOOT, conn);
 
                 case 6:  // fetch_chunk
@@ -694,7 +696,7 @@ class GyverHUB : public HubBuilder, public HubStream {
             case 10:
 #if !defined(GH_NO_FS) && !defined(GH_NO_OTA) && !defined(GH_NO_OTA_URL)
                 if (!file_d && !file_u && !ota_f && !fs_buffer && modules.read(GH_MOD_OTA_URL)) {
-                    ota_url = name;
+                    ota_url = value;
                     answerType();
                     fs_state = GH_OTA_URL;
                     return setStatus(GH_OTA_URL, conn);
@@ -754,13 +756,11 @@ class GyverHUB : public HubBuilder, public HubStream {
                     ota_url_f = 1;
 #ifdef ESP8266
                     ESPhttpUpdate.rebootOnUpdate(false);
-                    ESPhttpUpdate.setClientTimeout(3000);
                     BearSSL::WiFiClientSecure client;
                     client.setInsecure();
                     ok = ESPhttpUpdate.update(client, ota_url);
 #else
                     httpUpdate.rebootOnUpdate(false);
-                    httpUpdate.setClientTimeout(3000);
                     WiFiClientSecure client;
                     client.setInsecure();
                     ok = httpUpdate.update(client, ota_url);
@@ -914,7 +914,7 @@ class GyverHUB : public HubBuilder, public HubStream {
         _jsArr(answ, String(ESP.getSketchSize() / 1000.0, 1) + " kB (" + String(ESP.getFreeSketchSpace() / 1000.0, 1) + ")");
         _jsArr(answ, String(ESP.getFlashChipSize() / 1000.0, 1) + " kB");
         _jsArr(answ, String(ESP.getCpuFreqMHz()) + F(" MHz"));
-        _jsArr(answ, version ? version : F(""));
+        _jsArr(answ, version);
         _jsArr(answ, GH_VERSION);
         _jsArr(answ, id);
         answ[answ.length() - 1] = ']';  // ',' = ']'
@@ -1016,7 +1016,7 @@ class GyverHUB : public HubBuilder, public HubStream {
     }
 
     // ======================= DISCOVER ========================
-    String answerDiscover() {
+    String answerDiscover(bool broadcast = false) {
         uint32_t hash = 0;
         if (PIN > 999) {
             char pin_s[11];
@@ -1051,7 +1051,7 @@ class GyverHUB : public HubBuilder, public HubStream {
         _jsVal(answ, F("max_upl"), GH_UPL_CHUNK_SIZE);
         answ[answ.length() - 1] = '}';  // ',' = '}'
         answ += '\n';
-        answer(answ);
+        answer(answ, true, broadcast);
         return answ;
     }
 
@@ -1076,7 +1076,7 @@ class GyverHUB : public HubBuilder, public HubStream {
     }
 
     // ======================= ANSWER ========================
-    void answer(String& answ, bool close = true) {
+    void answer(String& answ, bool close = true, bool broadcast = false) {
         if (!hub_ptr) return;
         switch (hub_ptr->conn) {
             case GH_STREAM:
@@ -1095,7 +1095,7 @@ class GyverHUB : public HubBuilder, public HubStream {
                 break;
             case GH_MQTT:
 #ifndef GH_NO_MQTT
-                if (modules.read(GH_MOD_MQTT)) answerMQTT(hub_ptr->id, answ);
+                if (modules.read(GH_MOD_MQTT)) answerMQTT(hub_ptr->id, answ, broadcast);
 #endif
                 break;
 #endif
@@ -1106,7 +1106,7 @@ class GyverHUB : public HubBuilder, public HubStream {
     }
 
     // ======================= SEND ========================
-    void send(const String& answ, bool broadcast = false) {
+    void send(String& answ, bool broadcast = false) {
         if (modules.read(GH_MOD_MANUAL) && focus_arr[0]) {  // GH_MANUAL
             if (manual_cb) manual_cb(answ);
         }
@@ -1139,8 +1139,7 @@ class GyverHUB : public HubBuilder, public HubStream {
     }
 
     // ========================== ADDER ==========================
-    template <typename T>
-    void _jsVal(String& s, FSTR key, T value) {
+    void _jsVal(String& s, FSTR key, uint32_t value) {
         s += '\'';
         s += key;
         s += F("':");
@@ -1170,13 +1169,13 @@ class GyverHUB : public HubBuilder, public HubStream {
     const char* prefix = nullptr;
     const char* name = nullptr;
     const char* icon = nullptr;
-    FSTR version = nullptr;
+    const char* version = nullptr;
     uint32_t PIN = 0;
     char id[9];
 
     void (*build_cb)() = nullptr;
     void (*cli_cb)(String& str) = nullptr;
-    void (*manual_cb)(const String& s) = nullptr;
+    void (*manual_cb)(String& s) = nullptr;
     void (*status_cb)(GHstatus status) = nullptr;
     GHhub* hub_ptr = nullptr;
 

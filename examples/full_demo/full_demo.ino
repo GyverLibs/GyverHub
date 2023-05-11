@@ -148,7 +148,7 @@ void build() {
     // hub.EndWidgets();
 
     // hub.BeginWidgets();
-    hub.Display(F("disp"), disp_s, nullptr, GH_BLUE);
+    hub.Display(F("disp"), disp_s, F(""), GH_BLUE);
     hub.HTML(F("text"), html_s);
     // hub.EndWidgets();
 
@@ -197,7 +197,7 @@ void setup() {
     });
 
     hub.begin();    // запустить
-    // hub.setVersion(F("v1.1"));   // установить версию (отображается в info)
+    // hub.setVersion("v1.1");      // установить версию (отображается в info)
     // hub.setPIN(1234);            // установить пин-код
     // hub.sendGetAuto(true);       //автоматически отправлять новое состояние на get-топик
 

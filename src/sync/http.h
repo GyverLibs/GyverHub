@@ -22,33 +22,33 @@ class HubHTTP {
     HubHTTP() : server(GH_HTTP_PORT) {}
 
    protected:
-    virtual String answerDiscover() = 0;
+    virtual String answerDiscover(bool broadcast) = 0;
     virtual const char* getPrefix() = 0;
     virtual const char* getID() = 0;
     virtual void setStatus(GHstate_t state, GHconn_t conn) = 0;
 
     void beginHTTP() {
-        server.onNotFound([this]() {
-            uint8_t ok = 0;
-            String str('/');
-            str += getPrefix();
-            if (server.uri() == str) ok = 1;
-            str += '/';
-            str += getID();
-            if (server.uri() == str) ok = 2;
-
-            if (ok) {
-                server.sendHeader(F("Access-Control-Allow-Private-Network"), F("true"));
-                server.sendHeader(F("Access-Control-Allow-Origin"), F("*"));
-                server.sendHeader(F("Access-Control-Allow-Methods"), F("*"));
-                server.send(200, "text/plain", answerDiscover());
-                setStatus(ok == 1 ? GH_DISCOVER_ALL : GH_DISCOVER, GH_HTTP);
-            } else {
-                server.send(404);
-                setStatus(GH_UNKNOWN, GH_HTTP);
-            }
+        String str('/');
+        str += getPrefix();
+        server.on(str.c_str(), [this]() {
+            setHeaders();
+            server.send(200, "text/plain", answerDiscover(true));
+            setStatus(GH_DISCOVER_ALL, GH_HTTP);
         });
 
+        str += '/';
+        str += getID();
+        server.on(str.c_str(), [this]() {
+            setHeaders();
+            server.send(200, "text/plain", answerDiscover(false));
+            setStatus(GH_DISCOVER, GH_HTTP);
+        });
+
+        server.onNotFound([this]() {
+            server.send(404);
+            setStatus(GH_UNKNOWN, GH_HTTP);
+        });
+        
         server.begin(GH_HTTP_PORT);
     }
     void endHTTP() {
@@ -59,6 +59,11 @@ class HubHTTP {
     }
 
    private:
+    void setHeaders() {
+        server.sendHeader(F("Access-Control-Allow-Private-Network"), F("true"));
+        server.sendHeader(F("Access-Control-Allow-Origin"), F("*"));
+        server.sendHeader(F("Access-Control-Allow-Methods"), F("*"));
+    }
 #ifdef ESP8266
     ESP8266WebServer server;
 #else
