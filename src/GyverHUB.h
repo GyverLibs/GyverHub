@@ -1048,11 +1048,10 @@ class GyverHUB : public HubBuilder, public HubStream {
         _jsStr(answ, F("ip"), ip);
         _jsVal(answ, F("PIN"), hash);
         _jsStr(answ, F("version"), version);
-        _jsVal(answ, F("max_upl"), GH_UPL_CHUNK_SIZE);
 #ifdef GH_ESP_BUILD
-        _jsVal(answ, F("esp"), 1);
+        _jsVal(answ, F("max_upl"), GH_UPL_CHUNK_SIZE);
 #else
-        _jsVal(answ, F("esp"), 0);
+        _jsVal(answ, F("max_upl"), 0);
 #endif
         answ[answ.length() - 1] = '}';  // ',' = '}'
         answ += '\n';
