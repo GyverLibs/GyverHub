@@ -6,7 +6,7 @@
 [![Foo](https://img.shields.io/badge/ПОДПИСАТЬСЯ-НА%20ОБНОВЛЕНИЯ-brightgreen.svg?style=social&logo=telegram&color=blue)](https://t.me/GyverLibs)
 
 # GyverHUB
-Система взаимодействия с микроконтроллером из приложения GyverHUB, конструктор интерфейса
+Панель управления для esp8266, esp32 и других Arduino. Конструктор интерфейса. Интеграция в умный дом
 
 > <br>**Документация находится в [Wiki репозитория](https://github.com/GyverLibs/GyverHUB/wiki). English docs - [translate](https://github-com.translate.goog/GyverLibs/GyverHUB/wiki?_x_tr_sl=ru&_x_tr_tl=en)**<br><br>
 
