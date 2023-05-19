@@ -22,6 +22,7 @@ GyverHUB - это программный комплекс, включающий 
 - С официального сайта [hub.gyver.ru](http://hub.gyver.ru/)
 - Сайт можно [установить](https://github.com/GyverLibs/GyverHUB/wiki/%D0%9D%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B#%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0-%D0%B2%D0%B5%D0%B1-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F) как веб-приложение (PWA) на любое устройство (Android/iOS/Windows...)
 - Локально с компьютера, для этого нужно [скачать сайт](https://hub.gyver.ru/GyverHUB.zip)
+- Из памяти ESP8266/32 в режиме HTTP сервера
 - Из [Телеграм-бота](https://t.me/GyverHUB_bot)
 - Отдельное Android приложение (в разработке)
 
@@ -30,7 +31,6 @@ GyverHUB - это программный комплекс, включающий 
 - WebSocket (в локальной сети)
 - Serial (проводное подключение) (в разработке)
 - Bluetooth (в разработке)
-- В ручном режиме - любой символьный интерфейс (GSM, GPRS, радио...)
 
 Основные моменты:
 - Приложение может обнаруживать устройства в своей "сети"
@@ -41,7 +41,7 @@ GyverHUB - это программный комплекс, включающий 
 
 Особенности:
 - Библиотека невероятно проста в использовании
-- Стильный дизайн ;) светлая и тёмная темы
+- Стильный дизайн ;) светлая и тёмная темы, несколько цветовых схем
 - Удобный парсинг действий с приложения/сайта или сервера умного дома
 - Более 20 активных компонентов интерфейса (кнопки, слайдеры, выбор...) + блоки оформления и навигации
 - Настраиваемые модули: загрузка и скачивание файлов, информация о плате, OTA обновление, защита паролем, интерфейс командной строки...
@@ -56,8 +56,7 @@ GyverHUB - это программный комплекс, включающий 
 В отличие от них GyverHUB полностью бесплатный, безопасный, не имеет ограничений и не нуждается в локальном сервере
 
 ### Совместимость
-- Все Arduino: Serial, Bluetooth (Serial) и ручной режим
-- ESP8266 и ESP32: + WebSocket и MQTT
+Все Arduino
 
 ## Установка
 - Зависимости: [Stamp](https://github.com/GyverLibs/Stamp), [PubSubClient](https://github.com/knolleary/pubsubclient), [arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets), [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer), [ESPAsyncTCP](https://github.com/me-no-dev/ESPAsyncTCP), [AsyncTCP](https://github.com/me-no-dev/AsyncTCP), [async-mqtt-client](https://github.com/marvinroger/async-mqtt-client)
