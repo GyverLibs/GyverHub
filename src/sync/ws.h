@@ -3,7 +3,7 @@
 #include "macro.h"
 
 #ifdef GH_ESP_BUILD
-#ifdef GH_NO_LOCAL
+#ifdef GH_NO_WS
 class HubWS {
    public:
 };
@@ -19,22 +19,22 @@ class HubWS {
    protected:
     HubWS() : ws(GH_WS_PORT, "", "hub") {}
 
-    virtual void parse(char* url, GHconn_t conn) = 0;
-    virtual void setStatus(GHstate_t state, GHconn_t conn) = 0;
+    virtual void parse(char* url, GHconn_t conn, bool manual) = 0;
+    virtual void sendEvent(GHevent_t state, GHconn_t conn) = 0;
 
     void beginWS() {
         ws.onEvent([this](uint8_t num, WStype_t type, uint8_t* data, size_t len) {
             switch (type) {
                 case WStype_CONNECTED:
-                    setStatus(GH_CONNECTED, GH_WS);
+                    sendEvent(GH_CONNECTED, GH_WS);
                     break;
 
                 case WStype_DISCONNECTED:
-                    setStatus(GH_DISCONNECTED, GH_WS);
+                    sendEvent(GH_DISCONNECTED, GH_WS);
                     break;
 
                 case WStype_ERROR:
-                    setStatus(GH_ERROR, GH_WS);
+                    sendEvent(GH_ERROR, GH_WS);
                     break;
 
                 case WStype_TEXT: {
@@ -42,7 +42,7 @@ class HubWS {
                     /*char data_c[len + 1];
                     if (len) strcpy(data_c, (char*)data);
                     data_c[len] = 0;*/
-                    parse((char*)data, GH_WS);
+                    parse((char*)data, GH_WS, false);
                 } break;
 
                 case WStype_BIN:

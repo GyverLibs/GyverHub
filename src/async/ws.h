@@ -3,7 +3,7 @@
 #include "macro.h"
 
 #ifdef GH_ESP_BUILD
-#ifdef GH_NO_LOCAL
+#ifdef GH_NO_WS
 class HubWS {
    public:
 };
@@ -21,29 +21,29 @@ class HubWS {
         server.addHandler(&ws);
     }
 
-    virtual void parse(char* url, GHconn_t conn) = 0;
-    virtual void setStatus(GHstate_t state, GHconn_t conn) = 0;
+    virtual void parse(char* url, GHconn_t conn, bool manual) = 0;
+    virtual void sendEvent(GHevent_t state, GHconn_t conn) = 0;
 
     void beginWS() {
         ws.onEvent([this](GH_UNUSED AsyncWebSocket* server, GH_UNUSED AsyncWebSocketClient* client, AwsEventType etype, void* arg, uint8_t* data, size_t len) {
             switch (etype) {
                 case WS_EVT_CONNECT:
-                    setStatus(GH_CONNECTED, GH_WS);
+                    sendEvent(GH_CONNECTED, GH_WS);
                     break;
 
                 case WS_EVT_DISCONNECT:
-                    setStatus(GH_DISCONNECTED, GH_WS);
+                    sendEvent(GH_DISCONNECTED, GH_WS);
                     break;
                     
                 case WS_EVT_ERROR:
-                    setStatus(GH_ERROR, GH_WS);
+                    sendEvent(GH_ERROR, GH_WS);
                     break;
 
                 case WS_EVT_DATA: {
                     AwsFrameInfo* ws_info = (AwsFrameInfo*)arg;
                     if (ws_info->final && ws_info->index == 0 && ws_info->len == len && ws_info->opcode == WS_TEXT) {
                         clientID = client->id();
-                        parse((char*)data, GH_WS);
+                        parse((char*)data, GH_WS, false);
                     }
                 } break;
 

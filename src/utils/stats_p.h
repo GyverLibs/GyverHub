@@ -6,8 +6,8 @@
 #include "action.h"
 #include "build.h"
 
-// получить текстовое значение типа GHstate_t для вывода в порт
-FSTR GHreadState(GHstate_t n);
+// получить текстовое значение типа GHevent_t для вывода в порт
+FSTR GHreadEvent(GHevent_t n);
 
 // получить текстовое значение типа GHconn_t для вывода в порт
 FSTR GHreadConn(GHconn_t n);

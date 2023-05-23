@@ -4,19 +4,20 @@
 GH_PGM(_GH_CMD0, "focus");
 GH_PGM(_GH_CMD1, "ping");
 GH_PGM(_GH_CMD2, "unfocus");
-#ifdef GH_ESP_BUILD
 GH_PGM(_GH_CMD3, "info");
+#ifdef GH_ESP_BUILD
 GH_PGM(_GH_CMD4, "fsbr");
-GH_PGM(_GH_CMD5, "reboot");
-GH_PGM(_GH_CMD6, "fetch_chunk");
+GH_PGM(_GH_CMD5, "format");
+GH_PGM(_GH_CMD6, "reboot");
+GH_PGM(_GH_CMD7, "fetch_chunk");
 #endif
 
 #ifdef GH_ESP_BUILD
-#define GH_CMD_LEN 7
-GH_PGM_LIST(_GH_cmd_list, _GH_CMD0, _GH_CMD1, _GH_CMD2, _GH_CMD3, _GH_CMD4, _GH_CMD5, _GH_CMD6);
+#define GH_CMD_LEN 8
+GH_PGM_LIST(_GH_cmd_list, _GH_CMD0, _GH_CMD1, _GH_CMD2, _GH_CMD3, _GH_CMD4, _GH_CMD5, _GH_CMD6, _GH_CMD7);
 #else
-#define GH_CMD_LEN 3
-GH_PGM_LIST(_GH_cmd_list, _GH_CMD0, _GH_CMD1, _GH_CMD2);
+#define GH_CMD_LEN 4
+GH_PGM_LIST(_GH_cmd_list, _GH_CMD0, _GH_CMD1, _GH_CMD2, _GH_CMD3);
 #endif
 
 int GH_getCmd(char* str) {

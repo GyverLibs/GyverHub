@@ -1,12 +1,6 @@
 #pragma once
 #include "config.h"
 
-#ifdef GH_ESP_BUILD
-#define GH_CONN_AMOUNT 4
-#else
-#define GH_CONN_AMOUNT 2
-#endif
-
 // причина перезагрузки
 enum GHreason_t {
     GH_REB_NONE,
@@ -17,16 +11,17 @@ enum GHreason_t {
 
 // тип подключения
 enum GHconn_t {
-    GH_MANUAL,
-    GH_STREAM,
+    GH_SERIAL,
+    GH_BT,
     GH_WS,
     GH_MQTT,
-    GH_HTTP,
     GH_SYSTEM,
 };
 
-// статус системы
-enum GHstate_t {
+#define GH_CONN_AMOUNT 4
+
+// системные события
+enum GHevent_t {
     GH_IDLE,
     GH_START,
     GH_STOP,
@@ -52,6 +47,7 @@ enum GHstate_t {
     GH_INFO,
     GH_REBOOT,
     GH_FSBR,
+    GH_FORMAT,
     GH_DELETE,
     GH_RENAME,
 
@@ -74,9 +70,4 @@ enum GHstate_t {
     GH_OTA_FINISH,
 
     GH_OTA_URL,
-};
-
-struct GHstatus {
-    GHconn_t conn;
-    GHstate_t state;
 };

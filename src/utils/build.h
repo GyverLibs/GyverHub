@@ -57,13 +57,13 @@ class GHbuild {
     }
 
     // парсить действие по кнопке с именем name. fstr - имя передано как F() или PSTR()
-    uint8_t parseClick(VSPTR name, bool* value, bool fstr = true) {
+    bool parseClick(VSPTR name, bool* value, bool fstr = true) {
         if (press(name, fstr)) {
             if (value) *value = 1;
             return 1;
         } else if (release(name, fstr)) {
             if (value) *value = 0;
-            return 2;
+            return 0;
         }
         return 0;
     }

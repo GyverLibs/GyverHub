@@ -7,7 +7,6 @@
 #include "builder.h"
 #include "config.h"
 #include "macro.h"
-#include "stream.h"
 #include "utils/build.h"
 #include "utils/cmd_p.h"
 #include "utils/color.h"
@@ -30,14 +29,16 @@
 #include <ESP8266httpUpdate.h>
 #endif
 #endif
-#else
+#endif
+
+#ifdef ESP32
+#include <WiFi.h>
 #ifndef GH_NO_OTA
+#include <Update.h>
 #ifndef GH_NO_OTA_URL
 #include <HTTPUpdate.h>
 #endif
-#include <Update.h>
 #endif
-#include <WiFi.h>
 #endif
 
 #ifndef GH_NO_FS
@@ -49,23 +50,22 @@
 #endif
 
 #ifdef GH_ASYNC
-#include "async/http.h"
 #include "async/mqtt.h"
 #include "async/ws.h"
+#include "async/http.h"
 #else
-#include "sync/http.h"
 #include "sync/mqtt.h"
 #include "sync/ws.h"
+#include "sync/http.h"
 #endif
-// #include "http.h"
 
 #endif
 
 // ========================== CLASS ==========================
 #ifdef GH_ESP_BUILD
-class GyverHUB : public HubBuilder, public HubStream, public HubHTTP, public HubMQTT, public HubWS {
+class GyverHUB : public HubBuilder, public HubHTTP, public HubMQTT, public HubWS {
 #else
-class GyverHUB : public HubBuilder, public HubStream {
+class GyverHUB : public HubBuilder {
 #endif
    public:
     // ========================== CONSTRUCT ==========================
@@ -96,39 +96,35 @@ class GyverHUB : public HubBuilder, public HubStream {
 
     // запустить
     void begin() {
-#ifndef GH_NO_OTA_URL
-
-#endif
-
 #ifdef GH_ESP_BUILD
-#ifndef GH_NO_LOCAL
-        if (modules.read(GH_MOD_LOCAL)) beginHTTP();
-        if (modules.read(GH_MOD_LOCAL)) beginWS();
+#ifndef GH_NO_WS
+        beginWS();
+        beginHTTP();
 #endif
 #ifndef GH_NO_MQTT
-        if (modules.read(GH_MOD_MQTT)) beginMQTT();
+        beginMQTT();
 #endif
 #ifndef GH_NO_FS
-        GH_FS.begin();
+        fs_mounted = GH_FS.begin();
 #endif
 #endif
         running_f = true;
-        setStatus(GH_START, GH_SYSTEM);
+        sendEvent(GH_START, GH_SYSTEM);
     }
 
     // остановить
     void end() {
 #ifdef GH_ESP_BUILD
-#ifndef GH_NO_LOCAL
-        endHTTP();
+#ifndef GH_NO_WS
         endWS();
+        endHTTP();
 #endif
 #ifndef GH_NO_MQTT
         endMQTT();
 #endif
 #endif
         running_f = false;
-        setStatus(GH_STOP, GH_SYSTEM);
+        sendEvent(GH_STOP, GH_SYSTEM);
     }
 
     // установить версию прошивки для отображения в Info и OTA
@@ -136,7 +132,7 @@ class GyverHUB : public HubBuilder, public HubStream {
         version = v;
     }
 
-    // установить размер буфера строки для сборки интерфейса в режиме MANUAL и STREAM
+    // установить размер буфера строки для сборки интерфейса при ручной отправке
     // 0 - интерфейс будет собран и отправлен цельной строкой
     // >0 - пакет будет отправляться частями
     void setBufferSize(uint16_t size) {
@@ -166,7 +162,7 @@ class GyverHUB : public HubBuilder, public HubStream {
     }
 
     // подключить функцию-обработчик запроса при ручном соединении
-    void onManual(void (*handler)(String& s)) {
+    void onManual(void (*handler)(String& s, GHconn_t conn, bool broadcast)) {
         manual_cb = *handler;
     }
 
@@ -195,8 +191,13 @@ class GyverHUB : public HubBuilder, public HubStream {
     // ========================== STATUS ==========================
 
     // подключить обработчик изменения статуса
-    void onStatus(void (*handler)(GHstatus status)) {
-        status_cb = *handler;
+    void onEvent(void (*handler)(GHevent_t state, GHconn_t conn)) {
+        event_cb = *handler;
+    }
+
+    // отправить event для отладки
+    void sendEvent(GHevent_t state, GHconn_t conn) {
+        if (event_cb) event_cb(state, conn);
     }
 
     // вернёт true, если система запущена
@@ -223,6 +224,11 @@ class GyverHUB : public HubBuilder, public HubStream {
             if (focus_arr[i]) return 1;
         }
         return 0;
+    }
+
+    // проверить фокус по указанному типу связи
+    bool focused(GHconn_t conn) {
+        return focus_arr[conn];
     }
 
     // обновить веб-интерфейс. Вызывать внутри обработчика build
@@ -379,33 +385,28 @@ class GyverHUB : public HubBuilder, public HubStream {
     // ========================== PARSER ==========================
 
     // парсить строку вида PREFIX/ID/HUB_ID/CMD/NAME=VALUE
-    void parse(char* url, GHconn_t conn = GH_MANUAL) {
+    void parse(char* url, GHconn_t conn, bool manual = true) {
         if (!running_f) return;
         char* eq = strchr(url, '=');
         char val[1] = "";
         if (eq) *eq = 0;
-        parse(url, eq ? (eq + 1) : val, conn);
+        parse(url, eq ? (eq + 1) : val, conn, manual);
         if (eq) *eq = '=';
     }
 
     // парсить строку вида PREFIX/ID/HUB_ID/CMD/NAME с отдельным value
-    void parse(char* url, char* value, GHconn_t conn = GH_MANUAL) {
+    void parse(char* url, char* value, GHconn_t conn, bool manual = true) {
 #if defined(GH_ESP_BUILD) && !defined(GH_NO_FS) && !defined(GH_NO_OTA) && !defined(GH_NO_OTA_URL)
         if (ota_url_f) return;
 #endif
         if (!running_f) return;
-        if (conn == GH_MQTT && !modules.read(GH_MOD_MQTT)) return;
-        if (conn == GH_WS && !modules.read(GH_MOD_LOCAL)) return;
-        if (conn == GH_MANUAL && !modules.read(GH_MOD_MANUAL)) return;
-        if (conn == GH_STREAM && !modules.read(GH_MOD_STREAM)) return;
-
-        if (strncmp(url, prefix, strlen(prefix))) return setStatus(GH_UNKNOWN, conn);
+        if (strncmp(url, prefix, strlen(prefix))) return sendEvent(GH_UNKNOWN, conn);
 
         if (!strcmp(url, prefix)) {  // == prefix
-            GHhub hub(conn, value);
+            GHhub hub(conn, value, manual);
             hub_ptr = &hub;
-            answerDiscover(true);
-            return setStatus(GH_DISCOVER_ALL, conn);
+            answerDiscover();
+            return sendEvent(GH_DISCOVER_ALL, conn);
         }
 
         GHparser<5> p(url);
@@ -413,15 +414,15 @@ class GyverHUB : public HubBuilder, public HubStream {
         if (strcmp(p.str[1], id)) return;  // wrong id
 
         if (p.size == 2) {
-            GHhub hub(conn, value);
+            GHhub hub(conn, value, manual);
             hub_ptr = &hub;
             answerDiscover();
-            return setStatus(GH_DISCOVER, conn);
+            return sendEvent(GH_DISCOVER, conn);
         }
 
-        if (p.size == 3) return setStatus(GH_UNKNOWN, conn);
+        if (p.size == 3) return sendEvent(GH_UNKNOWN, conn);
 
-        GHhub hub(conn, p.str[2]);
+        GHhub hub(conn, p.str[2], manual);
         hub_ptr = &hub;
 
         if (p.size == 4) {
@@ -432,7 +433,7 @@ class GyverHUB : public HubBuilder, public HubStream {
                 if (!strcmp_P(p.str[2], PSTR("read"))) {
                     if (modules.read(GH_MOD_READ)) sendGet(p.str[3]);
                     hub_ptr = nullptr;
-                    return setStatus(GH_READ_HOOK, conn);
+                    return sendEvent(GH_READ_HOOK, conn);
                 } else if (!strcmp_P(p.str[2], PSTR("set"))) {
                     if (modules.read(GH_MOD_SET)) {
                         GHbuild build(GH_BUILD_ACTION, GH_ACTION_SET, p.str[3], value, hub);
@@ -442,7 +443,7 @@ class GyverHUB : public HubBuilder, public HubStream {
                         hub_ptr = nullptr;
                         if (auto_f) sendGet(p.str[3], value);
                     }
-                    return setStatus(GH_SET_HOOK, conn);
+                    return sendEvent(GH_SET_HOOK, conn);
                 }
             }
 #endif
@@ -452,63 +453,75 @@ class GyverHUB : public HubBuilder, public HubStream {
             switch (GH_getCmd(p.str[3])) {
                 case 0:  // focus
                     answerUI();
-                    return setStatus(GH_FOCUS, conn);
+                    return sendEvent(GH_FOCUS, conn);
 
                 case 1:  // ping
                     answerType();
-                    return setStatus(GH_PING, conn);
+                    return sendEvent(GH_PING, conn);
 
                 case 2:  // unfocus
                     clearFocus(conn);
-                    return setStatus(GH_UNFOCUS, conn);
+                    return sendEvent(GH_UNFOCUS, conn);
 
-#ifdef GH_ESP_BUILD
                 case 3:  // info
-#ifndef GH_NO_INFO
                     if (modules.read(GH_MOD_INFO)) answerInfo();
                     else answerType(F("ERR"));
-#else
-                    answerType(F("ERR"));
-#endif
-                    return setStatus(GH_INFO, conn);
+                    return sendEvent(GH_INFO, conn);
 
+#ifdef GH_ESP_BUILD
                 case 4:  // fsbr
 #ifndef GH_NO_FS
-                    if (modules.read(GH_MOD_FSBR)) answerFsbr();
+                    if (modules.read(GH_MOD_FSBR)) {
+                        if (fs_mounted) answerFsbr();
+                        else answerType(F("fs_error"));
+                    }
                     else answerType(F("ERR"));
 #else
                     answerType(F("ERR"));
 #endif
-                    return setStatus(GH_FSBR, conn);
+                    return sendEvent(GH_FSBR, conn);
 
-                case 5:  // reboot
+                case 5:  // format
+#ifndef GH_NO_FS
+                    if (modules.read(GH_MOD_FORMAT)) {
+                        GH_FS.format();
+                        GH_FS.end();
+                        fs_mounted = GH_FS.begin();
+                        answerFsbr();
+                    } else answerType(F("ERR"));
+#else
+                    answerType(F("ERR"));
+#endif
+                    return sendEvent(GH_FORMAT, conn);
+
+                case 6:  // reboot
                     if (modules.read(GH_MOD_REBOOT)) {
                         reboot_f = GH_REB_BUTTON;
                         answerType();
                     } else answerType(F("ERR"));
-                    return setStatus(GH_REBOOT, conn);
+                    return sendEvent(GH_REBOOT, conn);
 
-                case 6:  // fetch_chunk
+                case 7:  // fetch_chunk
 #ifndef GH_NO_FS
                     fs_tmr = millis();
                     if (!file_d || fs_hub != hub || !modules.read(GH_MOD_DOWNLOAD)) {
                         answerType(F("fetch_err"));
-                        return setStatus(GH_DOWNLOAD_ERROR, conn);
+                        return sendEvent(GH_DOWNLOAD_ERROR, conn);
                     } else {
                         answerChunk();
                         dwn_chunk_count++;
                         if (dwn_chunk_count >= dwn_chunk_amount) {
                             file_d.close();
-                            return setStatus(GH_DOWNLOAD_FINISH, conn);
+                            return sendEvent(GH_DOWNLOAD_FINISH, conn);
                         }
-                        return setStatus(GH_DOWNLOAD_CHUNK, conn);
+                        return sendEvent(GH_DOWNLOAD_CHUNK, conn);
                     }
 #endif
                     break;
 #endif
                 default:  // unknown
                     clearFocus(conn);
-                    return setStatus(GH_UNKNOWN, conn);
+                    return sendEvent(GH_UNKNOWN, conn);
             }
             return;
         }
@@ -532,7 +545,7 @@ class GyverHUB : public HubBuilder, public HubStream {
                     if (send_f) answerUI();
                     else answerType();
                 }
-                return setStatus(GH_SET, conn);
+                return sendEvent(GH_SET, conn);
 
             // click
             case 1:
@@ -547,7 +560,7 @@ class GyverHUB : public HubBuilder, public HubStream {
                     if (send_f) answerUI();
                     else answerType();
                 }
-                return setStatus(GH_CLICK, conn);
+                return sendEvent(GH_CLICK, conn);
 
             // cli
             case 2:
@@ -556,7 +569,7 @@ class GyverHUB : public HubBuilder, public HubStream {
                     String str(value);
                     cli_cb(str);
                 }
-                return setStatus(GH_CLI, conn);
+                return sendEvent(GH_CLI, conn);
 
 #ifdef GH_ESP_BUILD
             // delete
@@ -567,7 +580,7 @@ class GyverHUB : public HubBuilder, public HubStream {
 #else
                 answerType(F("ERR"));
 #endif
-                return setStatus(GH_DELETE, conn);
+                return sendEvent(GH_DELETE, conn);
 
             // rename
             case 4:
@@ -577,7 +590,7 @@ class GyverHUB : public HubBuilder, public HubStream {
 #else
                 answerType(F("ERR"));
 #endif
-                return setStatus(GH_RENAME, conn);
+                return sendEvent(GH_RENAME, conn);
 
             // fetch
             case 5:
@@ -590,12 +603,12 @@ class GyverHUB : public HubBuilder, public HubStream {
                         dwn_chunk_count = 0;
                         dwn_chunk_amount = (file_d.size() + GH_DOWN_CHUNK_SIZE - 1) / GH_DOWN_CHUNK_SIZE;  // round up
                         answerType(F("fetch_start"));
-                        return setStatus(GH_DOWNLOAD, conn);
+                        return sendEvent(GH_DOWNLOAD, conn);
                     }
                 }
 #endif
                 answerType(F("fetch_err"));
-                return setStatus(GH_DOWNLOAD_ERROR, conn);
+                return sendEvent(GH_DOWNLOAD_ERROR, conn);
 
             // upload
             case 6:
@@ -608,14 +621,14 @@ class GyverHUB : public HubBuilder, public HubStream {
                             fs_hub = hub;
                             fs_tmr = millis();
                             answerType(F("upload_start"));
-                            setStatus(GH_UPLOAD, conn);
+                            sendEvent(GH_UPLOAD, conn);
                             return;
                         }
                     }
                 }
 #endif
                 answerType(F("upload_err"));
-                return setStatus(GH_UPLOAD_ERROR, conn);
+                return sendEvent(GH_UPLOAD_ERROR, conn);
 
             // upload_chunk
             case 7:
@@ -633,7 +646,7 @@ class GyverHUB : public HubBuilder, public HubStream {
                 }
 #endif
                 answerType(F("upload_err"));
-                return setStatus(GH_UPLOAD_ERROR, conn);
+                return sendEvent(GH_UPLOAD_ERROR, conn);
 
             // ota
             case 8:
@@ -665,14 +678,14 @@ class GyverHUB : public HubBuilder, public HubStream {
                                 ota_f = true;
                                 fs_tmr = millis();
                                 answerType(F("ota_start"));
-                                return setStatus(GH_OTA, conn);
+                                return sendEvent(GH_OTA, conn);
                             }
                         }
                     }
                 }
 #endif
                 answerType(F("ota_err"));
-                return setStatus(GH_OTA_ERROR, conn);
+                return sendEvent(GH_OTA_ERROR, conn);
 
             // ota_chunk
             case 9:
@@ -690,25 +703,27 @@ class GyverHUB : public HubBuilder, public HubStream {
                 }
 #endif
                 answerType(F("ota_err"));
-                return setStatus(GH_OTA_ERROR, conn);
+                return sendEvent(GH_OTA_ERROR, conn);
 
             // ota_url
             case 10:
 #if !defined(GH_NO_FS) && !defined(GH_NO_OTA) && !defined(GH_NO_OTA_URL)
                 if (!file_d && !file_u && !ota_f && !fs_buffer && modules.read(GH_MOD_OTA_URL)) {
+                    if (!strcmp_P(name, PSTR("flash"))) ota_url_fs = 0;
+                    else if (!strcmp_P(name, PSTR("fs"))) ota_url_fs = 1;
                     ota_url = value;
                     answerType();
                     fs_state = GH_OTA_URL;
-                    return setStatus(GH_OTA_URL, conn);
+                    return sendEvent(GH_OTA_URL, conn);
                 }
 #endif
                 answerType(F("ERR"));
-                return setStatus(GH_OTA_URL, conn);
+                return sendEvent(GH_OTA_URL, conn);
 
 #endif
             default:
                 clearFocus(conn);
-                return setStatus(GH_UNKNOWN, conn);
+                return sendEvent(GH_UNKNOWN, conn);
         }
     }
 
@@ -725,16 +740,13 @@ class GyverHUB : public HubBuilder, public HubStream {
             }
         }
 
-#ifndef GH_NO_STREAM
-        if (modules.read(GH_MOD_STREAM)) tickStream();
-#endif
 #ifdef GH_ESP_BUILD
-#ifndef GH_NO_LOCAL
-        if (modules.read(GH_MOD_LOCAL)) tickHTTP();
-        if (modules.read(GH_MOD_LOCAL)) tickWS();
+#ifndef GH_NO_WS
+        tickWS();
+        tickHTTP();
 #endif
 #ifndef GH_NO_MQTT
-        if (modules.read(GH_MOD_MQTT)) tickMQTT();
+        tickMQTT();
 #endif
 
 #ifndef GH_NO_FS
@@ -757,13 +769,15 @@ class GyverHUB : public HubBuilder, public HubStream {
 #ifdef ESP8266
                     ESPhttpUpdate.rebootOnUpdate(false);
                     BearSSL::WiFiClientSecure client;
-                    client.setInsecure();
-                    ok = ESPhttpUpdate.update(client, ota_url);
+                    if (ota_url.startsWith(F("https"))) client.setInsecure();
+                    if (ota_url_fs) ESPhttpUpdate.updateFS(client, ota_url);
+                    else ok = ESPhttpUpdate.update(client, ota_url);
 #else
                     httpUpdate.rebootOnUpdate(false);
                     WiFiClientSecure client;
-                    client.setInsecure();
-                    ok = httpUpdate.update(client, ota_url);
+                    if (ota_url.startsWith(F("https"))) client.setInsecure();
+                    if (ota_url_fs) ok = httpUpdate.updateSpiffs(client, ota_url);
+                    else ok = httpUpdate.update(client, ota_url);
 #endif
                     hub_ptr = &fs_hub;
                     if (ok) {
@@ -779,7 +793,7 @@ class GyverHUB : public HubBuilder, public HubStream {
 
                 case GH_DOWNLOAD_ABORTED:
                     file_d.close();
-                    setStatus(GH_DOWNLOAD_ABORTED, fs_hub.conn);
+                    sendEvent(GH_DOWNLOAD_ABORTED, fs_hub.conn);
                     break;
 
                 case GH_UPLOAD_CHUNK:
@@ -787,7 +801,7 @@ class GyverHUB : public HubBuilder, public HubStream {
                     hub_ptr = &fs_hub;
                     answerType(F("upload_next_chunk"));
                     fs_tmr = millis();
-                    setStatus(GH_UPLOAD_CHUNK, fs_hub.conn);
+                    sendEvent(GH_UPLOAD_CHUNK, fs_hub.conn);
                     break;
 
                 case GH_UPLOAD_FINISH:
@@ -797,12 +811,12 @@ class GyverHUB : public HubBuilder, public HubStream {
                     file_u.close();
                     hub_ptr = &fs_hub;
                     answerType(F("upload_end"));
-                    setStatus(GH_UPLOAD_FINISH, fs_hub.conn);
+                    sendEvent(GH_UPLOAD_FINISH, fs_hub.conn);
                     break;
 
                 case GH_UPLOAD_ABORTED:
                     file_u.close();
-                    setStatus(GH_UPLOAD_ABORTED, fs_hub.conn);
+                    sendEvent(GH_UPLOAD_ABORTED, fs_hub.conn);
                     break;
 #ifndef GH_NO_OTA
                 case GH_OTA_CHUNK:
@@ -810,7 +824,7 @@ class GyverHUB : public HubBuilder, public HubStream {
                     hub_ptr = &fs_hub;
                     answerType(F("ota_next_chunk"));
                     fs_tmr = millis();
-                    setStatus(GH_OTA_CHUNK, fs_hub.conn);
+                    sendEvent(GH_OTA_CHUNK, fs_hub.conn);
                     break;
 
                 case GH_OTA_FINISH:
@@ -822,13 +836,13 @@ class GyverHUB : public HubBuilder, public HubStream {
                     hub_ptr = &fs_hub;
                     if (Update.end(true)) answerType(F("ota_end"));
                     else answerType(F("ota_err"));
-                    setStatus(GH_OTA_FINISH, fs_hub.conn);
+                    sendEvent(GH_OTA_FINISH, fs_hub.conn);
                     break;
 
                 case GH_OTA_ABORTED:
                     Update.end();
                     ota_f = false;
-                    setStatus(GH_OTA_ABORTED, fs_hub.conn);
+                    sendEvent(GH_OTA_ABORTED, fs_hub.conn);
                     break;
 #endif
                 default:
@@ -856,9 +870,6 @@ class GyverHUB : public HubBuilder, public HubStream {
     const char* getID() {
         return id;
     }
-    void setStatus(GHstate_t state, GHconn_t conn) {
-        if (status_cb) status_cb((GHstatus){conn, state});
-    }
     void _afterComponent() {
         switch (buf_mode) {
             case GH_NORMAL:
@@ -882,7 +893,6 @@ class GyverHUB : public HubBuilder, public HubStream {
 
 #ifdef GH_ESP_BUILD
 #ifndef GH_NO_MQTT
-        if (!modules.read(GH_MOD_MQTT)) return;
         String topic(prefix);
         topic += F("/hub/");
         topic += id;
@@ -894,8 +904,6 @@ class GyverHUB : public HubBuilder, public HubStream {
 
     // ======================= INFO ========================
     void answerInfo() {
-#ifdef GH_ESP_BUILD
-#ifndef GH_NO_INFO
         String answ;
         answ.reserve(250);
         answ += '\n';
@@ -903,6 +911,9 @@ class GyverHUB : public HubBuilder, public HubStream {
         _jsID(answ);
         _jsStr(answ, F("type"), F("info"));
         answ += F("'info':[");
+        _jsArr(answ, GH_VERSION);
+        _jsArr(answ, version);
+#ifdef GH_ESP_BUILD
         _jsArr(answ, WiFi.getMode() == WIFI_AP ? F("AP") : (WiFi.getMode() == WIFI_STA ? F("STA") : F("AP_STA")));
         _jsArr(answ, WiFi.SSID());
         _jsArr(answ, WiFi.localIP().toString());
@@ -914,15 +925,11 @@ class GyverHUB : public HubBuilder, public HubStream {
         _jsArr(answ, String(ESP.getSketchSize() / 1000.0, 1) + " kB (" + String(ESP.getFreeSketchSpace() / 1000.0, 1) + ")");
         _jsArr(answ, String(ESP.getFlashChipSize() / 1000.0, 1) + " kB");
         _jsArr(answ, String(ESP.getCpuFreqMHz()) + F(" MHz"));
-        _jsArr(answ, version);
-        _jsArr(answ, GH_VERSION);
-        _jsArr(answ, id);
+#endif
         answ[answ.length() - 1] = ']';  // ',' = ']'
         answ += '}';
         answ += '\n';
         answer(answ);
-#endif
-#endif
     }
 
     // ======================= UI ========================
@@ -997,6 +1004,12 @@ class GyverHUB : public HubBuilder, public HubStream {
         _jsID(answ);
         _jsStr(answ, F("type"), F("fsbr"));
 
+#ifdef ATOMIC_FS_UPDATE
+        _jsVal(answ, F("gzip"), 1);
+#else
+        _jsVal(answ, F("gzip"), 0);
+#endif
+
 #ifdef ESP8266
         FSInfo fs_info;
         GH_FS.info(fs_info);
@@ -1016,7 +1029,7 @@ class GyverHUB : public HubBuilder, public HubStream {
     }
 
     // ======================= DISCOVER ========================
-    String answerDiscover(bool broadcast = false) {
+    void answerDiscover() {
         uint32_t hash = 0;
         if (PIN > 999) {
             char pin_s[11];
@@ -1027,16 +1040,6 @@ class GyverHUB : public HubBuilder, public HubStream {
             }
         }
 
-        String ip(F("unset"));
-#ifdef GH_ESP_BUILD
-        if (WiFi.getMode() == WIFI_AP) ip = WiFi.softAPIP().toString();
-        else if (WiFi.getMode() == WIFI_STA) ip = WiFi.localIP().toString();
-        else if (WiFi.getMode() == WIFI_AP_STA) {
-            if (WiFi.status() == WL_CONNECTED) ip = WiFi.localIP().toString();
-            else ip = WiFi.softAPIP().toString();
-        }
-#endif
-
         String answ;
         answ.reserve(120);
         answ += '\n';
@@ -1045,18 +1048,17 @@ class GyverHUB : public HubBuilder, public HubStream {
         _jsStr(answ, F("type"), F("discover"));
         _jsStr(answ, F("name"), name);
         _jsStr(answ, F("icon"), icon);
-        _jsStr(answ, F("ip"), ip);
         _jsVal(answ, F("PIN"), hash);
         _jsStr(answ, F("version"), version);
-#ifdef GH_ESP_BUILD
         _jsVal(answ, F("max_upl"), GH_UPL_CHUNK_SIZE);
+#ifdef GH_ESP_BUILD
+        _jsStr(answ, F("esp"), 1);
 #else
-        _jsVal(answ, F("max_upl"), 0);
+        _jsStr(answ, F("esp"), 0);
 #endif
         answ[answ.length() - 1] = '}';  // ',' = '}'
         answ += '\n';
-        answer(answ, true, broadcast);
-        return answ;
+        answer(answ, true);
     }
 
     // ======================= CHUNK ========================
@@ -1080,55 +1082,35 @@ class GyverHUB : public HubBuilder, public HubStream {
     }
 
     // ======================= ANSWER ========================
-    void answer(String& answ, bool close = true, bool broadcast = false) {
+    void answer(String& answ, bool close = true) {
         if (!hub_ptr) return;
-        switch (hub_ptr->conn) {
-            case GH_STREAM:
-#ifndef GH_NO_STREAM
-                if (modules.read(GH_MOD_STREAM)) sendStream(answ);
-#endif
-                break;
-            case GH_MANUAL:
-                if (manual_cb && modules.read(GH_MOD_MANUAL)) manual_cb(answ);
-                break;
+        if (hub_ptr->manual) {
+            if (manual_cb) manual_cb(answ, hub_ptr->conn, false);
+        } else {
 #ifdef GH_ESP_BUILD
-            case GH_WS:
-#ifndef GH_NO_LOCAL
-                if (modules.read(GH_MOD_LOCAL)) answerWS(answ);
+#ifndef GH_NO_WS
+            if (hub_ptr->conn == GH_WS) answerWS(answ);
 #endif
-                break;
-            case GH_MQTT:
 #ifndef GH_NO_MQTT
-                if (modules.read(GH_MOD_MQTT)) answerMQTT(hub_ptr->id, answ, broadcast);
+            if (hub_ptr->conn == GH_MQTT) answerMQTT(answ, hub_ptr->id);
 #endif
-                break;
 #endif
-            default:
-                break;
         }
         if (close) hub_ptr = nullptr;
     }
 
     // ======================= SEND ========================
     void send(String& answ, bool broadcast = false) {
-        if (modules.read(GH_MOD_MANUAL) && focus_arr[0]) {  // GH_MANUAL
-            if (manual_cb) manual_cb(answ);
+        for (int i = 0; i < GH_CONN_AMOUNT; i++) {
+            if (manual_cb) manual_cb(answ, (GHconn_t)i, broadcast);
         }
-        if (modules.read(GH_MOD_STREAM) && focus_arr[1]) {  // GH_STREAM
-#ifndef GH_NO_STREAM
-            sendStream(answ);
-#endif
-        }
+
 #ifdef GH_ESP_BUILD
-#ifndef GH_NO_LOCAL
-        if (modules.read(GH_MOD_LOCAL) && focus_arr[2]) {  // GH_WS
-            sendWS(answ);
-        }
+#ifndef GH_NO_WS
+        if (focus_arr[GH_WS]) sendWS(answ);
 #endif
 #ifndef GH_NO_MQTT
-        if (modules.read(GH_MOD_MQTT) && (focus_arr[3] || broadcast)) {  // GH_MQTT
-            sendMQTT(answ);                                              // broadcast!
-        }
+        if ((focus_arr[GH_MQTT] || broadcast)) sendMQTT(answ);
 #endif
 #endif
     }
@@ -1179,8 +1161,8 @@ class GyverHUB : public HubBuilder, public HubStream {
 
     void (*build_cb)() = nullptr;
     void (*cli_cb)(String& str) = nullptr;
-    void (*manual_cb)(String& s) = nullptr;
-    void (*status_cb)(GHstatus status) = nullptr;
+    void (*manual_cb)(String& s, GHconn_t conn, bool broadcast) = nullptr;
+    void (*event_cb)(GHevent_t state, GHconn_t conn) = nullptr;
     GHhub* hub_ptr = nullptr;
 
     bool running_f = 0;
@@ -1207,9 +1189,11 @@ class GyverHUB : public HubBuilder, public HubStream {
 #ifndef GH_NO_OTA_URL
     String ota_url;
     bool ota_url_f = 0;
+    bool ota_url_fs = 0;
 #endif
+    bool fs_mounted = 0;
     GHhub fs_hub;
-    GHstate_t fs_state = GH_IDLE;
+    GHevent_t fs_state = GH_IDLE;
     char* fs_buffer = nullptr;
     File file_d, file_u;
     bool ota_f = false;

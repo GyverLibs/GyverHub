@@ -3,7 +3,7 @@
 #include "macro.h"
 
 #ifdef GH_ESP_BUILD
-#ifdef GH_NO_LOCAL
+#ifdef GH_NO_WS
 class HubMQTT {
    public:
     void setupMQTT(const char* host, uint16_t port, const char* login = nullptr, const char* pass = nullptr, uint8_t nqos = 0, bool nret = 0) {}
@@ -37,17 +37,17 @@ class HubMQTT {
 
     // ============ PROTECTED =============
    protected:
-    virtual void parse(char* url, char* value, GHconn_t conn) = 0;
+    virtual void parse(char* url, char* value, GHconn_t conn, bool manual) = 0;
     virtual const char* getPrefix() = 0;
     virtual const char* getID() = 0;
-    virtual void setStatus(GHstate_t state, GHconn_t conn) = 0;
+    virtual void sendEvent(GHevent_t state, GHconn_t conn) = 0;
 
     void beginMQTT() {
         mqtt.setCallback([this](char* topic, uint8_t* data, uint16_t len) {
             char data_c[len + 1];
             if (len) strncpy(data_c, (char*)data, len);
             data_c[len] = 0;
-            parse(topic, data_c, GH_MQTT);
+            parse(topic, data_c, GH_MQTT, false);
         });
     }
 
@@ -59,7 +59,7 @@ class HubMQTT {
         if (mq_configured) {
             if (!mqtt.connected() && (!mqtt_tmr || millis() - mqtt_tmr > GH_MQTT_RECONNECT)) {
                 mqtt_tmr = millis();
-                setStatus(GH_CONNECTING, GH_MQTT);
+                sendEvent(GH_CONNECTING, GH_MQTT);
                 connectMQTT();
             }
             mqtt.loop();
@@ -79,15 +79,12 @@ class HubMQTT {
         sendMQTT(topic, msg);
     }
 
-    void answerMQTT(const char* hubID, const String& msg, bool broadcast = false) {
+    void answerMQTT(const String& msg, const char* hubID) {
         String topic(getPrefix());
-        topic += F("/hub");
-        if (!broadcast) {
-            topic += '/';
-            topic += hubID;
-            topic += '/';
-            topic += getID();
-        }
+        topic += F("/hub/");
+        topic += hubID;
+        topic += '/';
+        topic += getID();
         sendMQTT(topic, msg);
     }
 
@@ -122,7 +119,7 @@ class HubMQTT {
             sub_topic += "/#";
             mqtt.subscribe(sub_topic.c_str(), qos);
         }
-        setStatus(ok ? GH_CONNECTED : GH_ERROR, GH_MQTT);
+        sendEvent(ok ? GH_CONNECTED : GH_ERROR, GH_MQTT);
     }
     void _setupMQTT(const char* login, const char* pass, uint8_t nqos, bool nret) {
         mqtt.setClient(mclient);

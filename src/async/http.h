@@ -1,9 +1,10 @@
 #pragma once
 #include "config.h"
+#include "index.h"
 #include "macro.h"
 
 #ifdef GH_ESP_BUILD
-#ifdef GH_NO_LOCAL
+#ifdef GH_NO_WS
 class HubHTTP {
    public:
 };
@@ -19,31 +20,48 @@ class HubHTTP {
 
     // ============ PROTECTED =============
    protected:
-    virtual String answerDiscover(bool broadcast) = 0;
-    virtual const char* getPrefix() = 0;
-    virtual const char* getID() = 0;
-    virtual void setStatus(GHstate_t state, GHconn_t conn) = 0;
-
     void beginHTTP() {
-        String str('/');
-        str += getPrefix();
-        server.on(str.c_str(), HTTP_GET, [this](AsyncWebServerRequest* req) {
-            String answ = answerDiscover(true);
-            AsyncWebServerResponse* resp = req->beginResponse(200, "text/plain", answ);
-            setHeaders(resp);
+        server.on("/hub_discover_all", HTTP_GET, [this](AsyncWebServerRequest* req) {
+            AsyncWebServerResponse* resp = req->beginResponse(200, F("text/plain"), F("OK"));
+            resp->addHeader(F("Access-Control-Allow-Private-Network"), F("true"));
+            resp->addHeader(F("Access-Control-Allow-Origin"), F("*"));
+            resp->addHeader(F("Access-Control-Allow-Methods"), F("*"));
             req->send(resp);
-            setStatus(GH_DISCOVER_ALL, GH_HTTP);
         });
 
-        str += '/';
-        str += getID();
-        server.on(str.c_str(), HTTP_GET, [this](AsyncWebServerRequest* req) {
-            String answ = answerDiscover(false);
-            AsyncWebServerResponse* resp = req->beginResponse(200, "text/plain", answ);
-            setHeaders(resp);
-            req->send(resp);
-            setStatus(GH_DISCOVER, GH_HTTP);
+#ifndef GH_NO_PORTAL
+        server.on("/", HTTP_GET, [this](AsyncWebServerRequest* request) {
+            AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", hub_index_gz, hub_index_gz_len);
+            gzipHeader(response);
+            request->send(response);
         });
+        server.on("/favicon.svg", HTTP_GET, [this](AsyncWebServerRequest* request) {
+            AsyncWebServerResponse* response = request->beginResponse(200);
+            request->send(response);
+        });
+
+        server.serveStatic("/", GH_FS, "/hub/").setCacheControl(GH_CACHE_PRD);
+        /*server.on("/favicon.svg", HTTP_GET, [this](AsyncWebServerRequest* request) {
+            AsyncWebServerResponse* response = request->beginResponse(GH_FS, "/hub/favicon.svg.gz", "image/svg+xml");
+            gzipHeader(response);
+            request->send(response);
+        });
+        server.on("/test.html", HTTP_GET, [this](AsyncWebServerRequest* request) {
+            AsyncWebServerResponse* response = request->beginResponse(GH_FS, "/hub/test.html.gz", "text/html");
+            gzipHeader(response);
+            request->send(response);
+        });*/
+        server.on("/script.js", HTTP_GET, [this](AsyncWebServerRequest* request) {
+            AsyncWebServerResponse* response = request->beginResponse(GH_FS, "/hub/script.js.gz", "text/javascript");
+            gzipHeader(response);
+            request->send(response);
+        });
+        server.on("/style.css", HTTP_GET, [this](AsyncWebServerRequest* request) {
+            AsyncWebServerResponse* response = request->beginResponse(GH_FS, "/hub/style.css.gz", "text/css");
+            gzipHeader(response);
+            request->send(response);
+        });
+#endif
 
         server.begin();
     }
@@ -57,10 +75,8 @@ class HubHTTP {
 
     // ============ PRIVATE =============
    private:
-    void setHeaders(AsyncWebServerResponse* resp) {
-        resp->addHeader(F("Access-Control-Allow-Private-Network"), F("true"));
-        resp->addHeader(F("Access-Control-Allow-Origin"), F("*"));
-        resp->addHeader(F("Access-Control-Allow-Methods"), F("*"));
+    void gzipHeader(AsyncWebServerResponse* response) {
+        response->addHeader("Content-Encoding", "gzip");
     }
     AsyncWebServer server;
 };

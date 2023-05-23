@@ -58,6 +58,9 @@ void GH_escapeChar(String* s, char c) {
                 *s += 't';
                 break;
         }
+    } else if (c == '\"') {
+        *s += '\\';
+        *s += c;
     } else {
         *s += c;
     }

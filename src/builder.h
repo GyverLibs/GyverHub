@@ -49,21 +49,21 @@ class HubBuilder {
     }
 
     // ========================== BUTTON ==========================
-    uint8_t Button(FSTR name, bool* value = nullptr, FSTR label = nullptr, uint32_t color = GH_DEFAULT, int size = 22) {
+    bool Button(FSTR name, bool* value = nullptr, FSTR label = nullptr, uint32_t color = GH_DEFAULT, int size = 22) {
         return _button(true, F("button"), name, value, label, color, size);
     }
-    uint8_t Button(CSREF name, bool* value = nullptr, CSREF label = "", uint32_t color = GH_DEFAULT, int size = 22) {
+    bool Button(CSREF name, bool* value = nullptr, CSREF label = "", uint32_t color = GH_DEFAULT, int size = 22) {
         return _button(false, F("button"), name.c_str(), value, label.c_str(), color, size);
     }
 
-    uint8_t ButtonIcon(FSTR name, bool* value = nullptr, FSTR label = nullptr, uint32_t color = GH_DEFAULT, int size = 50) {
+    bool ButtonIcon(FSTR name, bool* value = nullptr, FSTR label = nullptr, uint32_t color = GH_DEFAULT, int size = 50) {
         return _button(true, F("button_i"), name, value, label, color, size);
     }
-    uint8_t ButtonIcon(CSREF name, bool* value = nullptr, CSREF label = "", uint32_t color = GH_DEFAULT, int size = 50) {
+    bool ButtonIcon(CSREF name, bool* value = nullptr, CSREF label = "", uint32_t color = GH_DEFAULT, int size = 50) {
         return _button(false, F("button_i"), name.c_str(), value, label.c_str(), color, size);
     }
 
-    uint8_t _button(bool fstr, FSTR tag, VSPTR name, bool* value, VSPTR label, uint32_t color, int size) {
+    bool _button(bool fstr, FSTR tag, VSPTR name, bool* value, VSPTR label, uint32_t color, int size) {
         if (_isUI()) {
             _begin(tag);
             _name(name, fstr);
@@ -477,7 +477,9 @@ class HubBuilder {
             _tabw();
             _end();
         } else if (bptr->type == GH_BUILD_ACTION) {
-            return bptr->parseSet(name, value, GH_UINT8, fstr);
+            bool act = bptr->parseSet(name, value, GH_UINT8, fstr);
+            if (act) refresh();
+            return act;
         }
         return 0;
     }
@@ -486,6 +488,7 @@ class HubBuilder {
     String* sptr = nullptr;
     GHbuild* bptr = nullptr;
     virtual void _afterComponent() = 0;
+    virtual void refresh() = 0;
 
     // ========================== PRIVATE ==========================
    private:

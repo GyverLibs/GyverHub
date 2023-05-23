@@ -6,16 +6,15 @@
 
 // ====== НАСТРОЙКИ КОМПИЛЯЦИИ ======
 #define ATOMIC_FS_UPDATE  // OTA обновление GZIP файлом
-#define GH_ASYNC          // использовать ASYNC библиотеки
+//#define GH_ASYNC          // использовать ASYNC библиотеки
 
 // отключение модулей
-//#define GH_NO_STREAM
-//#define GH_NO_LOCAL
-//#define GH_NO_MQTT
-//#define GH_NO_FS
-//#define GH_NO_INFO
-//#define GH_NO_OTA
-//#define GH_NO_OTA_URL
+//#define GH_NO_PORTAL    // открытие сайта из памяти esp
+//#define GH_NO_WS        // WebSocket
+//#define GH_NO_MQTT      // MQTT
+//#define GH_NO_FS        // работа с файлами (включая ОТА!)
+//#define GH_NO_OTA       // ОТА файлом с приложения
+//#define GH_NO_OTA_URL   // ОТА по URL
 // =================================
 
 #include <Arduino.h>
@@ -184,11 +183,11 @@ void setup() {
     });
 
     // обработчик статуса для отладки
-    hub.onStatus([](GHstatus s) {
+    hub.onEvent([](GHevent_t event, GHconn_t conn) {
         // GHreadXXXX берёт текстовое описание статуса из PROGMEM
-        Serial.print(GHreadConn(s.conn));
+        Serial.print(GHreadConn(conn));
         Serial.print(": ");
-        Serial.println(GHreadState(s.state));
+        Serial.println(GHreadEvent(event));
     });
     
     // вывести причину перезагрузки

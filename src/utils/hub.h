@@ -5,9 +5,10 @@
 
 struct GHhub {
     GHhub() {}
-    GHhub(GHconn_t nconn, const char* nid) {
+    GHhub(GHconn_t nconn, const char* nid, bool nmanual) {
         conn = nconn;
         if (strlen(nid) <= 8) strcpy(id, nid);
+        manual = nmanual;
     }
 
     // тип соединения
@@ -15,6 +16,9 @@ struct GHhub {
 
     // id клиента
     char id[9] = {'\0'};
+    
+    // из ручного парсера
+    bool manual = false;
 
     bool eq(GHhub& hub) {
         return (hub.conn == conn && !strcmp(hub.id, id));

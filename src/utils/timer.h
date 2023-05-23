@@ -4,17 +4,14 @@
 // ====================== TIMER =======================
 struct GHtimer {
     GHtimer() {}
-    GHtimer(uint32_t nprd) {
-        start(nprd);
+    GHtimer(uint32_t ms, uint8_t seconds = 0, uint8_t minutes = 0, uint8_t hours = 0, uint8_t days = 0) {
+        start(ms, seconds, minutes, hours, days);
     }
 
-    void start(uint32_t nprd) {
-        prd = nprd;
-        if (prd) start();
-    }
-    void start(uint8_t seconds, uint8_t minutes, uint8_t hours, uint8_t days) {
+    void start(uint32_t ms, uint8_t seconds = 0, uint8_t minutes = 0, uint8_t hours = 0, uint8_t days = 0) {
         prd = days * 86400ul + hours * 3600ul + minutes * 60 + seconds;
         prd *= 1000ul;
+        prd += ms;
         if (prd) start();
     }
     void start() {
