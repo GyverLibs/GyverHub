@@ -1,6 +1,5 @@
 #pragma once
 #include "config.h"
-#include "index.h"
 #include "macro.h"
 
 #ifdef GH_ESP_BUILD
@@ -30,8 +29,13 @@ class HubHTTP {
         });
 
 #ifndef GH_NO_PORTAL
-        server.on("/", HTTP_GET, [this](AsyncWebServerRequest* request) {
+        /*server.on("/", HTTP_GET, [this](AsyncWebServerRequest* request) {
             AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", hub_index_gz, hub_index_gz_len);
+            gzipHeader(response);
+            request->send(response);
+        });*/
+        server.on("/", HTTP_GET, [this](AsyncWebServerRequest* request) {
+            AsyncWebServerResponse* response = request->beginResponse(GH_FS, "/hub/index.html.gz", "text/html");
             gzipHeader(response);
             request->send(response);
         });

@@ -72,7 +72,6 @@ if os.path.exists('host'): shutil.rmtree('host')
 if os.path.exists('local'): shutil.rmtree('local')
 
 os.mkdir('esp')
-os.mkdir('esp/hub')
 os.mkdir('host')
 os.mkdir('host/icons')
 os.mkdir('local')
@@ -191,21 +190,23 @@ js_min = js_min.replace('__VER__', version)
 js_min = js_min.replace('__ESP__', '')
 js_min = re.sub(r'(^\s+)', '' , js_min, flags=re.MULTILINE)
 
-with open('esp/hub/script.js', 'w') as f: f.write(js_min)
-with open('esp/hub/script.js', 'rb') as f_in, gzip.open('esp/hub/script.js.gz', 'wb') as f_out: f_out.writelines(f_in)
-os.remove("esp/hub/script.js")
+with open('esp/script.js', 'w') as f: f.write(js_min)
+with open('esp/script.js', 'rb') as f_in, gzip.open('esp/script.js.gz', 'wb') as f_out: f_out.writelines(f_in)
+os.remove("esp/script.js")
 
 # CSS
-with open('esp/hub/style.css', 'w') as f: f.write(css_min.replace('url(fa-solid-900.ttf)', 'url(' + fa_url + ')'))
-with open('esp/hub/style.css', 'rb') as f_in, gzip.open('esp/hub/style.css.gz', 'wb') as f_out: f_out.writelines(f_in)
-os.remove("esp/hub/style.css")
+with open('esp/style.css', 'w') as f: f.write(css_min.replace('url(fa-solid-900.ttf)', 'url(' + fa_url + ')'))
+with open('esp/style.css', 'rb') as f_in, gzip.open('esp/style.css.gz', 'wb') as f_out: f_out.writelines(f_in)
+os.remove("esp/style.css")
 
 # OTHER
-#with open('local/fa-solid-900.ttf', 'rb') as f_in, gzip.open('esp/hub/fa-solid-900.ttf.gz', 'wb') as f_out: f_out.writelines(f_in)
-#with open('local/test.html', 'rb') as f_in, gzip.open('esp/hub/test.html.gz', 'wb') as f_out: f_out.writelines(f_in)
-#with open('local/favicon.svg', 'rb') as f_in, gzip.open('esp/hub/favicon.svg.gz', 'wb') as f_out: f_out.writelines(f_in)
+#with open('local/fa-solid-900.ttf', 'rb') as f_in, gzip.open('esp/fa-solid-900.ttf.gz', 'wb') as f_out: f_out.writelines(f_in)
+#with open('local/test.html', 'rb') as f_in, gzip.open('esp/test.html.gz', 'wb') as f_out: f_out.writelines(f_in)
+#with open('local/favicon.svg', 'rb') as f_in, gzip.open('esp/favicon.svg.gz', 'wb') as f_out: f_out.writelines(f_in)
 
 # INDEX
+with open('local/index.html', 'rb') as f_in, gzip.open('esp/index.html.gz', 'wb') as f_out: f_out.writelines(f_in)
+'''
 with open('local/index.html', 'rb') as f_in, gzip.open('esp/index.html.gz', 'wb') as f_out: f_out.writelines(f_in)
 with open('esp/index.html.gz', "rb") as f: ba = bytearray(f.read())
 
@@ -223,3 +224,4 @@ with open('esp/index.h', "w") as f:
     f.write(index_h)
 
 os.remove("esp/index.html.gz")
+'''

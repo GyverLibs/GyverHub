@@ -1,6 +1,5 @@
 #pragma once
 #include "config.h"
-#include "index.h"
 #include "macro.h"
 
 #ifdef GH_ESP_BUILD
@@ -32,9 +31,13 @@ class HubHTTP {
         });
 
 #ifndef GH_NO_PORTAL
-        server.on("/", [this]() {
+        /*server.on("/", [this]() {
             server.sendHeader(F("Content-Encoding"), F("gzip"));
             server.send_P(200, "text/html", (PGM_P)hub_index_gz, (size_t)hub_index_gz_len);
+        });*/
+        server.on("/", [this]() {
+            File f = GH_FS.open("/hub/index.html.gz", "r");
+            if (f) server.streamFile(f, "text/html");
         });
         server.on("/favicon.svg", [this]() {
             server.send(200);
