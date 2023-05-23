@@ -75,9 +75,7 @@ void build() {
 
     // BeginWidgets достаточно вызвать один раз, интерфейс будет собираться сам
     hub.BeginWidgets();
-    if (hub.Tabs(F("tabs"), &tab, F("Tab 1,MY TAB,tab 2,tab 3,TAB 4"))) {
-        hub.refresh();  // обновить страницу
-    }
+    hub.Tabs(F("tabs"), &tab, F("Tab 1,MY TAB,tab 2,tab 3,TAB 4"));
     // hub.EndWidgets();
 
     // hub.BeginWidgets();

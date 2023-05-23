@@ -20,9 +20,7 @@ void build() {
     hub.BeginWidgets();
 
     hub.WidgetSize(80);
-    if (hub.Tabs(F("tabs"), &tab, F("Sliders,Switches,Inputs,Buttons"))) {
-        hub.refresh();  // обновить страницу
-    }
+    hub.Tabs(F("tabs"), &tab, F("Sliders,Switches,Inputs,Buttons"));
 
     hub.WidgetSize(20);
     if (hub.Spinner(F("am"), &spin_am, GH_UINT8, F("Amount"), 0, DYN_MAX, 1)) {
