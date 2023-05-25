@@ -6,8 +6,8 @@ let focused = null;
 let touch = 0;
 let pressId = null;
 let pickers = {};
-let canvases = [];
 let dup_names = [];
+let gauges = {};
 
 let wid_row_id = null;
 let wid_row_count = 0;
@@ -643,7 +643,6 @@ function addHTML(ctrl) {
     `;
   }
 }
-
 function addCanvas(ctrl) {
   if (checkDup(ctrl)) return;
   checkWidget(ctrl);
@@ -660,57 +659,31 @@ function addCanvas(ctrl) {
     </div>
     `;
   }
-  canvases.push(ctrl.name);
+}
+function addGauge(ctrl) {
+  if (checkDup(ctrl)) return;
+  checkWidget(ctrl);
+  endButtons();
+  if (wid_row_id) {
+    let inner = `
+    <canvas class="gauge_t" id="#${ctrl.name}"></canvas>
+    `;
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.label ? ctrl.label : 'GAUGE', inner);
+  } else {
+    EL('controls').innerHTML += `
+    <div class="cv_block cv_block_back">
+      <canvas class="gauge_t" id="#${ctrl.name}"></canvas>
+    </div>
+    `;
+  }
+  gauges[ctrl.name] = {name: ctrl.name, value: Number(ctrl.value), min: Number(ctrl.min), max: Number(ctrl.max), step: Number(ctrl.step), text: ctrl.text, color: ctrl.color, interval: 0};
+  gauges[ctrl.name].value_t = ctrl.value;
 }
 
 // ================ UTILS =================
-function openColor(id) {
-  EL('color_cont#' + id).getElementsByTagName('button')[0].click()
-}
-function checkLen(arg, len) {
-  if (len && arg.value.length > len) arg.value = arg.value.substring(0, len);
-}
-function checkEnter(arg) {
-  if (event.key == 'Enter') set_h(arg.name, arg.value);
-}
-function getUnix(arg) {
-  return Math.floor(arg.valueAsNumber / 1000);
-}
-function showNotif(text, name) {
-  if (!("Notification" in window) || Notification.permission != 'granted') return;
-  let descr = name + ' (' + new Date(Date.now()).toLocaleString() + ')';
-  navigator.serviceWorker.getRegistration().then(function (reg) {
-    reg.showNotification(text, { body: descr, vibrate: true });
-  });
-  //new Notification(text, {body: descr});
-  //self.registration.showNotification(text, {body: descr});
-}
-function checkDup(ctrl) {
-  if (EL('#' + ctrl.name)) {
-    dup_names.push(' ' + ctrl.name);
-    return 1;
-  }
-  return 0;
-}
-function renderButton(title, className, name, label, size, color = null, is_icon = false) {
-  let col = (color != null) ? ((is_icon ? ';color:' : ';background:') + intToCol(color)) : '';
-  return `<button id="#${name}" title='${title}' style="font-size:${size}px${col}" class="${className}" onmousedown="if(!touch)click_h('${name}',1)" onmouseup="if(!touch&&pressId)click_h('${name}',0)" onmouseleave="if(pressId&&!touch)click_h('${name}',0);" ontouchstart="touch=1;click_h('${name}',1)" ontouchend="click_h('${name}',0)">${label}</button>`;
-}
+// widget
 function checkWidget(ctrl) {
   if (ctrl.tab_w && !wid_row_id) beginWidgets(null, true);
-}
-function beginButtons() {
-  btn_row_id = 'buttons_row#' + btn_row_count;
-  btn_row_count++;
-  EL('controls').innerHTML += `
-  <div id="${btn_row_id}" class="control control_nob control_scroll"></div>
-  `;
-}
-function endButtons() {
-  if (btn_row_id && EL(btn_row_id).getElementsByTagName('*').length == 1) {
-    EL(btn_row_id).innerHTML = "<div></div>" + EL(btn_row_id).innerHTML + "<div></div>";  // center button
-  }
-  btn_row_id = null;
 }
 function beginWidgets(ctrl = null, check = false) {
   if (!check) endButtons();
@@ -747,27 +720,52 @@ function addWidget(width, name, label, inner, height = 0, noback = false) {
   </div>
   `;
 }
-function moveSlider(arg, sendf = true) {
-  if (dis_scroll_f) {
-    dis_scroll_f--;
-    if (!dis_scroll_f) disableScroll();
+// color
+function openColor(id) {
+  EL('color_cont#' + id).getElementsByTagName('button')[0].click()
+}
+function showColors() {
+  Object.keys(pickers).forEach(pick => {
+    Pickr.create({
+      el: EL(pick),
+      theme: 'nano',
+      default: pickers[pick],
+      defaultRepresentation: 'HEXA',
+      components: {
+        preview: true,
+        hue: true,
+        interaction: {
+          hex: false,
+          input: true,
+          save: true
+        }
+      }
+    }).on('save', (color) => {
+      let col = color.toHEXA().toString();
+      set_h('color', colToInt(col));
+      EL('color_btn' + pick).style.color = col;
+    });
+  });
+}
+// buttons
+function renderButton(title, className, name, label, size, color = null, is_icon = false) {
+  let col = (color != null) ? ((is_icon ? ';color:' : ';background:') + intToCol(color)) : '';
+  return `<button id="#${name}" title='${title}' style="font-size:${size}px${col}" class="${className}" onmousedown="if(!touch)click_h('${name}',1)" onmouseup="if(!touch&&pressId)click_h('${name}',0)" onmouseleave="if(pressId&&!touch)click_h('${name}',0);" ontouchstart="touch=1;click_h('${name}',1)" ontouchend="click_h('${name}',0)">${label}</button>`;
+}
+function beginButtons() {
+  btn_row_id = 'buttons_row#' + btn_row_count;
+  btn_row_count++;
+  EL('controls').innerHTML += `
+  <div id="${btn_row_id}" class="control control_nob control_scroll"></div>
+  `;
+}
+function endButtons() {
+  if (btn_row_id && EL(btn_row_id).getElementsByTagName('*').length == 1) {
+    EL(btn_row_id).innerHTML = "<div></div>" + EL(btn_row_id).innerHTML + "<div></div>";  // center button
   }
-  arg.style.backgroundSize = (arg.value - arg.min) * 100 / (arg.max - arg.min) + '% 100%';
-  EL('out' + arg.id).value = formatToStep(arg.value, arg.step);
-  if (sendf) input_h(arg.name, arg.value);
+  btn_row_id = null;
 }
-function formatToStep(val, step) {
-  step = step.toString();
-  if (step.indexOf('.') > 0) return Number(val).toFixed((step.split('.')[1]).toString().length);
-  else return val;
-}
-function moveSliders() {
-  document.querySelectorAll('.c_range, .c_rangeW').forEach(x => { moveSlider(x, false) });
-}
-function togglePass(id) {
-  if (EL(id).type == 'text') EL(id).type = 'password';
-  else EL(id).type = 'text';
-}
+// spinner
 function spinSpinner(el, dir) {
   let num = (dir == 1) ? el.previousElementSibling : el.nextElementSibling;
   let val = Number(num.value) + Number(num.step) * Number(dir);
@@ -782,6 +780,195 @@ function resizeSpinner(el) {
 function resizeSpinners() {
   let spinners = document.querySelectorAll(".spinner");
   spinners.forEach((sp) => resizeSpinner(sp));
+}
+// slider
+function moveSliders() {
+  document.querySelectorAll('.c_range, .c_rangeW').forEach(x => { moveSlider(x, false) });
+}
+function moveSlider(arg, sendf = true) {
+  if (dis_scroll_f) {
+    dis_scroll_f--;
+    if (!dis_scroll_f) disableScroll();
+  }
+  arg.style.backgroundSize = (arg.value - arg.min) * 100 / (arg.max - arg.min) + '% 100%';
+  EL('out' + arg.id).value = formatToStep(arg.value, arg.step);
+  if (sendf) input_h(arg.name, arg.value);
+}
+// canvas
+function showCanvases(controls) {
+  for (ctrl of controls) {
+    if (ctrl.type == 'canvas') {
+      let cv = EL('#' + ctrl.name);
+      cv.width = cv.parentNode.clientWidth;
+      cv.height = cv.width * ctrl.size / 1000;
+      drawCanvas(cv, ctrl.value);
+    }
+  }
+}
+function drawCanvas(cv, data) {
+  function cv_map(cv, v, h) {
+    v = cv.width * v / 1000;
+    return v >= 0 ? v : (h ? cv.height : cv.width) - v;
+  }
+  function cv_scale(cv, v) {
+    return cv.parentNode.clientWidth * v / 1000;
+  }
+
+  let cx = cv.getContext("2d");
+  const cmd_list = ['fillStyle', 'strokeStyle', 'shadowColor', 'shadowBlur', 'shadowOffsetX', 'shadowOffsetY', 'lineWidth', 'miterLimit', 'font', 'textAlign', 'textBaseline', 'lineCap', 'lineJoin', 'globalCompositeOperation', 'globalAlpha', 'scale', 'rotate', 'rect', 'fillRect', 'strokeRect', 'clearRect', 'moveTo', 'lineTo', 'quadraticCurveTo', 'bezierCurveTo', 'translate', 'arcTo', 'arc', 'fillText', 'strokeText', 'drawImage', 'fill', 'stroke', 'beginPath', 'closePath', 'clip', 'save', 'restore'];
+  const const_list = ['butt', 'round', 'square', 'square', 'bevel', 'miter', 'start', 'end', 'center', 'left', 'right', 'alphabetic', 'top', 'hanging', 'middle', 'ideographic', 'bottom', 'source-over', 'source-atop', 'source-in', 'source-out', 'destination-over', 'destination-atop', 'destination-in', 'destination-out', 'lighter', 'copy', 'xor', 'top', 'bottom', 'middle', 'alphabetic'];
+  for (d of data) {
+    let div = d.indexOf(':');
+    let cmd = parseInt(d, 10);
+
+    if (!isNaN(cmd) && cmd <= 37) {
+      if (div == 1 || div == 2) {
+        let val = d.slice(div + 1);
+        let vals = val.split(',');
+        if (cmd <= 2) eval('cx.' + cmd_list[cmd] + '=\'' + intToColA(val) + '\'');
+        else if (cmd <= 7) eval('cx.' + cmd_list[cmd] + '=' + cv_scale(cv, val));
+        else if (cmd <= 13) eval('cx.' + cmd_list[cmd] + '=\'' + const_list[val] + '\'');
+        else if (cmd <= 14) eval('cx.' + cmd_list[cmd] + '=' + val);  // alpha
+        else if (cmd <= 16) eval('cx.' + cmd_list[cmd] + '(' + val + ')');  // scale rotate
+        else if (cmd <= 26) {
+          let str = 'cx.' + cmd_list[cmd] + '(';
+          for (let i in vals) {
+            if (i > 0) str += ',';
+            str += `cv_map(cv,${vals[i]},${(i % 2)})`;
+          }
+          eval(str + ')');
+        } else if (cmd == 27) {
+          eval(`cx.${cmd_list[cmd]}(cv_map(cv,${vals[0]},0),cv_map(cv,${vals[1]},1),cv_map(cv,${vals[2]},0),${vals[3]},${vals[4]},${vals[5]})`);
+        } else if (cmd <= 29) {
+          eval(`cx.${cmd_list[cmd]}(${vals[0]},cv_map(cv,${vals[1]},0),cv_map(cv,${vals[2]},1),${vals[3]})`);
+        } else if (cmd == 30) {
+          let str = 'cx.' + cmd_list[cmd] + '(';
+          for (let i in vals) {
+            if (i > 0) {
+              str += `,cv_map(cv,${vals[i]},${!(i % 2)})`;
+            } else str += vals[i];
+          }
+          eval(str + ')');
+        }
+      } else {
+        if (cmd >= 31) eval('cx.' + cmd_list[cmd] + '()');
+      }
+    } else {
+      eval(d);
+    }
+  }
+}
+// gauge
+function drawGauge(g) {
+  let cv = document.getElementById('#' + g.name);
+  let cx = cv.getContext("2d");
+  let perc = (g.value_t - g.min) * 100 / (g.max - g.min);
+  let col = g.color == null ? intToCol(colors[cfg.maincolor]) : intToCol(g.color);
+  let v = themes[cfg.theme];
+  if (perc < 0) perc = 0;
+  if (perc > 100) perc = 100;
+
+  cv.width = cv.parentNode.clientWidth;
+  cv.height = cv.width / 2;
+  cx.clearRect(0, 0, cv.width, cv.height);
+  cx.lineWidth = cv.width / 8;
+
+  cx.strokeStyle = theme_cols[v][6];
+  cx.beginPath();
+  cx.arc(cv.width / 2, cv.height * 19 / 20, cv.width / 2 - cx.lineWidth, Math.PI * (1 + perc / 100), Math.PI * 2);
+  cx.stroke();
+
+  cx.strokeStyle = col;
+  cx.beginPath();
+  cx.arc(cv.width / 2, cv.height * 19 / 20, cv.width / 2 - cx.lineWidth, Math.PI, Math.PI * (1 + perc / 100));
+  cx.stroke();
+
+  cx.fillStyle = col;
+  cx.font = '10px ' + cfg.font;
+  cx.textAlign = "center";
+
+  let text = g.text;
+  let len = Math.max(
+    (formatToStep(g.value, g.step) + text).length,
+    (formatToStep(g.min, g.step) + text).length,
+    (formatToStep(g.max, g.step) + text).length
+  );
+  if (len == 1) text += '  ';
+  else if (len == 2) text += ' ';
+
+  let w = Math.max(
+    cx.measureText(formatToStep(g.value, g.step) + text).width,
+    cx.measureText(formatToStep(g.min, g.step) + text).width,
+    cx.measureText(formatToStep(g.max, g.step) + text).width
+  );
+
+  cx.font = cv.width / 2 * 10 / w + 'px ' + cfg.font;
+  cx.fillText(formatToStep(g.value, g.step) + g.text, cv.width / 2, cv.height * 9 / 10);
+
+  cx.font = '10px ' + cfg.font;
+  w = Math.max(
+    cx.measureText(g.value).width,
+    cx.measureText(g.min).width,
+    cx.measureText(g.max).width
+  );
+  cx.fillStyle = theme_cols[v][2];
+  cx.font = cx.lineWidth * 2 / 3 * 10 / w + 'px ' + cfg.font;
+  cx.fillText(g.min, cx.lineWidth, cv.height * 9 / 10);
+  cx.fillText(g.max, cv.width - cx.lineWidth, cv.height * 9 / 10);
+
+  let step = Math.abs(g.max - g.min) / 10;
+  if (Math.abs(g.value - g.value_t) <= step) g.value_t = g.value;
+  else if (g.value_t < g.value) g.value_t += step;
+  else if (g.value_t > g.value) g.value_t -= step;
+}
+function showGauges() {
+  Object.values(gauges).forEach(gauge => {
+    drawGauge(gauge);
+    gauge.interval = setInterval(() => {
+      if (gauge.value != gauge.value_t) drawGauge(gauge);
+    }, 30);
+  });
+}
+function stopGauges() {
+  Object.values(gauges).forEach(gauge => {
+    clearInterval(gauge.interval);
+  });
+  gauges = {};
+}
+// misc
+function checkLen(arg, len) {
+  if (len && arg.value.length > len) arg.value = arg.value.substring(0, len);
+}
+function checkEnter(arg) {
+  if (event.key == 'Enter') set_h(arg.name, arg.value);
+}
+function getUnix(arg) {
+  return Math.floor(arg.valueAsNumber / 1000);
+}
+function showNotif(text, name) {
+  if (!("Notification" in window) || Notification.permission != 'granted') return;
+  let descr = name + ' (' + new Date(Date.now()).toLocaleString() + ')';
+  navigator.serviceWorker.getRegistration().then(function (reg) {
+    reg.showNotification(text, { body: descr, vibrate: true });
+  });
+  //new Notification(text, {body: descr});
+  //self.registration.showNotification(text, {body: descr});
+}
+function checkDup(ctrl) {
+  if (EL('#' + ctrl.name)) {
+    dup_names.push(' ' + ctrl.name);
+    return 1;
+  }
+  return 0;
+}
+function formatToStep(val, step) {
+  step = step.toString();
+  if (step.indexOf('.') > 0) return Number(val).toFixed((step.split('.')[1]).toString().length);
+  else return val;
+}
+function togglePass(id) {
+  if (EL(id).type == 'text') EL(id).type = 'password';
+  else EL(id).type = 'text';
 }
 function resizeChbuttons() {
   let chtext = document.querySelectorAll(".chtext");

@@ -523,6 +523,12 @@ body::-webkit-scrollbar-thumb {
   overflow: hidden;
 }
 
+.cv_block_back {
+  background: var(--tab);
+  margin: 3px 0;
+  border-radius: 7px;
+}
+
 /* SWITCH */
 .switch {
   /*margin: 10px 2px 5px 2px;*/

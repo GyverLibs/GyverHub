@@ -14,6 +14,12 @@ function applyUpdate(name, value) {
   else if (cl.contains('switch_t')) el.checked = (value == '1');
   else if (cl.contains('select_t')) el.value = value;
   else if (cl.contains('canvas_t')) drawCanvas(el, value);
+  else if (cl.contains('gauge_t')) {
+    if (name in gauges) {
+      gauges[name].value = Number(value);
+      drawGauge(gauges[name]);
+    }
+  }
   else if (cl.contains('flags_t')) {
     let flags = document.getElementById('#' + name).getElementsByTagName('input');
     let val = value;
@@ -259,17 +265,18 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
 function showControls(controls) {
   EL('controls').innerHTML = '';
   if (!controls) return;
-  canvases = [];
+  stopGauges();
   pickers = {};
   dup_names = [];
-
   wid_row_count = 0;
   btn_row_count = 0;
   wid_row_id = null;
   btn_row_id = null;
+
   for (ctrl of controls) {
     if (devices[focused].show_names && ctrl.name) ctrl.label = ctrl.name;
     switch (ctrl.type) {
+      case 'gauge': addGauge(ctrl); break;
       case 'js': eval(ctrl.value); break;
       case 'canvas': addCanvas(ctrl); break;
       case 'button': addButton(ctrl); break;
@@ -306,13 +313,16 @@ function showControls(controls) {
     let labels = document.querySelectorAll(".widget_label");
     for (let lbl of labels) lbl.classList.add('widget_label_name');
   }
-  resizeSpinners();
-  resizeChbuttons();
-  scrollDown();
-  moveSliders();
-  showColors();
-  showCanvases(controls);
-  if (dup_names.length) showPopupError('Duplicated names: ' + dup_names);
+  setTimeout(() => {
+    resizeSpinners();
+    resizeChbuttons();
+    scrollDown();
+    moveSliders();
+    showColors();
+    showCanvases(controls);
+    showGauges();
+    if (dup_names.length) showPopupError('Duplicated names: ' + dup_names);
+  }, 10);
 }
 function showInfo(device) {
   EL('info_lib_v').innerHTML = device.info[0];
@@ -328,93 +338,7 @@ function showInfo(device) {
     EL('info_firm_v').onclick = function () { checkUpdates(focused, true); };
     EL('info_firm_v').classList.add('info_link');
   } else {
-    EL('info_firm_v').onclick = function () {};
+    EL('info_firm_v').onclick = function () { };
     EL('info_firm_v').classList.remove('info_link');
-  }
-}
-function showColors() {
-  Object.keys(pickers).forEach(pick => {
-    Pickr.create({
-      el: EL(pick),
-      theme: 'nano',
-      default: pickers[pick],
-      defaultRepresentation: 'HEXA',
-      components: {
-        preview: true,
-        hue: true,
-        interaction: {
-          hex: false,
-          input: true,
-          save: true
-        }
-      }
-    }).on('save', (color) => {
-      let col = color.toHEXA().toString();
-      set_h('color', colToInt(col));
-      EL('color_btn' + pick).style.color = col;
-    });
-  });
-}
-function showCanvases(controls) {
-  for (ctrl of controls) {
-    if (ctrl.type == 'canvas') {
-      let cv = EL('#' + ctrl.name);
-      cv.width = cv.parentNode.clientWidth;
-      cv.height = cv.width * ctrl.size / 1000;
-      drawCanvas(cv, ctrl.value);
-    }
-  }
-}
-function drawCanvas(cv, data) {
-  function cv_map(cv, v, h) {
-    v = cv.width * v / 1000;
-    return v >= 0 ? v : (h ? cv.height : cv.width) - v;
-  }
-  function cv_scale(cv, v) {
-    return cv.parentNode.clientWidth * v / 1000;
-  }
-
-  let cx = cv.getContext("2d");
-  const cmd_list = ['fillStyle', 'strokeStyle', 'shadowColor', 'shadowBlur', 'shadowOffsetX', 'shadowOffsetY', 'lineWidth', 'miterLimit', 'font', 'textAlign', 'textBaseline', 'lineCap', 'lineJoin', 'globalCompositeOperation', 'globalAlpha', 'scale', 'rotate', 'rect', 'fillRect', 'strokeRect', 'clearRect', 'moveTo', 'lineTo', 'quadraticCurveTo', 'bezierCurveTo', 'translate', 'arcTo', 'arc', 'fillText', 'strokeText', 'drawImage', 'fill', 'stroke', 'beginPath', 'closePath', 'clip', 'save', 'restore'];
-  const const_list = ['butt', 'round', 'square', 'square', 'bevel', 'miter', 'start', 'end', 'center', 'left', 'right', 'alphabetic', 'top', 'hanging', 'middle', 'ideographic', 'bottom', 'source-over', 'source-atop', 'source-in', 'source-out', 'destination-over', 'destination-atop', 'destination-in', 'destination-out', 'lighter', 'copy', 'xor', 'top', 'bottom', 'middle', 'alphabetic'];
-  for (d of data) {
-    let div = d.indexOf(':');
-    let cmd = parseInt(d, 10);
-
-    if (!isNaN(cmd) && cmd <= 37) {
-      if (div == 1 || div == 2) {
-        let val = d.slice(div + 1);
-        let vals = val.split(',');
-        if (cmd <= 2) eval('cx.' + cmd_list[cmd] + '=\'' + intToColA(val) + '\'');
-        else if (cmd <= 7) eval('cx.' + cmd_list[cmd] + '=' + cv_scale(cv, val));
-        else if (cmd <= 13) eval('cx.' + cmd_list[cmd] + '=\'' + const_list[val] + '\'');
-        else if (cmd <= 14) eval('cx.' + cmd_list[cmd] + '=' + val);  // alpha
-        else if (cmd <= 16) eval('cx.' + cmd_list[cmd] + '(' + val + ')');  // scale rotate
-        else if (cmd <= 26) {
-          let str = 'cx.' + cmd_list[cmd] + '(';
-          for (let i in vals) {
-            if (i > 0) str += ',';
-            str += `cv_map(cv,${vals[i]},${(i % 2)})`;
-          }
-          eval(str + ')');
-        } else if (cmd == 27) {
-          eval(`cx.${cmd_list[cmd]}(cv_map(cv,${vals[0]},0),cv_map(cv,${vals[1]},1),cv_map(cv,${vals[2]},0),${vals[3]},${vals[4]},${vals[5]})`);
-        } else if (cmd <= 29) {
-          eval(`cx.${cmd_list[cmd]}(${vals[0]},cv_map(cv,${vals[1]},0),cv_map(cv,${vals[2]},1),${vals[3]})`);
-        } else if (cmd == 30) {
-          let str = 'cx.' + cmd_list[cmd] + '(';
-          for (let i in vals) {
-            if (i > 0) {
-              str += `,cv_map(cv,${vals[i]},${!(i % 2)})`;
-            } else str += vals[i];
-          }
-          eval(str + ')');
-        }
-      } else {
-        if (cmd >= 31) eval('cx.' + cmd_list[cmd] + '()');
-      }
-    } else {
-      eval(d);
-    }
   }
 }

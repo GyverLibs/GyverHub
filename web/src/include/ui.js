@@ -1,60 +1,3 @@
-const app_title = 'GyverHUB';
-const app_version = '__VER__';
-const version_notes = 'Много изменений, несовместимо с предыдущей версией! Обнови библиотеку на 24.05.2023 и новее! + Добавлен Canvas API';
-const ota_url = 'hub.gyver.ru/ota/projects.json';
-
-const info_labels_version = {
-  info_lib_v: 'Library',
-  info_firm_v: 'Firmware',
-};
-const info_labels_esp = {
-  info_mode: 'WiFi Mode',
-  info_ssid: 'SSID',
-  info_l_ip: 'Local IP',
-  info_ap_ip: 'AP IP',
-  info_mac: 'MAC',
-  info_rssi: 'RSSI',
-  info_uptime: 'Uptime',
-  info_heap: 'Free Heap',
-  info_sketch: 'Sketch (Free)',
-  info_flash: 'Flash Size',
-  info_cpu: 'Cpu Freq.',
-};
-const info_labels_topics = {
-  info_id: 'ID',
-  info_set: 'Set',
-  info_read: 'Read',
-  info_get: 'Get',
-  info_status: 'Status',
-};
-const colors = {
-  //RED: 0xcb2839,
-  ORANGE: 0xd55f30,
-  YELLOW: 0xd69d27,
-  GREEN: 0x37A93C,
-  MINT: 0x25b18f,
-  AQUA: 0x2ba1cd,
-  BLUE: 0x297bcd,
-  VIOLET: 0x825ae7,
-  PINK: 0xc8589a,
-};
-const fonts = [
-  'monospace',
-  'system-ui',
-  'cursive',
-  'Arial',
-  'Verdana',
-  'Tahoma',
-  'Trebuchet MS',
-  'Georgia',
-  'Garamond',
-];
-const themes = {
-  DARK: 0,
-  LIGHT: 1
-};
-
-// =============== VARS ==============
 let screen = 'main';
 let deferredPrompt = null;
 let pin_id = null;
@@ -98,11 +41,13 @@ document.addEventListener('keydown', function (e) {
 
 // ============= STARTUP ============
 window.onload = function () {
-  // system
+  /*NON-ESP*/
   if ('serviceWorker' in navigator && !isLocal()) {
     navigator.serviceWorker.register('/sw.js');
   }
   window.addEventListener('beforeinstallprompt', (e) => deferredPrompt = e);
+  /*/NON-ESP*/
+
   window.history.pushState({ page: 1 }, "", "");    // back/refresh
   window.onpopstate = function (e) {
     window.history.pushState({ page: 1 }, "", "");
@@ -334,6 +279,7 @@ function refresh_h() {
   else discover();
 }
 function back_h() {
+  stopGauges();
   if (screen == 'device') {
     showErr(false);
     switch (devices_t[focused].conn) {
@@ -442,6 +388,7 @@ function clear_all() {
 }
 function show_screen(nscreen) {
   screen = nscreen;
+  stopGauges();
   stopFS();
   show_keypad(false);
   let config_s = EL('config').style;
@@ -672,23 +619,18 @@ async function cfg_import() {
 
 // ============ THEME =============
 function updateTheme() {
-  const theme = [
-    ['#1b1c20', '#26272c', '#eee', '#ccc', '#141516', '#444', '#0e0e0e', 'dark', '#222', '#000'],
-    ['#eee', '#fff', '#111', '#333', '#ddd', '#999', '#bdbdbd', 'light', '#fff', '#000000a3']
-  ];  // back/tab/font/font2/dark/thumb/black/scheme/font4/shad/font3
-
   let v = themes[cfg.theme];
   let r = document.querySelector(':root');
-  r.style.setProperty('--back', theme[v][0]);
-  r.style.setProperty('--tab', theme[v][1]);
-  r.style.setProperty('--font', theme[v][2]);
-  r.style.setProperty('--font2', theme[v][3]);
-  r.style.setProperty('--dark', theme[v][4]);
-  r.style.setProperty('--thumb', theme[v][5]);
-  r.style.setProperty('--black', theme[v][6]);
-  r.style.setProperty('--scheme', theme[v][7]);
-  r.style.setProperty('--font_inv', theme[v][8]);
-  r.style.setProperty('--shad', theme[v][9]);
+  r.style.setProperty('--back', theme_cols[v][0]);
+  r.style.setProperty('--tab', theme_cols[v][1]);
+  r.style.setProperty('--font', theme_cols[v][2]);
+  r.style.setProperty('--font2', theme_cols[v][3]);
+  r.style.setProperty('--dark', theme_cols[v][4]);
+  r.style.setProperty('--thumb', theme_cols[v][5]);
+  r.style.setProperty('--black', theme_cols[v][6]);
+  r.style.setProperty('--scheme', theme_cols[v][7]);
+  r.style.setProperty('--font_inv', theme_cols[v][8]);
+  r.style.setProperty('--shad', theme_cols[v][9]);
   r.style.setProperty('--ui_width', cfg.ui_width + 'px');
   r.style.setProperty('--prim', intToCol(colors[cfg.maincolor]));
   r.style.setProperty('--font_f', cfg.font);

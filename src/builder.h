@@ -278,6 +278,33 @@ class HubBuilder {
         return 0;
     }
 
+    // ========================== GAUGE ===========================
+    void Gauge(FSTR name, float value = 0, FSTR text = nullptr, FSTR label = nullptr, float minv = 0, float maxv = 100, float step = 1, uint32_t color = GH_DEFAULT) {
+        _gauge(true, name, value, text, label, minv, maxv, step, color);
+    }
+    void Gauge(CSREF name, float value = 0, CSREF text = "", CSREF label = "", float minv = 0, float maxv = 100, float step = 1, uint32_t color = GH_DEFAULT) {
+        _gauge(true, name.c_str(), value, text.c_str(), label.c_str(), minv, maxv, step, color);
+    }
+
+    void _gauge(bool fstr, VSPTR name, float value, VSPTR text, VSPTR label, float minv, float maxv, float step, uint32_t color) {
+        if (_isUI()) {
+            _begin(F("gauge"));
+            _name(name, fstr);
+            _value();
+            *sptr += value;
+            _text(text, fstr);
+            _label(label, fstr);
+            _minv(minv);
+            _maxv(maxv);
+            _step(step);
+            _color(color);
+            _tabw();
+            _end();
+        } else if (_isRead()) {
+            if (_checkName(name, fstr)) *sptr += value;
+        }
+    }
+
     // ========================== SWITCH ==========================
     bool Switch(FSTR name, bool* value = nullptr, FSTR label = nullptr, uint32_t color = GH_DEFAULT) {
         return _switch(true, F("switch"), name, value, label, color, nullptr);
@@ -515,7 +542,7 @@ class HubBuilder {
         _tabw();
         _end();
     }
-    
+
     void _canvas(bool fstr, VSPTR name, int size, GHcanvas* cv, VSPTR label, bool begin) {
         if (_isUI()) {
             _begin(F("canvas"));

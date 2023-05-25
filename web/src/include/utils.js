@@ -1,6 +1,67 @@
+const app_title = 'GyverHUB';
+const version_notes = 'Добавлены Canvas API и Gauge. Требуется библиотека версии от 25.05.2023';
+const ota_url = 'hub.gyver.ru/ota/projects.json';
+const non_esp = '__ESP__';
+const app_version = '__VER__';
+
 const log_enable = true;
 const log_network = false;
-const non_esp = '__ESP__';
+
+const info_labels_version = {
+  info_lib_v: 'Library',
+  info_firm_v: 'Firmware',
+};
+const info_labels_esp = {
+  info_mode: 'WiFi Mode',
+  info_ssid: 'SSID',
+  info_l_ip: 'Local IP',
+  info_ap_ip: 'AP IP',
+  info_mac: 'MAC',
+  info_rssi: 'RSSI',
+  info_uptime: 'Uptime',
+  info_heap: 'Free Heap',
+  info_sketch: 'Sketch (Free)',
+  info_flash: 'Flash Size',
+  info_cpu: 'Cpu Freq.',
+};
+const info_labels_topics = {
+  info_id: 'ID',
+  info_set: 'Set',
+  info_read: 'Read',
+  info_get: 'Get',
+  info_status: 'Status',
+};
+const colors = {
+  //RED: 0xcb2839,
+  ORANGE: 0xd55f30,
+  YELLOW: 0xd69d27,
+  GREEN: 0x37A93C,
+  MINT: 0x25b18f,
+  AQUA: 0x2ba1cd,
+  BLUE: 0x297bcd,
+  VIOLET: 0x825ae7,
+  PINK: 0xc8589a,
+};
+const fonts = [
+  'monospace',
+  'system-ui',
+  'cursive',
+  'Arial',
+  'Verdana',
+  'Tahoma',
+  'Trebuchet MS',
+  'Georgia',
+  'Garamond',
+];
+const themes = {
+  DARK: 0,
+  LIGHT: 1
+};
+const theme_cols = [
+  ['#1b1c20', '#26272c', '#eee', '#ccc', '#141516', '#444', '#0e0e0e', 'dark', '#222', '#000'],
+  ['#eee', '#fff', '#111', '#333', '#ddd', '#999', '#bdbdbd', 'light', '#fff', '#000000a3']
+];  // back/tab/font/font2/dark/thumb/black/scheme/font4/shad/font3
+
 
 function getMime(name) {
   const mime_table = {
@@ -103,6 +164,10 @@ function enableScroll() {
 function refreshSpin(val) {
   if (val) EL('icon_refresh').classList.add('spinning');
   else EL('icon_refresh').classList.remove('spinning');
+}
+
+function resize_h() {
+  showGauges();
 }
 
 // ========== POPUP ==============
