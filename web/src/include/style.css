@@ -31,18 +31,6 @@
   max-width: var(--ui_width);
 }
 
-#info_l_ip,
-#info_firm_v {
-  color: var(--prim);
-  user-select: none;
-}
-
-#info_l_ip:hover,
-#info_firm_v:hover {
-  cursor: pointer;
-  text-decoration: underline;
-}
-
 html {
   height: 100%;
 }
@@ -411,8 +399,18 @@ body::-webkit-scrollbar-thumb {
 /* =================================== */
 #devices {
   /*grid-gap: 10px;*/
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   /*grid-template-columns: repeat(auto-fit, 200px);*/
+}
+
+.info_link {
+  color: var(--prim);
+  user-select: none;
+}
+
+.info_link:hover {
+  cursor: pointer;
+  text-decoration: underline;
 }
 
 .info {
@@ -517,6 +515,13 @@ body::-webkit-scrollbar-thumb {
 /* =================================== */
 /* ================ UI =============== */
 /* =================================== */
+
+.cv_block {
+  display: flex;
+  justify-content: center;
+  padding: 6px 10px;
+  overflow: hidden;
+}
 
 /* SWITCH */
 .switch {
@@ -996,15 +1001,15 @@ input:checked+.led_i_tab {
 
 /* SWITCH I tab */
 .switch_i_cont_tab {
-  margin: -70px 70px 0 0;
+  margin: -65px 65px 0 0;
   width: 0px;
   height: 0px;
 }
 
 .switch_i_tab {
   justify-content: center;
-  width: 70px;
-  height: 70px;
+  width: 65px;
+  height: 65px;
   font-size: 40px;
 
   /*box-shadow: 0 0 0 3px var(--black), 0 0 4px 3px var(--black), 0 0 4px 0 inset var(--black);*/
@@ -1306,6 +1311,11 @@ input:checked+.chbutton_s {
   text-transform: uppercase;
   white-space: nowrap;
   overflow-x: clip;
+}
+
+.widget_label_name {
+  text-transform: none !important;
+  user-select: text !important;
 }
 
 .widget_block {

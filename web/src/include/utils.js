@@ -58,7 +58,10 @@ String.prototype.hashCode = function () {
   return hash[0];
 }
 function intToCol(val) {
-  return "#" + val.toString(16).padStart(6, '0');
+  return "#" + Number(val).toString(16).padStart(6, '0');
+}
+function intToColA(val) {
+  return "#" + Number(val).toString(16).padStart(8, '0');
 }
 function colToInt(str) {
   return parseInt(str.substr(1), 16);

@@ -15,6 +15,8 @@ class HubHTTP {
 class HubHTTP {
     // ============ PUBLIC =============
    public:
+    AsyncWebServer server;
+    
     HubHTTP() : server(GH_HTTP_PORT) {}
 
     // ============ PROTECTED =============
@@ -82,7 +84,6 @@ class HubHTTP {
     void gzipHeader(AsyncWebServerResponse* response) {
         response->addHeader("Content-Encoding", "gzip");
     }
-    AsyncWebServer server;
 };
 #endif
 #endif

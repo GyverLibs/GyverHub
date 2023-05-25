@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <Stamp.h>
 
+#include "canvas.h"
 #include "config.h"
 #include "macro.h"
 #include "utils/build.h"
@@ -38,7 +39,7 @@ class HubBuilder {
     bool Dummy(CSREF name, void* value = nullptr, GHdata_t type = GH_NULL) {
         return _dummy(false, name.c_str(), value, type);
     }
-    
+
     bool _dummy(bool fstr, VSPTR name, void* value, GHdata_t type) {
         if (_isRead()) {
             if (_checkName(name, fstr)) GHtypeToStr(sptr, value, type);
@@ -188,6 +189,18 @@ class HubBuilder {
             _end();
         } else if (_isRead()) {
             if (_checkName(name, fstr)) _escape(sptr, value);
+        }
+    }
+
+    // =========================== JS ===========================
+    void JS(const String& value = "") {
+        if (_isUI()) {
+            _begin(F("js"));
+            _value();
+            _quot();
+            _escape(sptr, value);
+            _quot();
+            _end();
         }
     }
 
@@ -484,6 +497,38 @@ class HubBuilder {
         return 0;
     }
 
+    // ========================= CANVAS =========================
+    void Canvas(FSTR name, int size = 500, GHcanvas* cv = nullptr, FSTR label = nullptr) {
+        _canvas(true, name, size, cv, label, false);
+    }
+    void Canvas(CSREF name, int size = 500, GHcanvas* cv = nullptr, CSREF label = "") {
+        _canvas(false, name.c_str(), size, cv, label.c_str(), false);
+    }
+    void BeginCanvas(FSTR name, int size = 500, GHcanvas* cv = nullptr, FSTR label = nullptr) {
+        _canvas(false, name, size, cv, label, true);
+    }
+    void BeginCanvas(CSREF name, int size = 500, GHcanvas* cv = nullptr, CSREF label = "") {
+        _canvas(false, name.c_str(), size, cv, label.c_str(), true);
+    }
+    void EndCanvas() {
+        *sptr += ']';
+        _tabw();
+        _end();
+    }
+    
+    void _canvas(bool fstr, VSPTR name, int size, GHcanvas* cv, VSPTR label, bool begin) {
+        if (_isUI()) {
+            _begin(F("canvas"));
+            _name(name, fstr);
+            _size(size);
+            _label(label, fstr);
+            _value();
+            *sptr += '[';
+            if (begin && cv) cv->extBuffer(sptr);
+            else EndCanvas();
+        }
+    }
+
    protected:
     String* sptr = nullptr;
     GHbuild* bptr = nullptr;
@@ -539,6 +584,17 @@ class HubBuilder {
     void _value() {
         *sptr += F(",'value':");
     }
+    void _value(VSPTR value, bool fstr = true) {
+        _value();
+        _quot();
+        if (value) {
+            if (fstr) *sptr += (FSTR)value;
+            else *sptr += (PGM_P)value;
+        }
+        _quot();
+    }
+
+    // ================
     void _name(VSPTR name, bool fstr = true) {
         *sptr += F(",'name':'");
         if (name) {

@@ -19,6 +19,12 @@ class HubHTTP {
 
 class HubHTTP {
    public:
+#ifdef ESP8266
+    ESP8266WebServer server;
+#else
+    WebServer server;
+#endif
+
     HubHTTP() : server(GH_HTTP_PORT) {}
 
    protected:
@@ -72,11 +78,6 @@ class HubHTTP {
     }
 
    private:
-#ifdef ESP8266
-    ESP8266WebServer server;
-#else
-    WebServer server;
-#endif
 };
 #endif
 #endif

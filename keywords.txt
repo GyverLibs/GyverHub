@@ -38,6 +38,9 @@ onCLI	KEYWORD2
 print	KEYWORD2
 sendPush	KEYWORD2
 sendUpdate	KEYWORD2
+sendCanvas	KEYWORD2
+sendCanvasBegin	KEYWORD2
+sendCanvasEnd	KEYWORD2
 setupMQTT	KEYWORD2
 turnOn	KEYWORD2
 turnOff	KEYWORD2
@@ -55,6 +58,71 @@ toString	KEYWORD2
 start	KEYWORD2
 stop	KEYWORD2
 ready	KEYWORD2
+
+extBuffer	KEYWORD2
+clearBuffer	KEYWORD2
+custom	KEYWORD2
+clear	KEYWORD2
+background	KEYWORD2
+fill	KEYWORD2
+noFill	KEYWORD2
+stroke	KEYWORD2
+noStroke	KEYWORD2
+strokeWeight	KEYWORD2
+strokeJoin	KEYWORD2
+strokeCap	KEYWORD2
+circle	KEYWORD2
+line	KEYWORD2
+point	KEYWORD2
+quadrangle	KEYWORD2
+triangle	KEYWORD2
+rect	KEYWORD2
+square	KEYWORD2
+ellipseMode	KEYWORD2
+rectMode	KEYWORD2
+textFont	KEYWORD2
+textSize	KEYWORD2
+text	KEYWORD2
+textAlign	KEYWORD2
+push	KEYWORD2
+pop	KEYWORD2
+fillStyle	KEYWORD2
+strokeStyle	KEYWORD2
+shadowColor	KEYWORD2
+shadowBlur	KEYWORD2
+shadowOffsetX	KEYWORD2
+shadowOffsetY	KEYWORD2
+lineCap	KEYWORD2
+lineJoin	KEYWORD2
+lineWidth	KEYWORD2
+miterLimit	KEYWORD2
+font	KEYWORD2
+textAlign	KEYWORD2
+textBaseline	KEYWORD2
+globalAlpha	KEYWORD2
+globalCompositeOperation	KEYWORD2
+fillRect	KEYWORD2
+strokeRect	KEYWORD2
+clearRect	KEYWORD2
+fill	KEYWORD2
+stroke	KEYWORD2
+beginPath	KEYWORD2
+moveTo	KEYWORD2
+closePath	KEYWORD2
+lineTo	KEYWORD2
+clip	KEYWORD2
+quadraticCurveTo	KEYWORD2
+bezierCurveTo	KEYWORD2
+arc	KEYWORD2
+arcTo	KEYWORD2
+scale	KEYWORD2
+rotate	KEYWORD2
+translate	KEYWORD2
+fillText	KEYWORD2
+strokeText	KEYWORD2
+drawImage	KEYWORD2
+save	KEYWORD2
+restore	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
@@ -87,6 +155,10 @@ Select	LITERAL1
 Flags	LITERAL1
 Color	LITERAL1
 Dummy	LITERAL1
+JS	LITERAL1
+Canvas	LITERAL1
+BeginCanvas	LITERAL1
+EndCanvas	LITERAL1
 
 GH_RED	LITERAL1
 GH_ORANGE	LITERAL1
@@ -98,6 +170,7 @@ GH_BLUE	LITERAL1
 GH_VIOLET	LITERAL1
 GH_PINK	LITERAL1
 
+GHcanvas	LITERAL1
 GHlog	LITERAL1
 GHcolor	LITERAL1
 GHflags	LITERAL1

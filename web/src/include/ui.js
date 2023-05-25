@@ -1,6 +1,6 @@
 const app_title = 'GyverHUB';
 const app_version = '__VER__';
-const version_notes = 'Много изменений, несовместимо с предыдущей версией! Обнови библиотеку на 23.05.2023 и новее!';
+const version_notes = 'Много изменений, несовместимо с предыдущей версией! Обнови библиотеку на 24.05.2023 и новее! + Добавлен Canvas API';
 const ota_url = 'hub.gyver.ru/ota/projects.json';
 
 const info_labels_version = {
@@ -286,9 +286,8 @@ function render_info() {
     </div>`;
   });
   EL('info_esp').innerHTML += '<div style="padding:10px"><button class="c_btn btn_mini" onclick="reboot_h()"><span class="icon info_icon"></span>Reboot</button></div>';
-
   EL('info_l_ip').onclick = function () { window.open('http://' + devices[focused].ip, '_blank').focus(); };
-  EL('info_firm_v').onclick = function () { checkUpdates(focused, true); };
+  EL('info_l_ip').classList.add('info_link');
 }
 function update_info() {
   let id = focused;
@@ -543,7 +542,7 @@ function toggleCLI() {
   showCLI(!(EL('cli_cont').style.display == 'block'));
 }
 function showCLI(v) {
-  EL('bottom_space').style.height = v ? '170px' : '100px';
+  EL('bottom_space').style.height = v ? '170px' : '70px';
   EL('cli_cont').style.display = v ? 'block' : 'none';
   if (v) EL('cli_input').focus();
   EL('info_cli_sw').checked = v;

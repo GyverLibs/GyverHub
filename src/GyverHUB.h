@@ -5,6 +5,7 @@
 #include <Stamp.h>
 
 #include "builder.h"
+#include "canvas.h"
 #include "config.h"
 #include "macro.h"
 #include "utils/build.h"
@@ -50,13 +51,13 @@
 #endif
 
 #ifdef GH_ASYNC
+#include "async/http.h"
 #include "async/mqtt.h"
 #include "async/ws.h"
-#include "async/http.h"
 #else
+#include "sync/http.h"
 #include "sync/mqtt.h"
 #include "sync/ws.h"
-#include "sync/http.h"
 #endif
 
 #endif
@@ -320,6 +321,38 @@ class GyverHUB : public HubBuilder {
         answ += F("'updates':{");
     }
 
+    // ======================= SEND CANVAS ========================
+    // отправить холст
+    void sendCanvas(const String& name, GHcanvas& cv) {
+        if (!running_f) return;
+        String answ;
+        _updateBegin(answ);
+        answ += '\'';
+        answ += name;
+        answ += F("':[");
+        answ += cv.buf;
+        answ += F("]}}\n");
+        send(answ);
+        cv.clearBuffer();
+    }
+
+    // начать отправку холста
+    void sendCanvasBegin(const String& name, GHcanvas& cv) {
+        if (!running_f) return;
+        cv.buf = "";
+        _updateBegin(cv.buf);
+        cv.buf += '\'';
+        cv.buf += name;
+        cv.buf += F("':[");
+    }
+
+    // закончить отправку холста
+    void sendCanvasEnd(GHcanvas& cv) {
+        cv.buf += F("]}}\n");
+        send(cv.buf);
+        cv.clearBuffer();
+    }
+
     // ======================== SEND GET =========================
 
     // автоматически отправлять новое состояние на get-топик при изменении через set (умолч. false)
@@ -474,8 +507,7 @@ class GyverHUB : public HubBuilder {
                     if (modules.read(GH_MOD_FSBR)) {
                         if (fs_mounted) answerFsbr();
                         else answerType(F("fs_error"));
-                    }
-                    else answerType(F("ERR"));
+                    } else answerType(F("ERR"));
 #else
                     answerType(F("ERR"));
 #endif

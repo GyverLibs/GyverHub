@@ -1,6 +1,6 @@
 # GyverHUB Web Builder
 
-version = '0.19b'
+version = '0.20b'
 fa_url = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-solid-900.ttf'
 
 js_files = [
@@ -178,7 +178,7 @@ shutil.move('local.zip', 'local/local.zip')
 # JS
 js_min = ''
 for file in js_files:
-    if ('mqtt' in file): continue
+    if (('mqtt' in file) or ('test' in file)): continue
     with open(file, 'r') as f:
         read = f.read()
         read = re.sub(r'\/\*NON-ESP\*\/([\s\S]*?)\/\*\/NON-ESP\*\/', '', read)
@@ -199,14 +199,14 @@ with open('esp/style.css', 'w') as f: f.write(css_min.replace('url(fa-solid-900.
 with open('esp/style.css', 'rb') as f_in, gzip.open('esp/style.css.gz', 'wb') as f_out: f_out.writelines(f_in)
 os.remove("esp/style.css")
 
+# INDEX
+with open('local/index.html', 'rb') as f_in, gzip.open('esp/index.html.gz', 'wb') as f_out: f_out.writelines(f_in)
+
 # OTHER
+'''
 #with open('local/fa-solid-900.ttf', 'rb') as f_in, gzip.open('esp/fa-solid-900.ttf.gz', 'wb') as f_out: f_out.writelines(f_in)
 #with open('local/test.html', 'rb') as f_in, gzip.open('esp/test.html.gz', 'wb') as f_out: f_out.writelines(f_in)
 #with open('local/favicon.svg', 'rb') as f_in, gzip.open('esp/favicon.svg.gz', 'wb') as f_out: f_out.writelines(f_in)
-
-# INDEX
-with open('local/index.html', 'rb') as f_in, gzip.open('esp/index.html.gz', 'wb') as f_out: f_out.writelines(f_in)
-'''
 with open('local/index.html', 'rb') as f_in, gzip.open('esp/index.html.gz', 'wb') as f_out: f_out.writelines(f_in)
 with open('esp/index.html.gz', "rb") as f: ba = bytearray(f.read())
 

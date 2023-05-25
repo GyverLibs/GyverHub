@@ -247,18 +247,6 @@ function render_main(v) {
         </div>
 
       </div>
-
-      <div class="cfg_col" id="app_block">
-        <div class="cfg_row cfg_head">
-        <label><span class="icon cfg_icon"></span>App</label>
-          <div>
-            <button class="c_btn btn_mini ${isSSL() ? 'info_btn_dis' : ''}" onclick="pwa_install(false)">HTTP</button>
-            <button class="c_btn btn_mini ${!isSSL() ? 'info_btn_dis' : ''}" onclick="pwa_install(true)">HTTPS</button>
-          </div>
-        </div>
-        <!--<span class="notice_block">HTTP app: <b>Local</b> and <b>MQTT</b><br>HTTPS app: only <b>MQTT</b></span>-->
-        <span class="notice_block" id="pwa_unsafe">Enable <u>${browser()}://flags/#unsafely-treat-insecure-origin-as-secure</u> and add <u>${window.location.href}</u> to list</span>
-      </div>
       <!--/NON-ESP-->
 
       <div class="cfg_col">
@@ -324,8 +312,21 @@ function render_main(v) {
             </div>
           </div>
         </div>
-
       </div>
+
+      <!--NON-ESP-->
+      <div class="cfg_col" id="app_block">
+        <div class="cfg_row cfg_head">
+        <label><span class="icon cfg_icon"></span>App</label>
+          <div>
+            <button class="c_btn btn_mini ${isSSL() ? 'info_btn_dis' : ''}" onclick="pwa_install(false)">HTTP</button>
+            <button class="c_btn btn_mini ${!isSSL() ? 'info_btn_dis' : ''}" onclick="pwa_install(true)">HTTPS</button>
+          </div>
+        </div>
+        <!--<span class="notice_block">HTTP app: <b>Local</b> and <b>MQTT</b><br>HTTPS app: only <b>MQTT</b></span>-->
+        <span class="notice_block" id="pwa_unsafe">Enable <u>${browser()}://flags/#unsafely-treat-insecure-origin-as-secure</u> and add <u>${window.location.href}</u> to list</span>
+      </div>
+      <!--/NON-ESP-->
 
       <div class="cfg_col">
         <div class="cfg_info">

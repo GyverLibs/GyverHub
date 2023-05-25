@@ -6,6 +6,7 @@ let focused = null;
 let touch = 0;
 let pressId = null;
 let pickers = {};
+let canvases = [];
 let dup_names = [];
 
 let wid_row_id = null;
@@ -641,6 +642,25 @@ function addHTML(ctrl) {
     </div>
     `;
   }
+}
+
+function addCanvas(ctrl) {
+  if (checkDup(ctrl)) return;
+  checkWidget(ctrl);
+  endButtons();
+  if (wid_row_id) {
+    let inner = `
+    <canvas class="canvas_t" id="#${ctrl.name}"></canvas>
+    `;
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.label ? ctrl.label : 'CANVAS', inner);
+  } else {
+    EL('controls').innerHTML += `
+    <div class="cv_block">
+      <canvas class="canvas_t" id="#${ctrl.name}"></canvas>
+    </div>
+    `;
+  }
+  canvases.push(ctrl.name);
 }
 
 // ================ UTILS =================
