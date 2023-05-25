@@ -595,7 +595,7 @@ input:checked+.slider:before {
   margin: 0;
   background: none;
   border: none;
-  background: var(--back);
+  background: var(--dark);
   background-repeat: no-repeat;
   background-image: linear-gradient(var(--prim), var(--prim));
 }
@@ -644,7 +644,7 @@ input:checked+.slider:before {
   height: 35px;
   padding: 0;
   margin: 0;
-  background: var(--back);
+  background: var(--dark);
   background-repeat: no-repeat;
   background-image: linear-gradient(var(--prim), var(--prim));
   border-radius: 5px;

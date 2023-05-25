@@ -279,7 +279,6 @@ function refresh_h() {
   else discover();
 }
 function back_h() {
-  stopGauges();
   if (screen == 'device') {
     showErr(false);
     switch (devices_t[focused].conn) {
@@ -388,7 +387,6 @@ function clear_all() {
 }
 function show_screen(nscreen) {
   screen = nscreen;
-  stopGauges();
   stopFS();
   show_keypad(false);
   let config_s = EL('config').style;

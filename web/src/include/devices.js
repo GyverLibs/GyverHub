@@ -676,7 +676,7 @@ function addGauge(ctrl) {
     </div>
     `;
   }
-  gauges[ctrl.name] = {name: ctrl.name, value: Number(ctrl.value), min: Number(ctrl.min), max: Number(ctrl.max), step: Number(ctrl.step), text: ctrl.text, color: ctrl.color, interval: 0};
+  gauges[ctrl.name] = {name: ctrl.name, value: Number(ctrl.value), min: Number(ctrl.min), max: Number(ctrl.max), step: Number(ctrl.step), text: ctrl.text, color: ctrl.color};
   gauges[ctrl.name].value_t = ctrl.value;
 }
 
@@ -860,7 +860,12 @@ function drawCanvas(cv, data) {
 }
 // gauge
 function drawGauge(g) {
-  let cv = document.getElementById('#' + g.name);
+  let cv = EL('#' + g.name);
+  if (!cv) return;
+  if (Math.abs(g.value - g.value_t) <= 0.1) g.value_t = g.value;
+  else g.value_t += (g.value - g.value_t) * 0.2;
+  if (g.value_t != g.value) setTimeout(() => drawGauge(g), 30);
+
   let cx = cv.getContext("2d");
   let perc = (g.value_t - g.min) * 100 / (g.max - g.min);
   let col = g.color == null ? intToCol(colors[cfg.maincolor]) : intToCol(g.color);
@@ -869,18 +874,18 @@ function drawGauge(g) {
   if (perc > 100) perc = 100;
 
   cv.width = cv.parentNode.clientWidth;
-  cv.height = cv.width / 2;
+  cv.height = cv.width * 0.47;
   cx.clearRect(0, 0, cv.width, cv.height);
   cx.lineWidth = cv.width / 8;
 
-  cx.strokeStyle = theme_cols[v][6];
+  cx.strokeStyle = theme_cols[v][4];
   cx.beginPath();
-  cx.arc(cv.width / 2, cv.height * 19 / 20, cv.width / 2 - cx.lineWidth, Math.PI * (1 + perc / 100), Math.PI * 2);
+  cx.arc(cv.width / 2, cv.height * 0.97, cv.width / 2 - cx.lineWidth, Math.PI * (1 + perc / 100), Math.PI * 2);
   cx.stroke();
 
   cx.strokeStyle = col;
   cx.beginPath();
-  cx.arc(cv.width / 2, cv.height * 19 / 20, cv.width / 2 - cx.lineWidth, Math.PI, Math.PI * (1 + perc / 100));
+  cx.arc(cv.width / 2, cv.height * 0.97, cv.width / 2 - cx.lineWidth, Math.PI, Math.PI * (1 + perc / 100));
   cx.stroke();
 
   cx.fillStyle = col;
@@ -902,38 +907,24 @@ function drawGauge(g) {
     cx.measureText(formatToStep(g.max, g.step) + text).width
   );
 
-  cx.font = cv.width / 2 * 10 / w + 'px ' + cfg.font;
-  cx.fillText(formatToStep(g.value, g.step) + g.text, cv.width / 2, cv.height * 9 / 10);
+  cx.fillStyle = theme_cols[v][3];
+  cx.font = cv.width * 0.5 * 10 / w + 'px ' + cfg.font;
+  cx.fillText(formatToStep(g.value, g.step) + g.text, cv.width / 2, cv.height * 0.93);
 
   cx.font = '10px ' + cfg.font;
   w = Math.max(
-    cx.measureText(g.value).width,
-    cx.measureText(g.min).width,
-    cx.measureText(g.max).width
+    cx.measureText(Math.round(g.min)).width,
+    cx.measureText(Math.round(g.max)).width
   );
   cx.fillStyle = theme_cols[v][2];
-  cx.font = cx.lineWidth * 2 / 3 * 10 / w + 'px ' + cfg.font;
-  cx.fillText(g.min, cx.lineWidth, cv.height * 9 / 10);
-  cx.fillText(g.max, cv.width - cx.lineWidth, cv.height * 9 / 10);
-
-  let step = Math.abs(g.max - g.min) / 10;
-  if (Math.abs(g.value - g.value_t) <= step) g.value_t = g.value;
-  else if (g.value_t < g.value) g.value_t += step;
-  else if (g.value_t > g.value) g.value_t -= step;
+  cx.font = cx.lineWidth * 0.6 * 10 / w + 'px ' + cfg.font;
+  cx.fillText(g.min, cx.lineWidth, cv.height * 0.92);
+  cx.fillText(g.max, cv.width - cx.lineWidth, cv.height * 0.92);
 }
 function showGauges() {
   Object.values(gauges).forEach(gauge => {
     drawGauge(gauge);
-    gauge.interval = setInterval(() => {
-      if (gauge.value != gauge.value_t) drawGauge(gauge);
-    }, 30);
   });
-}
-function stopGauges() {
-  Object.values(gauges).forEach(gauge => {
-    clearInterval(gauge.interval);
-  });
-  gauges = {};
 }
 // misc
 function checkLen(arg, len) {

@@ -265,7 +265,7 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
 function showControls(controls) {
   EL('controls').innerHTML = '';
   if (!controls) return;
-  stopGauges();
+  gauges = {};
   pickers = {};
   dup_names = [];
   wid_row_count = 0;
