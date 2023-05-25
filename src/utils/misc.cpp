@@ -2,7 +2,7 @@
 
 String _GH_empty_str;
 
-char* GHsplitter(char* list, char div) {
+char* GH_splitter(char* list, char div) {
     static uint8_t prev, end;
     if (list == NULL) prev = end = 0;
     else {
@@ -69,7 +69,7 @@ void GH_escapeChar(String* s, char c) {
 // ========================== FS ==========================
 #ifdef GH_ESP_BUILD
 #ifndef GH_NO_FS
-void showFiles(String& answ, const String& path, GH_UNUSED uint8_t levels, uint16_t* count) {
+void GH_showFiles(String& answ, const String& path, GH_UNUSED uint8_t levels, uint16_t* count) {
 #ifdef ESP8266
     Dir dir = GH_FS.openDir(path);
     while (dir.next()) {
@@ -85,7 +85,7 @@ void showFiles(String& answ, const String& path, GH_UNUSED uint8_t levels, uint1
                 answ = "";
             }
             Dir sdir = GH_FS.openDir(p);
-            showFiles(answ, p);
+            GH_showFiles(answ, p);
         }
         if (dir.isFile() && dir.fileName().length()) {
             answ += '\'';
@@ -114,7 +114,7 @@ void showFiles(String& answ, const String& path, GH_UNUSED uint8_t levels, uint1
                 *count += answ.length();
                 answ = "";
             }
-            if (levels) showFiles(answ, file.path(), levels - 1);
+            if (levels) GH_showFiles(answ, file.path(), levels - 1);
         } else {
             answ += '\'';
             if (levels != GH_FS_DEPTH) answ += path;
@@ -132,7 +132,7 @@ void showFiles(String& answ, const String& path, GH_UNUSED uint8_t levels, uint1
 #endif
 }
 
-void fileToB64(File& file, String& str) {
+void GH_fileToB64(File& file, String& str) {
     int16_t len = 0;
     uint16_t slen = 0;
     int val = 0, valb = -6;
@@ -158,7 +158,7 @@ void fileToB64(File& file, String& str) {
     }
 }
 
-void B64toFile(File& file, const char* str) {
+void GH_B64toFile(File& file, const char* str) {
     uint16_t len = strlen(str);
     if (len < 4) return;
     int padd = 0;
@@ -179,7 +179,7 @@ void B64toFile(File& file, const char* str) {
 #endif
 
 #ifndef GH_NO_OTA
-void B64toUpdate(const char* str) {
+void GH_B64toUpdate(const char* str) {
     uint16_t len = strlen(str);
     if (len < 4) return;
     int padd = 0;

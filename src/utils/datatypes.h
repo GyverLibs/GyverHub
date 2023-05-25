@@ -2,8 +2,8 @@
 #include <Arduino.h>
 #include <Stamp.h>
 
-#include "config.h"
-#include "macro.h"
+#include "config.hpp"
+#include "macro.hpp"
 #include "color.h"
 #include "flags.h"
 

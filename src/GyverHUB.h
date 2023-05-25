@@ -6,8 +6,8 @@
 
 #include "builder.h"
 #include "canvas.h"
-#include "config.h"
-#include "macro.h"
+#include "config.hpp"
+#include "macro.hpp"
 #include "utils/build.h"
 #include "utils/cmd_p.h"
 #include "utils/color.h"
@@ -295,8 +295,8 @@ class GyverHUB : public HubBuilder {
 
         char* str = (char*)name.c_str();
         char* p = str;
-        GHsplitter(NULL);
-        while ((p = GHsplitter(str)) != NULL) {
+        GH_splitter(NULL);
+        while ((p = GH_splitter(str)) != NULL) {
             build.type = GH_BUILD_READ;
             build.action.name = p;
             answ += '\'';
@@ -390,8 +390,8 @@ class GyverHUB : public HubBuilder {
 
         char* str = (char*)name.c_str();
         char* p = str;
-        GHsplitter(NULL);
-        while ((p = GHsplitter(str)) != NULL) {
+        GH_splitter(NULL);
+        while ((p = GH_splitter(str)) != NULL) {
             build.type = GH_BUILD_READ;
             build.action.name = p;
             build_cb();
@@ -829,7 +829,7 @@ class GyverHUB : public HubBuilder {
                     break;
 
                 case GH_UPLOAD_CHUNK:
-                    B64toFile(file_u, fs_buffer);
+                    GH_B64toFile(file_u, fs_buffer);
                     hub_ptr = &fs_hub;
                     answerType(F("upload_next_chunk"));
                     fs_tmr = millis();
@@ -837,7 +837,7 @@ class GyverHUB : public HubBuilder {
                     break;
 
                 case GH_UPLOAD_FINISH:
-                    B64toFile(file_u, fs_buffer);
+                    GH_B64toFile(file_u, fs_buffer);
                     delete fs_buffer;
                     fs_buffer = nullptr;
                     file_u.close();
@@ -852,7 +852,7 @@ class GyverHUB : public HubBuilder {
                     break;
 #ifndef GH_NO_OTA
                 case GH_OTA_CHUNK:
-                    B64toUpdate(fs_buffer);
+                    GH_B64toUpdate(fs_buffer);
                     hub_ptr = &fs_hub;
                     answerType(F("ota_next_chunk"));
                     fs_tmr = millis();
@@ -860,7 +860,7 @@ class GyverHUB : public HubBuilder {
                     break;
 
                 case GH_OTA_FINISH:
-                    B64toUpdate(fs_buffer);
+                    GH_B64toUpdate(fs_buffer);
                     delete fs_buffer;
                     fs_buffer = nullptr;
                     ota_f = false;
@@ -1026,10 +1026,10 @@ class GyverHUB : public HubBuilder {
         uint16_t count = 0;
         String answ;
         answ.reserve(100);
-        showFiles(answ, "/", GH_FS_DEPTH, &count);
+        GH_showFiles(answ, "/", GH_FS_DEPTH, &count);
         answ.reserve(count + 50);
         answ = F("\n{'fs':{'/':0,");
-        showFiles(answ, "/", GH_FS_DEPTH);
+        GH_showFiles(answ, "/", GH_FS_DEPTH);
         answ[answ.length() - 1] = '}';  // ',' = '}'
         answ += ',';
 
@@ -1106,7 +1106,7 @@ class GyverHUB : public HubBuilder {
         _jsVal(answ, F("chunk"), dwn_chunk_count);
         _jsVal(answ, F("amount"), dwn_chunk_amount);
         answ += F("'data':'");
-        fileToB64(file_d, answ);
+        GH_fileToB64(file_d, answ);
         answ += F("'}\n");
         answer(answ);
 #endif

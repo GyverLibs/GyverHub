@@ -3,8 +3,8 @@
 #include <Stamp.h>
 
 #include "canvas.h"
-#include "config.h"
-#include "macro.h"
+#include "config.hpp"
+#include "macro.hpp"
 #include "utils/build.h"
 #include "utils/color.h"
 #include "utils/datatypes.h"

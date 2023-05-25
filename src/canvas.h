@@ -6,7 +6,7 @@
 
 #include <Arduino.h>
 
-#include "macro.h"
+#include "macro.hpp"
 
 enum GHmode_t {
     CV_BUTT,

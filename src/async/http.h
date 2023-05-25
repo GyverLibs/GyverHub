@@ -1,6 +1,6 @@
 #pragma once
-#include "config.h"
-#include "macro.h"
+#include "config.hpp"
+#include "macro.hpp"
 
 #ifdef GH_ESP_BUILD
 #ifdef GH_NO_WS
@@ -31,6 +31,7 @@ class HubHTTP {
         });
 
 #ifndef GH_NO_PORTAL
+#ifndef GH_NO_FS
         /*server.on("/", HTTP_GET, [this](AsyncWebServerRequest* request) {
             AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", hub_index_gz, hub_index_gz_len);
             gzipHeader(response);
@@ -68,7 +69,7 @@ class HubHTTP {
             request->send(response);
         });
 #endif
-
+#endif
         server.begin();
     }
 

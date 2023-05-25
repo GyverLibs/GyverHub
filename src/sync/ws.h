@@ -1,6 +1,6 @@
 #pragma once
-#include "config.h"
-#include "macro.h"
+#include "config.hpp"
+#include "macro.hpp"
 
 #ifdef GH_ESP_BUILD
 #ifdef GH_NO_WS
@@ -23,7 +23,7 @@ class HubWS {
     virtual void sendEvent(GHevent_t state, GHconn_t conn) = 0;
 
     void beginWS() {
-        ws.onEvent([this](uint8_t num, WStype_t type, uint8_t* data, size_t len) {
+        ws.onEvent([this](uint8_t num, WStype_t type, uint8_t* data, GH_UNUSED size_t len) {
             switch (type) {
                 case WStype_CONNECTED:
                     sendEvent(GH_CONNECTED, GH_WS);

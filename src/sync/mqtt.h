@@ -1,6 +1,6 @@
 #pragma once
-#include "config.h"
-#include "macro.h"
+#include "config.hpp"
+#include "macro.hpp"
 
 #ifdef GH_ESP_BUILD
 #ifdef GH_NO_WS

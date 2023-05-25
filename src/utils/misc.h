@@ -1,8 +1,8 @@
 #pragma once
 #include <Arduino.h>
 
-#include "config.h"
-#include "macro.h"
+#include "config.hpp"
+#include "macro.hpp"
 #include "utils/b64.h"
 
 #ifdef GH_ESP_BUILD
@@ -51,17 +51,17 @@ struct GHparser {
     uint8_t size = 0;
 };
 
-char* GHsplitter(char* list, char div = ',');
+char* GH_splitter(char* list, char div = ',');
 String GH_uptime();
 void GH_escapeChar(String* s, char c);
 
 #ifdef GH_ESP_BUILD
 #ifndef GH_NO_FS
-void showFiles(String& answ, const String& path, GH_UNUSED uint8_t levels = 0, uint16_t* count = nullptr);
-void fileToB64(File& file, String& str);
-void B64toFile(File& file, const char* str);
+void GH_showFiles(String& answ, const String& path, GH_UNUSED uint8_t levels = 0, uint16_t* count = nullptr);
+void GH_fileToB64(File& file, String& str);
+void GH_B64toFile(File& file, const char* str);
 #endif
 #ifndef GH_NO_OTA
-void B64toUpdate(const char* str);
+void GH_B64toUpdate(const char* str);
 #endif
 #endif
