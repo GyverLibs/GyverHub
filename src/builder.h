@@ -538,9 +538,11 @@ class HubBuilder {
         _canvas(false, name.c_str(), size, cv, label.c_str(), true);
     }
     void EndCanvas() {
-        *sptr += ']';
-        _tabw();
-        _end();
+        if (_isUI()) {
+            *sptr += ']';
+            _tabw();
+            _end();
+        }
     }
 
     void _canvas(bool fstr, VSPTR name, int size, GHcanvas* cv, VSPTR label, bool begin) {
@@ -553,6 +555,8 @@ class HubBuilder {
             *sptr += '[';
             if (begin && cv) cv->extBuffer(sptr);
             else EndCanvas();
+        } else {
+            cv->extBuffer(nullptr);
         }
     }
 

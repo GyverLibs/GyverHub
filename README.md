@@ -57,6 +57,7 @@ GyverHUB - это программный комплекс, включающий 
 
 ### Совместимость
 Все Arduino
+- **НЕ РАБОТАЕТ НА ESP32 SDK 2.0.8**
 
 ## Установка
 - Зависимости: [Stamp](https://github.com/GyverLibs/Stamp), [PubSubClient](https://github.com/knolleary/pubsubclient), [arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets), [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer), [ESPAsyncTCP](https://github.com/me-no-dev/ESPAsyncTCP), [AsyncTCP](https://github.com/me-no-dev/AsyncTCP), [async-mqtt-client](https://github.com/marvinroger/async-mqtt-client)

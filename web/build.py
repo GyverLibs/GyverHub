@@ -1,6 +1,6 @@
 # GyverHUB Web Builder
 
-version = '0.22b'
+version = '0.23b'
 fa_url = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-solid-900.ttf'
 
 js_files = [

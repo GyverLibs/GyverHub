@@ -266,7 +266,6 @@ function showControls(controls) {
   EL('controls').innerHTML = '';
   if (!controls) return;
   gauges = {};
-  pickers = {};
   dup_names = [];
   wid_row_count = 0;
   btn_row_count = 0;
@@ -313,15 +312,16 @@ function showControls(controls) {
     let labels = document.querySelectorAll(".widget_label");
     for (let lbl of labels) lbl.classList.add('widget_label_name');
   }
+
+  resizeChbuttons();
+  moveSliders();
+  scrollDown();
+  resizeSpinners();
+  
   setTimeout(() => {
-    resizeSpinners();
-    resizeChbuttons();
-    scrollDown();
-    moveSliders();
-    showColors();
+    if (dup_names.length) showPopupError('Duplicated names: ' + dup_names);
     showCanvases(controls);
     showGauges();
-    if (dup_names.length) showPopupError('Duplicated names: ' + dup_names);
   }, 10);
 }
 function showInfo(device) {

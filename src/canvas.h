@@ -615,7 +615,7 @@ class GHcanvas {
    private:
     template <typename T>
     void _add(T v) {
-        *ps += v;
+        if (ps) *ps += v;
     }
     void _checkFirst() {
         if (first) first = 0;
@@ -664,7 +664,7 @@ class GHcanvas {
         _quot();
     }
 
-    String* ps;
+    String* ps = nullptr;
     bool first = 1;
     bool strokeF = 1;
     bool fillF = 1;

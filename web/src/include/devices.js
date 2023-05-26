@@ -5,7 +5,6 @@ let controls = {};
 let focused = null;
 let touch = 0;
 let pressId = null;
-let pickers = {};
 let dup_names = [];
 let gauges = {};
 
@@ -475,7 +474,28 @@ function addColor(ctrl) {
     </div>
     `;
   }
-  pickers['#' + ctrl.name] = color;
+  let pick = '#' + ctrl.name;
+  setTimeout(() => {
+    Pickr.create({
+      el: EL(pick),
+      theme: 'nano',
+      default: color,
+      defaultRepresentation: 'HEXA',
+      components: {
+        preview: true,
+        hue: true,
+        interaction: {
+          hex: false,
+          input: true,
+          save: true
+        }
+      }
+    }).on('save', (color) => {
+      let col = color.toHEXA().toString();
+      set_h('color', colToInt(col));
+      EL('color_btn' + pick).style.color = col;
+    });
+  }, 10);
 
   /*if (wid_row_id) {
     let inner = `
@@ -676,7 +696,7 @@ function addGauge(ctrl) {
     </div>
     `;
   }
-  gauges[ctrl.name] = {name: ctrl.name, value: Number(ctrl.value), min: Number(ctrl.min), max: Number(ctrl.max), step: Number(ctrl.step), text: ctrl.text, color: ctrl.color};
+  gauges[ctrl.name] = { name: ctrl.name, value: Number(ctrl.value), min: Number(ctrl.min), max: Number(ctrl.max), step: Number(ctrl.step), text: ctrl.text, color: ctrl.color };
   gauges[ctrl.name].value_t = ctrl.value;
 }
 
@@ -723,29 +743,6 @@ function addWidget(width, name, label, inner, height = 0, noback = false) {
 // color
 function openColor(id) {
   EL('color_cont#' + id).getElementsByTagName('button')[0].click()
-}
-function showColors() {
-  Object.keys(pickers).forEach(pick => {
-    Pickr.create({
-      el: EL(pick),
-      theme: 'nano',
-      default: pickers[pick],
-      defaultRepresentation: 'HEXA',
-      components: {
-        preview: true,
-        hue: true,
-        interaction: {
-          hex: false,
-          input: true,
-          save: true
-        }
-      }
-    }).on('save', (color) => {
-      let col = color.toHEXA().toString();
-      set_h('color', colToInt(col));
-      EL('color_btn' + pick).style.color = col;
-    });
-  });
 }
 // buttons
 function renderButton(title, className, name, label, size, color = null, is_icon = false) {
@@ -861,7 +858,7 @@ function drawCanvas(cv, data) {
 // gauge
 function drawGauge(g) {
   let cv = EL('#' + g.name);
-  if (!cv) return;
+  if (!cv || !cv.width) return;
   if (Math.abs(g.value - g.value_t) <= 0.1) g.value_t = g.value;
   else g.value_t += (g.value - g.value_t) * 0.2;
   if (g.value_t != g.value) setTimeout(() => drawGauge(g), 30);
