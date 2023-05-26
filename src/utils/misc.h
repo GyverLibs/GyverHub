@@ -54,6 +54,7 @@ struct GHparser {
 char* GH_splitter(char* list, char div = ',');
 String GH_uptime();
 void GH_escapeChar(String* s, char c);
+void GH_escapeStr(String* s, VSPTR v, bool fstr);
 
 #ifdef GH_ESP_BUILD
 #ifndef GH_NO_FS

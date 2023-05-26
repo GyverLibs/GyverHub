@@ -58,11 +58,23 @@ void GH_escapeChar(String* s, char c) {
                 *s += 't';
                 break;
         }
-    } else if (c == '\"') {
+    } else if (c == '\"' || c == '\'') {
         *s += '\\';
-        *s += c;
+        *s += '\"';
     } else {
         *s += c;
+    }
+}
+void GH_escapeStr(String* s, VSPTR v, bool fstr) {
+    if (fstr) {
+        uint16_t len = strlen_P((PGM_P)v);
+        char str[len + 1];
+        strcpy_P(str, (PGM_P)v);
+        for (uint16_t i = 0; i < len; i++) GH_escapeChar(s, str[i]);
+    } else {
+        char* str = (char*)v;
+        uint16_t len = strlen(str);
+        for (uint16_t i = 0; i < len; i++) GH_escapeChar(s, str[i]);
     }
 }
 

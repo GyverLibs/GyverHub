@@ -698,8 +698,7 @@ function addGauge(ctrl) {
     </div>
     `;
   }
-  gauges[ctrl.name] = { name: ctrl.name, value: Number(ctrl.value), min: Number(ctrl.min), max: Number(ctrl.max), step: Number(ctrl.step), text: ctrl.text, color: ctrl.color };
-  gauges[ctrl.name].value_t = ctrl.value;
+  gauges[ctrl.name] = { perc: null, name: ctrl.name, value: Number(ctrl.value), min: Number(ctrl.min), max: Number(ctrl.max), step: Number(ctrl.step), text: ctrl.text, color: ctrl.color };
 }
 
 // ================ UTILS =================
@@ -854,36 +853,39 @@ function drawCanvas(canvas) {
       eval(d);
     }
   }
+  canvas.value = "";
 }
 // gauge
 function drawGauge(g) {
   let cv = EL('#' + g.name);
   if (!cv) return;
-  if (Math.abs(g.value - g.value_t) <= 0.1) g.value_t = g.value;
-  else g.value_t += (g.value - g.value_t) * 0.2;
-  if (g.value_t != g.value) setTimeout(() => drawGauge(g), 30);
+  cv.width = cv.parentNode.clientWidth;
+  if (!cv.width) return;
 
   let cx = cv.getContext("2d");
-  let perc = (g.value_t - g.min) * 100 / (g.max - g.min);
   let col = g.color == null ? intToCol(colors[cfg.maincolor]) : intToCol(g.color);
   let v = themes[cfg.theme];
+  let perc = (g.value - g.min) * 100 / (g.max - g.min);
   if (perc < 0) perc = 0;
   if (perc > 100) perc = 100;
+  if (g.perc == null) g.perc = perc;
+  else {
+    if (Math.abs(g.perc - perc) <= 0.2) g.perc = perc;
+    else g.perc += (perc - g.perc) * 0.2;
+    if (g.perc != perc) setTimeout(() => drawGauge(g), 30);
+  }
 
-  cv.width = cv.parentNode.clientWidth;
   cv.height = cv.width * 0.47;
   cx.clearRect(0, 0, cv.width, cv.height);
   cx.lineWidth = cv.width / 8;
-  if (!cv.width) return;
-
   cx.strokeStyle = theme_cols[v][4];
   cx.beginPath();
-  cx.arc(cv.width / 2, cv.height * 0.97, cv.width / 2 - cx.lineWidth, Math.PI * (1 + perc / 100), Math.PI * 2);
+  cx.arc(cv.width / 2, cv.height * 0.97, cv.width / 2 - cx.lineWidth, Math.PI * (1 + g.perc / 100), Math.PI * 2);
   cx.stroke();
 
   cx.strokeStyle = col;
   cx.beginPath();
-  cx.arc(cv.width / 2, cv.height * 0.97, cv.width / 2 - cx.lineWidth, Math.PI, Math.PI * (1 + perc / 100));
+  cx.arc(cv.width / 2, cv.height * 0.97, cv.width / 2 - cx.lineWidth, Math.PI, Math.PI * (1 + g.perc / 100));
   cx.stroke();
 
   cx.fillStyle = col;

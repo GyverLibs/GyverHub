@@ -9,6 +9,7 @@
 #include "utils/color.h"
 #include "utils/datatypes.h"
 #include "utils/log.h"
+#include "utils/misc.h"
 
 class HubBuilder {
    public:
@@ -138,24 +139,24 @@ class HubBuilder {
             _tabw();
             _end();
         } else if (_isRead()) {
-            if (_checkName(name, fstr)) _escape(sptr, log->read());
+            if (_checkName(name, fstr)) GH_escapeStr(sptr, log->read().c_str(), false);
         }
     }
 
     // ========================== DISPLAY ==========================
-    void Display(FSTR name, const String& value = "", FSTR label = nullptr, uint32_t color = GH_DEFAULT, int rows = 2, int size = 40) {
+    void Display(FSTR name, FSTR value = nullptr, FSTR label = nullptr, uint32_t color = GH_DEFAULT, int rows = 2, int size = 40) {
         _display(true, name, value, label, color, rows, size);
     }
     void Display(CSREF name, const String& value = "", CSREF label = "", uint32_t color = GH_DEFAULT, int rows = 2, int size = 40) {
-        _display(true, name.c_str(), value, label.c_str(), color, rows, size);
+        _display(true, name.c_str(), value.c_str(), label.c_str(), color, rows, size);
     }
-    void _display(bool fstr, VSPTR name, const String& value, VSPTR label, uint32_t color, int rows, int size) {
+    void _display(bool fstr, VSPTR name, VSPTR value, VSPTR label, uint32_t color, int rows, int size) {
         if (_isUI()) {
             _begin(F("display"));
             _name(name, fstr);
             _value();
             _quot();
-            _escape(sptr, value);
+            GH_escapeStr(sptr, value, fstr);
             _quot();
             _label(label, fstr);
             _color(color);
@@ -165,40 +166,46 @@ class HubBuilder {
             _tabw();
             _end();
         } else if (_isRead()) {
-            if (_checkName(name, fstr)) _escape(sptr, value);
+            if (_checkName(name, fstr)) GH_escapeStr(sptr, value, fstr);
         }
     }
 
     // ========================== HTML ==========================
-    void HTML(FSTR name, const String& value = "", FSTR label = nullptr) {
+    void HTML(FSTR name, FSTR value = nullptr, FSTR label = nullptr) {
         _html(true, name, value, label);
     }
     void HTML(CSREF name, const String& value = "", CSREF label = "") {
-        _html(false, name.c_str(), value, label.c_str());
+        _html(false, name.c_str(), value.c_str(), label.c_str());
     }
-    void _html(bool fstr, VSPTR name, const String& value, VSPTR label) {
+    void _html(bool fstr, VSPTR name, VSPTR value, VSPTR label) {
         if (_isUI()) {
             _begin(F("html"));
             _name(name, fstr);
             _value();
             _quot();
-            _escape(sptr, value);
+            GH_escapeStr(sptr, value, fstr);
             _quot();
             _label(label, fstr);
             _tabw();
             _end();
         } else if (_isRead()) {
-            if (_checkName(name, fstr)) _escape(sptr, value);
+            if (_checkName(name, fstr)) GH_escapeStr(sptr, value, fstr);
         }
     }
 
     // =========================== JS ===========================
+    void JS(FSTR value = nullptr) {
+        _js(true, value);
+    }
     void JS(const String& value = "") {
+        _js(false, value.c_str());
+    }
+    void _js(bool fstr, VSPTR value) {
         if (_isUI()) {
             _begin(F("js"));
             _value();
             _quot();
-            _escape(sptr, value);
+            GH_escapeStr(sptr, value, fstr);
             _quot();
             _end();
         }
@@ -572,10 +579,6 @@ class HubBuilder {
     // ========================== PRIVATE ==========================
    private:
     int tab_width = 0;
-
-    void _escape(String* s, const String& v) {
-        for (uint16_t i = 0; i < v.length(); i++) GH_escapeChar(s, v[i]);
-    }
     bool _checkName(VSPTR name, bool fstr = true) {
         if (fstr ? (!strcmp_P(bptr->action.name, (PGM_P)name)) : (!strcmp(bptr->action.name, (PGM_P)name))) {
             bptr->type = GH_BUILD_NONE;

@@ -1,5 +1,5 @@
 const app_title = 'GyverHUB';
-const version_notes = 'Мелкие фиксы, добавлена ширина в Canvas. Версия библиотеки от 26.05';
+const version_notes = 'Средние фиксы, мелкие фиксы, добавлена ширина в Canvas. Версия библиотеки от 26.05';
 const ota_url = 'hub.gyver.ru/ota/projects.json';
 const non_esp = '__ESP__';
 const app_version = '__VER__';

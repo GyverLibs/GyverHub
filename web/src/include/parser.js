@@ -15,6 +15,7 @@ function applyUpdate(name, value) {
   else if (cl.contains('select_t')) el.value = value;
   else if (cl.contains('canvas_t')) {
     if (name in canvases) {
+      if (canvases[name].value.length) return;
       canvases[name].value = value;
       drawCanvas(canvases[name]);
     }

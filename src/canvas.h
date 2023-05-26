@@ -7,6 +7,7 @@
 #include <Arduino.h>
 
 #include "macro.hpp"
+#include "utils/misc.h"
 
 enum GHmode_t {
     CV_BUTT,
@@ -68,15 +69,17 @@ class GHcanvas {
 
     // добавить строку кода на js
     void custom(const String& s) {
+        if (!ps) return;
         _checkFirst();
         _quot();
-        _add(s);
+        GH_escapeStr(ps, s.c_str(), false);
         _quot();
     }
     void custom(FSTR s) {
+        if (!ps) return;
         _checkFirst();
         _quot();
-        _add(s);
+        GH_escapeStr(ps, s, true);
         _quot();
     }
 
