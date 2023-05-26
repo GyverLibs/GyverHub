@@ -858,7 +858,7 @@ function drawCanvas(cv, data) {
 // gauge
 function drawGauge(g) {
   let cv = EL('#' + g.name);
-  if (!cv || !cv.width) return;
+  if (!cv) return;
   if (Math.abs(g.value - g.value_t) <= 0.1) g.value_t = g.value;
   else g.value_t += (g.value - g.value_t) * 0.2;
   if (g.value_t != g.value) setTimeout(() => drawGauge(g), 30);
@@ -874,6 +874,7 @@ function drawGauge(g) {
   cv.height = cv.width * 0.47;
   cx.clearRect(0, 0, cv.width, cv.height);
   cx.lineWidth = cv.width / 8;
+  if (!cv.width) return;
 
   cx.strokeStyle = theme_cols[v][4];
   cx.beginPath();
