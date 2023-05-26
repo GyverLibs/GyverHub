@@ -525,17 +525,17 @@ class HubBuilder {
     }
 
     // ========================= CANVAS =========================
-    void Canvas(FSTR name, int size = 500, GHcanvas* cv = nullptr, FSTR label = nullptr) {
-        _canvas(true, name, size, cv, label, false);
+    void Canvas(FSTR name, int width = 400, int height = 300, GHcanvas* cv = nullptr, FSTR label = nullptr) {
+        _canvas(true, name, width, height, cv, label, false);
     }
-    void Canvas(CSREF name, int size = 500, GHcanvas* cv = nullptr, CSREF label = "") {
-        _canvas(false, name.c_str(), size, cv, label.c_str(), false);
+    void Canvas(CSREF name, int width = 400, int height = 300, GHcanvas* cv = nullptr, CSREF label = "") {
+        _canvas(false, name.c_str(), width, height, cv, label.c_str(), false);
     }
-    void BeginCanvas(FSTR name, int size = 500, GHcanvas* cv = nullptr, FSTR label = nullptr) {
-        _canvas(false, name, size, cv, label, true);
+    void BeginCanvas(FSTR name, int width = 400, int height = 300, GHcanvas* cv = nullptr, FSTR label = nullptr) {
+        _canvas(false, name, width, height, cv, label, true);
     }
-    void BeginCanvas(CSREF name, int size = 500, GHcanvas* cv = nullptr, CSREF label = "") {
-        _canvas(false, name.c_str(), size, cv, label.c_str(), true);
+    void BeginCanvas(CSREF name, int width = 400, int height = 300, GHcanvas* cv = nullptr, CSREF label = "") {
+        _canvas(false, name.c_str(), width, height, cv, label.c_str(), true);
     }
     void EndCanvas() {
         if (_isUI()) {
@@ -545,11 +545,14 @@ class HubBuilder {
         }
     }
 
-    void _canvas(bool fstr, VSPTR name, int size, GHcanvas* cv, VSPTR label, bool begin) {
+    void _canvas(bool fstr, VSPTR name, int width, int height, GHcanvas* cv, VSPTR label, bool begin) {
         if (_isUI()) {
             _begin(F("canvas"));
             _name(name, fstr);
-            _size(size);
+            _add(F(",'width':"));
+            *sptr += width;
+            _add(F(",'height':"));
+            *sptr += height;
             _label(label, fstr);
             _value();
             *sptr += '[';
@@ -592,7 +595,7 @@ class HubBuilder {
         *sptr += arg;
     }
     void _begin(FSTR type) {
-        *sptr += F("{'type':'");
+        _add(F("{'type':'"));
         *sptr += type;
         _quot();
     }
@@ -606,7 +609,7 @@ class HubBuilder {
     }
     void _tabw() {
         if (tab_width) {
-            *sptr += F(",'tab_w':");
+            _add(F(",'tab_w':"));
             *sptr += tab_width;
         }
     }
@@ -627,7 +630,7 @@ class HubBuilder {
 
     // ================
     void _name(VSPTR name, bool fstr = true) {
-        *sptr += F(",'name':'");
+        _add(F(",'name':'"));
         if (name) {
             if (fstr) *sptr += (FSTR)name;
             else *sptr += (PGM_P)name;
@@ -635,7 +638,7 @@ class HubBuilder {
         _quot();
     }
     void _label(VSPTR label, bool fstr = true) {
-        *sptr += F(",'label':'");
+        _add(F(",'label':'"));
         if (label) {
             if (fstr) *sptr += (FSTR)label;
             else *sptr += (PGM_P)label;
@@ -645,7 +648,7 @@ class HubBuilder {
 
     // ================
     void _text() {
-        *sptr += F(",'text':");
+        _add(F(",'text':"));
     }
     void _text(VSPTR text, bool fstr = true) {
         _text();
@@ -659,39 +662,39 @@ class HubBuilder {
 
     // ================
     void _height(int& height) {
-        *sptr += F(",'height':");
+        _add(F(",'height':"));
         *sptr += height;
     }
     void _color(uint32_t& col) {
         if (col == GH_DEFAULT) return;
-        *sptr += F(",'color':");
+        _add(F(",'color':"));
         *sptr += col;
     }
     void _size(int& val) {
-        *sptr += F(",'size':");
+        _add(F(",'size':"));
         *sptr += val;
     }
 
     // ================
     void _minv(float val) {
-        *sptr += F(",'min':");
+        _add(F(",'min':"));
         *sptr += val;
     }
 
     void _maxv(float val) {
-        *sptr += F(",'max':");
+        _add(F(",'max':"));
         *sptr += val;
     }
 
     void _step(float val) {
-        *sptr += F(",'step':");
+        _add(F(",'step':"));
         *sptr += val;
     }
 
     // ================
     void _tag(FSTR tag) {
-        *sptr += F(",'");
+        _add(F(",'"));
         *sptr += tag;
-        *sptr += F("':");
+        _add(F("':"));
     }
 };

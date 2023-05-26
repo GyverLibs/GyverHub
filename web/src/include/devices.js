@@ -7,6 +7,7 @@ let touch = 0;
 let pressId = null;
 let dup_names = [];
 let gauges = {};
+let canvases = {};
 
 let wid_row_id = null;
 let wid_row_count = 0;
@@ -679,6 +680,7 @@ function addCanvas(ctrl) {
     </div>
     `;
   }
+  canvases[ctrl.name] = { name: ctrl.name, width: ctrl.width, height: ctrl.height, value: ctrl.value };
 }
 function addGauge(ctrl) {
   if (checkDup(ctrl)) return;
@@ -792,29 +794,27 @@ function moveSlider(arg, sendf = true) {
   if (sendf) input_h(arg.name, arg.value);
 }
 // canvas
-function showCanvases(controls) {
-  for (ctrl of controls) {
-    if (ctrl.type == 'canvas') {
-      let cv = EL('#' + ctrl.name);
-      cv.width = cv.parentNode.clientWidth;
-      cv.height = cv.width * ctrl.size / 1000;
-      drawCanvas(cv, ctrl.value);
-    }
-  }
+function showCanvases() {
+  Object.values(canvases).forEach(canvas => {
+    let cv = EL('#' + canvas.name);
+    cv.width = cv.parentNode.clientWidth;
+    canvas.scale = cv.width / canvas.width;
+    cv.height = canvas.height * canvas.scale;
+    drawCanvas(canvas);
+  });
 }
-function drawCanvas(cv, data) {
+function drawCanvas(canvas) {
   function cv_map(cv, v, h) {
-    v = cv.width * v / 1000;
+    v *= canvas.scale;
     return v >= 0 ? v : (h ? cv.height : cv.width) - v;
   }
-  function cv_scale(cv, v) {
-    return cv.parentNode.clientWidth * v / 1000;
-  }
 
+  if (!canvas.scale) return;
+  let cv = EL('#' + canvas.name);
   let cx = cv.getContext("2d");
   const cmd_list = ['fillStyle', 'strokeStyle', 'shadowColor', 'shadowBlur', 'shadowOffsetX', 'shadowOffsetY', 'lineWidth', 'miterLimit', 'font', 'textAlign', 'textBaseline', 'lineCap', 'lineJoin', 'globalCompositeOperation', 'globalAlpha', 'scale', 'rotate', 'rect', 'fillRect', 'strokeRect', 'clearRect', 'moveTo', 'lineTo', 'quadraticCurveTo', 'bezierCurveTo', 'translate', 'arcTo', 'arc', 'fillText', 'strokeText', 'drawImage', 'fill', 'stroke', 'beginPath', 'closePath', 'clip', 'save', 'restore'];
   const const_list = ['butt', 'round', 'square', 'square', 'bevel', 'miter', 'start', 'end', 'center', 'left', 'right', 'alphabetic', 'top', 'hanging', 'middle', 'ideographic', 'bottom', 'source-over', 'source-atop', 'source-in', 'source-out', 'destination-over', 'destination-atop', 'destination-in', 'destination-out', 'lighter', 'copy', 'xor', 'top', 'bottom', 'middle', 'alphabetic'];
-  for (d of data) {
+  for (d of canvas.value) {
     let div = d.indexOf(':');
     let cmd = parseInt(d, 10);
 
@@ -823,7 +823,7 @@ function drawCanvas(cv, data) {
         let val = d.slice(div + 1);
         let vals = val.split(',');
         if (cmd <= 2) eval('cx.' + cmd_list[cmd] + '=\'' + intToColA(val) + '\'');
-        else if (cmd <= 7) eval('cx.' + cmd_list[cmd] + '=' + cv_scale(cv, val));
+        else if (cmd <= 7) eval('cx.' + cmd_list[cmd] + '=' + (val * canvas.scale));
         else if (cmd <= 13) eval('cx.' + cmd_list[cmd] + '=\'' + const_list[val] + '\'');
         else if (cmd <= 14) eval('cx.' + cmd_list[cmd] + '=' + val);  // alpha
         else if (cmd <= 16) eval('cx.' + cmd_list[cmd] + '(' + val + ')');  // scale rotate

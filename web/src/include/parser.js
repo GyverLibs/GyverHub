@@ -13,7 +13,12 @@ function applyUpdate(name, value) {
   else if (cl.contains('slider_t')) el.value = value, EL('out#' + name).innerHTML = value, moveSlider(el, false);
   else if (cl.contains('switch_t')) el.checked = (value == '1');
   else if (cl.contains('select_t')) el.value = value;
-  else if (cl.contains('canvas_t')) drawCanvas(el, value);
+  else if (cl.contains('canvas_t')) {
+    if (name in canvases) {
+      canvases[name].value = value;
+      drawCanvas(canvases[name]);
+    }
+  }
   else if (cl.contains('gauge_t')) {
     if (name in gauges) {
       gauges[name].value = Number(value);
@@ -266,6 +271,7 @@ function showControls(controls) {
   EL('controls').innerHTML = '';
   if (!controls) return;
   gauges = {};
+  canvases = {};
   dup_names = [];
   wid_row_count = 0;
   btn_row_count = 0;
@@ -317,10 +323,10 @@ function showControls(controls) {
   moveSliders();
   scrollDown();
   resizeSpinners();
-  
+
   setTimeout(() => {
     if (dup_names.length) showPopupError('Duplicated names: ' + dup_names);
-    showCanvases(controls);
+    showCanvases();
     showGauges();
   }, 10);
 }
