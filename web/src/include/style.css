@@ -1488,3 +1488,17 @@ input:checked+.chbutton_s {
 .cli_area::-webkit-scrollbar {
   display: none;
 }
+
+/* =================================== */
+/* =============== TEST ============== */
+/* =================================== */
+/*NON-ESP*/
+#test_cont {
+  width: 100%;
+  height: 100%;
+}
+.test_text {
+  padding-top: 75px;
+  color: var(--font);
+}
+/*/NON-ESP*/

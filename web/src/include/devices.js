@@ -700,9 +700,40 @@ function addGauge(ctrl) {
   }
   gauges[ctrl.name] = { perc: null, name: ctrl.name, value: Number(ctrl.value), min: Number(ctrl.min), max: Number(ctrl.max), step: Number(ctrl.step), text: ctrl.text, color: ctrl.color };
 }
+function addImage(ctrl) {
+  checkWidget(ctrl);
+  endButtons();
+  if (wid_row_id) {
+    let inner = `
+    <img src="${ctrl.value}" style="width: 100%">
+    `;
+    addWidget(ctrl.tab_w, '', ctrl.label ? ctrl.label : 'IMAGE', inner);
+  } else {
+    EL('controls').innerHTML += `
+    <div class="cv_block cv_block_back">
+      <img src="${ctrl.value}" style="width: 100%">
+    </div>
+    `;
+  }
+}
+function addStream(ctrl) {
+  checkWidget(ctrl);
+  endButtons();
+  if (wid_row_id) {
+    let inner = `
+    
+    `;
+    addWidget(ctrl.tab_w, '', ctrl.label ? ctrl.label : 'STREAM', inner);
+  } else {
+    EL('controls').innerHTML += `
+    <div class="cv_block cv_block_back">
+      
+    </div>
+    `;
+  }
+}
 
 // ================ UTILS =================
-// widget
 function checkWidget(ctrl) {
   if (ctrl.tab_w && !wid_row_id) beginWidgets(null, true);
 }
@@ -741,11 +772,9 @@ function addWidget(width, name, label, inner, height = 0, noback = false) {
   </div>
   `;
 }
-// color
 function openColor(id) {
   EL('color_cont#' + id).getElementsByTagName('button')[0].click()
 }
-// buttons
 function renderButton(title, className, name, label, size, color = null, is_icon = false) {
   let col = (color != null) ? ((is_icon ? ';color:' : ';background:') + intToCol(color)) : '';
   return `<button id="#${name}" title='${title}' style="font-size:${size}px${col}" class="${className}" onmousedown="if(!touch)click_h('${name}',1)" onmouseup="if(!touch&&pressId)click_h('${name}',0)" onmouseleave="if(pressId&&!touch)click_h('${name}',0);" ontouchstart="touch=1;click_h('${name}',1)" ontouchend="click_h('${name}',0)">${label}</button>`;
@@ -763,7 +792,6 @@ function endButtons() {
   }
   btn_row_id = null;
 }
-// spinner
 function spinSpinner(el, dir) {
   let num = (dir == 1) ? el.previousElementSibling : el.nextElementSibling;
   let val = Number(num.value) + Number(num.step) * Number(dir);
@@ -779,7 +807,6 @@ function resizeSpinners() {
   let spinners = document.querySelectorAll(".spinner");
   spinners.forEach((sp) => resizeSpinner(sp));
 }
-// slider
 function moveSliders() {
   document.querySelectorAll('.c_range, .c_rangeW').forEach(x => { moveSlider(x, false) });
 }
@@ -792,7 +819,6 @@ function moveSlider(arg, sendf = true) {
   EL('out' + arg.id).value = formatToStep(arg.value, arg.step);
   if (sendf) input_h(arg.name, arg.value);
 }
-// canvas
 function showCanvases() {
   Object.values(canvases).forEach(canvas => {
     let cv = EL('#' + canvas.name);
@@ -813,6 +839,7 @@ function drawCanvas(canvas) {
   let cx = cv.getContext("2d");
   const cmd_list = ['fillStyle', 'strokeStyle', 'shadowColor', 'shadowBlur', 'shadowOffsetX', 'shadowOffsetY', 'lineWidth', 'miterLimit', 'font', 'textAlign', 'textBaseline', 'lineCap', 'lineJoin', 'globalCompositeOperation', 'globalAlpha', 'scale', 'rotate', 'rect', 'fillRect', 'strokeRect', 'clearRect', 'moveTo', 'lineTo', 'quadraticCurveTo', 'bezierCurveTo', 'translate', 'arcTo', 'arc', 'fillText', 'strokeText', 'drawImage', 'fill', 'stroke', 'beginPath', 'closePath', 'clip', 'save', 'restore'];
   const const_list = ['butt', 'round', 'square', 'square', 'bevel', 'miter', 'start', 'end', 'center', 'left', 'right', 'alphabetic', 'top', 'hanging', 'middle', 'ideographic', 'bottom', 'source-over', 'source-atop', 'source-in', 'source-out', 'destination-over', 'destination-atop', 'destination-in', 'destination-out', 'lighter', 'copy', 'xor', 'top', 'bottom', 'middle', 'alphabetic'];
+  let ev_str = '';
   for (d of canvas.value) {
     let div = d.indexOf(':');
     let cmd = parseInt(d, 10);
@@ -821,22 +848,22 @@ function drawCanvas(canvas) {
       if (div == 1 || div == 2) {
         let val = d.slice(div + 1);
         let vals = val.split(',');
-        if (cmd <= 2) eval('cx.' + cmd_list[cmd] + '=\'' + intToColA(val) + '\'');
-        else if (cmd <= 7) eval('cx.' + cmd_list[cmd] + '=' + (val * canvas.scale));
-        else if (cmd <= 13) eval('cx.' + cmd_list[cmd] + '=\'' + const_list[val] + '\'');
-        else if (cmd <= 14) eval('cx.' + cmd_list[cmd] + '=' + val);  // alpha
-        else if (cmd <= 16) eval('cx.' + cmd_list[cmd] + '(' + val + ')');  // scale rotate
+        if (cmd <= 2) ev_str += ('cx.' + cmd_list[cmd] + '=\'' + intToColA(val) + '\';');
+        else if (cmd <= 7) ev_str += ('cx.' + cmd_list[cmd] + '=' + (val * canvas.scale) + ';');
+        else if (cmd <= 13) ev_str += ('cx.' + cmd_list[cmd] + '=\'' + const_list[val] + '\';');
+        else if (cmd <= 14) ev_str += ('cx.' + cmd_list[cmd] + '=' + val + ';');
+        else if (cmd <= 16) ev_str += ('cx.' + cmd_list[cmd] + '(' + val + ');');
         else if (cmd <= 26) {
           let str = 'cx.' + cmd_list[cmd] + '(';
           for (let i in vals) {
             if (i > 0) str += ',';
             str += `cv_map(cv,${vals[i]},${(i % 2)})`;
           }
-          eval(str + ')');
+          ev_str += (str + ');');
         } else if (cmd == 27) {
-          eval(`cx.${cmd_list[cmd]}(cv_map(cv,${vals[0]},0),cv_map(cv,${vals[1]},1),cv_map(cv,${vals[2]},0),${vals[3]},${vals[4]},${vals[5]})`);
+          ev_str += (`cx.${cmd_list[cmd]}(cv_map(cv,${vals[0]},0),cv_map(cv,${vals[1]},1),cv_map(cv,${vals[2]},0),${vals[3]},${vals[4]},${vals[5]});`);
         } else if (cmd <= 29) {
-          eval(`cx.${cmd_list[cmd]}(${vals[0]},cv_map(cv,${vals[1]},0),cv_map(cv,${vals[2]},1),${vals[3]})`);
+          ev_str += (`cx.${cmd_list[cmd]}(${vals[0]},cv_map(cv,${vals[1]},0),cv_map(cv,${vals[2]},1),${vals[3]});`);
         } else if (cmd == 30) {
           let str = 'cx.' + cmd_list[cmd] + '(';
           for (let i in vals) {
@@ -844,18 +871,18 @@ function drawCanvas(canvas) {
               str += `,cv_map(cv,${vals[i]},${!(i % 2)})`;
             } else str += vals[i];
           }
-          eval(str + ')');
+          ev_str += (str + ');');
         }
       } else {
-        if (cmd >= 31) eval('cx.' + cmd_list[cmd] + '()');
+        if (cmd >= 31) ev_str += ('cx.' + cmd_list[cmd] + '();');
       }
     } else {
-      eval(d);
+      ev_str += d + ';';
     }
   }
+  eval(ev_str);
   canvas.value = "";
 }
-// gauge
 function drawGauge(g) {
   let cv = EL('#' + g.name);
   if (!cv) return;
@@ -926,7 +953,6 @@ function showGauges() {
     drawGauge(gauge);
   });
 }
-// misc
 function checkLen(arg, len) {
   if (len && arg.value.length > len) arg.value = arg.value.substring(0, len);
 }

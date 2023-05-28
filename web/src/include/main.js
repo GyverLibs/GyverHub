@@ -17,6 +17,9 @@ function render_main(v) {
     </div>
   </div>
   `;
+  /*NON-ESP*/
+  test_cont.innerHTML = `<div class="test_text">А тут пока ничего нет. Но будет онлайн-тест интерфейса, в котором можно будет поиграться и проверить свой билд без загрузки прошивки</div>`;
+  /*/NON-ESP*/
 
   cli_cont.innerHTML = `
   <div class="cli_block">
@@ -32,7 +35,7 @@ function render_main(v) {
   footer_cont.innerHTML = `
   <div class="footer_inner">
     <a href="https://alexgyver.ru/support_alex/" target="_blank"><span class="icon info_icon info_icon_u"></span>Support</a>
-    <a href="test.html" target="_blank"><span class="icon info_icon info_icon_u"></span>Test</a>
+    <a style="cursor:pointer" onclick="test_h()"><span class="icon info_icon info_icon_u"></span>Test</a>
     <a href="https://github.com/GyverLibs/GyverHUB/wiki" target="_blank"><span class="icon info_icon info_icon_u"></span>Docs</a>
   </div>
   `;

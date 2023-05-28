@@ -93,7 +93,7 @@ function startup() {
     }
     //if (!focused) sendDiscover();
   }, 5000);
-  
+
   setTimeout(() => {
     if (show_version) alert('Версия ' + app_version + '!\n' + version_notes);
   }, 500);
@@ -272,6 +272,9 @@ function render_selects() {
 }
 
 // ============== SCREEN ==============
+function test_h() {
+  show_screen('test');
+}
 function refresh_h() {
   if (screen == 'device') post('focus');
   else if (screen == 'info') post('info');
@@ -279,36 +282,26 @@ function refresh_h() {
   else discover();
 }
 function back_h() {
-  if (screen == 'device') {
-    showErr(false);
-    switch (devices_t[focused].conn) {
-      case Conn.SERIAL:
-        break;
-
-      case Conn.BT:
-        break;
-
-      case Conn.WS:
-        // 'unfocus' forbidden
-        ws_stop(focused);
-        refreshSpin(false);
-        break;
-
-      case Conn.MQTT:
-        post('unfocus');
-        break;
-    }
-    log('Close device #' + focused);
-    focused = null;
-    show_screen('main');
-    //sendDiscover();
-    stop_ping();
-    stop_tout();
+  switch (screen) {
+    case 'device':
+      close_device();
+      break;
+    case 'info':
+      info_h();
+      break;
+    case 'fsbr':
+      fsbr_h();
+      break;
+    case 'config':
+      config_h();
+      break;
+    case 'pin':
+      show_screen('main');
+      break;
+    case 'test':
+      show_screen('main');
+      break;
   }
-  else if (screen == 'info') info_h();
-  else if (screen == 'fsbr') fsbr_h();
-  else if (screen == 'config') config_h();
-  else if (screen == 'pin') show_screen('main');
 }
 function config_h() {
   if (screen == 'config') {
@@ -378,6 +371,32 @@ function open_device(id) {
   show_screen('device');
   reset_ping();
 }
+function close_device() {
+  showErr(false);
+  switch (devices_t[focused].conn) {
+    case Conn.SERIAL:
+      break;
+
+    case Conn.BT:
+      break;
+
+    case Conn.WS:
+      // 'unfocus' forbidden
+      ws_stop(focused);
+      refreshSpin(false);
+      break;
+
+    case Conn.MQTT:
+      post('unfocus');
+      break;
+  }
+  log('Close device #' + focused);
+  focused = null;
+  show_screen('main');
+  //sendDiscover();
+  stop_ping();
+  stop_tout();
+}
 function clear_all() {
   EL('devices').innerHTML = "";
   devices = {};
@@ -389,6 +408,8 @@ function show_screen(nscreen) {
   screen = nscreen;
   stopFS();
   show_keypad(false);
+  let test_s = EL('test_cont').style;
+  let main_s = EL('main_cont').style;
   let config_s = EL('config').style;
   let devices_s = EL('devices').style;
   let controls_s = EL('controls').style;
@@ -402,6 +423,8 @@ function show_screen(nscreen) {
   let version_s = EL('version').style;
   let title_row_s = EL('title_row').style;
 
+  main_s.display = 'block';
+  test_s.display = 'none';
   config_s.display = 'none';
   devices_s.display = 'none';
   controls_s.display = 'none';
@@ -425,6 +448,12 @@ function show_screen(nscreen) {
     title_row_s.cursor = 'unset';
     EL('conn').innerHTML = '';
     showCLI(false);
+
+  } else if (screen == 'test') {
+    main_s.display = 'none';
+    test_s.display = 'block';
+    back_s.display = 'inline-block';
+    EL('title').innerHTML = 'UI Test';
 
   } else if (screen == 'device') {
     controls_s.display = 'block';

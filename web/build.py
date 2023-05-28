@@ -17,6 +17,18 @@ js_files = [
     'src/include/pickr.min.js',
 ]
 
+js_files_esp = [
+    'src/include/main.js',
+    'src/include/utils.js',
+    'src/include/devices.js',
+    'src/include/connection.js',
+    'src/include/fs.js',
+    'src/include/parser.js',
+    'src/include/ui.js',
+    'src/include/sort-paths.min.js',
+    'src/include/pickr.min.js',
+]
+
 css_files = [
     'src/include/style.css',
     'src/include/nano.min.css',
@@ -27,7 +39,6 @@ sw_cache = '''
   '/fa-solid-900.ttf',
   '/favicon.svg',
   '/index.html',
-  '/test.html',
   '/script.js',
   '/style.css',
 '''
@@ -36,19 +47,11 @@ copy_web = [
     'favicon.svg',
     'index.html',
     'manifest.json',
-    'test.html',
     'sw.js',
     'icons/icon-192x192.png',
     'icons/icon-256x256.png',
     'icons/icon-384x384.png',
     'icons/icon-512x512.png',
-]
-
-copy_local = [
-    'favicon.svg',
-    'test.html',
-    'script.js',
-    'style.css',
 ]
 
 inc_min = '''
@@ -64,6 +67,7 @@ import gzip
 import shutil
 import os
 import re
+import base64
 
 ##############################################################
 
@@ -149,16 +153,24 @@ with open('host/style.css', 'w') as f:
 #################################################################
 ###                           LOCAL                           ###
 #################################################################
+fa_b64 = 'data:font/truetype;charset=utf-8;base64,'
+with open("src/include/fa-solid-900.ttf", "rb") as f:
+    fa_b64 += (base64.b64encode(f.read())).decode('ascii')
 
-shutil.copyfile('src/include/fa-solid-900.ttf', 'local/fa-solid-900.ttf')
-shutil.copyfile('src/index.html', 'local/index.html')
+icon_b64 = "<link rel='icon' href='data:image/svg+xml;base64,"
+with open("src/favicon.svg", "rb") as f:
+    icon_b64 += (base64.b64encode(f.read())).decode('ascii') + "'>"
 
-for file in copy_local:
-    shutil.copyfile('host/' + file, 'local/' + file)
+shutil.copyfile('src/index.html', 'local/GyverHUB.html')
 
-with open('local/index.html', "r+") as f:
+inc_local = '<style>\n' + css_min.replace('url(fa-solid-900.ttf)', 'url(' + fa_b64 + ')') + '\n</style>\n'
+inc_local += '<script>\n' + js_min + '\n</script>\n'
+
+with open('local/GyverHUB.html', "r+") as f:
     data = f.read()
-    data = re.sub(r'<!--INC-->([\s\S]*?)<!--\/INC-->', inc_min, data)
+    data = re.sub(r'<!--INC-->([\s\S]*?)<!--\/INC-->', '__INC__', data)
+    data = data.replace('__INC__', inc_local)
+    data = re.sub(r'<!--ICON-->([\s\S]*?)<!--\/ICON-->', icon_b64, data)
     data = re.sub(r'<!--PWA-->([\s\S]*?)<!--\/PWA-->', '', data)
     data = re.sub(r'<!--METRIKA-->', '', data)
     data = re.sub(r'__VER__', version, data)
@@ -169,16 +181,12 @@ with open('local/index.html', "r+") as f:
     f.write(data)
     f.truncate()
 
-shutil.make_archive('local', 'zip', 'local')
-shutil.move('local.zip', 'local/local.zip')
-
 ###############################################################
 ###                           ESP                           ###
 ###############################################################
 # JS
 js_min = ''
-for file in js_files:
-    if (('mqtt' in file) or ('test' in file)): continue
+for file in js_files_esp:
     with open(file, 'r') as f:
         read = f.read()
         read = re.sub(r'\/\*NON-ESP\*\/([\s\S]*?)\/\*\/NON-ESP\*\/', '', read)
@@ -195,12 +203,36 @@ with open('esp/script.js', 'rb') as f_in, gzip.open('esp/script.js.gz', 'wb') as
 os.remove("esp/script.js")
 
 # CSS
-with open('esp/style.css', 'w') as f: f.write(css_min.replace('url(fa-solid-900.ttf)', 'url(' + fa_url + ')'))
+css_min = ''
+for file in css_files:
+    with open(file, 'r') as f:
+        read = f.read()
+        read = re.sub(r'\/\*NON-ESP\*\/([\s\S]*?)\/\*\/NON-ESP\*\/', '', read)
+        read = read.replace('url(fa-solid-900.ttf)', 'url(' + fa_url + ')')
+        if ('.min.' not in file): read = cssmin(read)
+        css_min += read + '\n'
+
+with open('esp/style.css', 'w') as f: f.write(css_min)
 with open('esp/style.css', 'rb') as f_in, gzip.open('esp/style.css.gz', 'wb') as f_out: f_out.writelines(f_in)
 os.remove("esp/style.css")
 
 # INDEX
-with open('local/index.html', 'rb') as f_in, gzip.open('esp/index.html.gz', 'wb') as f_out: f_out.writelines(f_in)
+shutil.copyfile('src/index.html', 'esp/index.html')
+with open('esp/index.html', "r+") as f:
+    data = f.read()
+    data = re.sub(r'<!--INC-->([\s\S]*?)<!--\/INC-->', inc_min, data)
+    data = re.sub(r'<!--PWA-->([\s\S]*?)<!--\/PWA-->', '', data)
+    data = re.sub(r'<!--METRIKA-->', '', data)
+    data = re.sub(r'__VER__', version, data)
+    data = re.sub(r'<!--([\s\S]*?)-->', '', data)
+    data = re.sub(r'<!--\/([\s\S]*?)-->', '', data)
+    data = "".join([s for s in data.strip().splitlines(True) if s.strip()])
+    f.seek(0)
+    f.write(data)
+    f.truncate()
+
+with open('esp/index.html', 'rb') as f_in, gzip.open('esp/index.html.gz', 'wb') as f_out: f_out.writelines(f_in)
+os.remove("esp/index.html")
 
 # OTHER
 '''

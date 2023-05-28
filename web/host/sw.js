@@ -6,7 +6,6 @@ const CACHED_URLS = [
   '/fa-solid-900.ttf',
   '/favicon.svg',
   '/index.html',
-  '/test.html',
   '/script.js',
   '/style.css',
 

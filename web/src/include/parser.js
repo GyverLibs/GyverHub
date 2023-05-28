@@ -282,6 +282,8 @@ function showControls(controls) {
   for (ctrl of controls) {
     if (devices[focused].show_names && ctrl.name) ctrl.label = ctrl.name;
     switch (ctrl.type) {
+      case 'image': addImage(ctrl); break;
+      case 'stream': addStream(ctrl); break;
       case 'gauge': addGauge(ctrl); break;
       case 'js': eval(ctrl.value); break;
       case 'canvas': addCanvas(ctrl); break;
