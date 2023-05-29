@@ -253,13 +253,15 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
       break;
 
     case 'ota_end':
-      showPopup('OTA Done!');
+      showPopup('OTA Done! Reboot');
       stopFS();
       EL('ota_label').innerHTML = 'Done!';
       setTimeout(() => EL('ota_label').innerHTML = '', 3000);
       break;
 
-    case 'ota_url_ok':
+    
+    // ============ OTA URL ============
+      case 'ota_url_ok':
       showPopup('OTA Done!');
       break;
 
@@ -273,6 +275,7 @@ function showControls(controls) {
   if (!controls) return;
   gauges = {};
   canvases = {};
+  pickers = {};
   dup_names = [];
   wid_row_count = 0;
   btn_row_count = 0;
@@ -331,6 +334,7 @@ function showControls(controls) {
     if (dup_names.length) showPopupError('Duplicated names: ' + dup_names);
     showCanvases();
     showGauges();
+    showPickers();
   }, 10);
 }
 function showInfo(device) {

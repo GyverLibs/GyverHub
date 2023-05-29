@@ -8,6 +8,7 @@ let pressId = null;
 let dup_names = [];
 let gauges = {};
 let canvases = {};
+let pickers = {};
 
 let wid_row_id = null;
 let wid_row_count = 0;
@@ -462,7 +463,7 @@ function addColor(ctrl) {
     <div id="color_cont#${ctrl.name}" style="visibility: hidden">
       <div id='#${ctrl.name}'></div>
     </div>
-    <button id="color_btn#${ctrl.name}" style="margin-left:-30px;color:${color}" class="icon cfg_btn_tab" onclick="openColor('${ctrl.name}')"></button>
+    <button id="color_btn#${ctrl.name}" style="margin-left:-30px;color:${color}" class="icon cfg_btn_tab" onclick="openPicker('${ctrl.name}')"></button>
     `;
 
   if (wid_row_id) {
@@ -475,29 +476,7 @@ function addColor(ctrl) {
     </div>
     `;
   }
-  let pick = '#' + ctrl.name;
-  setTimeout(() => {
-    Pickr.create({
-      el: EL(pick),
-      theme: 'nano',
-      default: color,
-      defaultRepresentation: 'HEXA',
-      components: {
-        preview: true,
-        hue: true,
-        interaction: {
-          hex: false,
-          input: true,
-          save: true
-        }
-      }
-    }).on('save', (color) => {
-      let col = color.toHEXA().toString();
-      set_h('color', colToInt(col));
-      EL('color_btn' + pick).style.color = col;
-    });
-  }, 10);
-
+  pickers[ctrl.name] = color;
   /*if (wid_row_id) {
     let inner = `
     <input id='#${ctrl.name}' class="c_base_inp c_col c_col_tab input_t" type="color" value="${ctrl.value}" onchange="set_h('${ctrl.name}',this.value)">
@@ -772,8 +751,32 @@ function addWidget(width, name, label, inner, height = 0, noback = false) {
   </div>
   `;
 }
-function openColor(id) {
+function openPicker(id) {
   EL('color_cont#' + id).getElementsByTagName('button')[0].click()
+}
+function showPickers() {
+  Object.keys(pickers).forEach(picker => {
+    let id = '#' + picker;
+    Pickr.create({
+      el: EL(id),
+      theme: 'nano',
+      default: pickers[picker],
+      defaultRepresentation: 'HEXA',
+      components: {
+        preview: true,
+        hue: true,
+        interaction: {
+          hex: false,
+          input: true,
+          save: true
+        }
+      }
+    }).on('save', (color) => {
+      let col = color.toHEXA().toString();
+      set_h('color', colToInt(col));
+      EL('color_btn' + id).style.color = col;
+    });
+  });
 }
 function renderButton(title, className, name, label, size, color = null, is_icon = false) {
   let col = (color != null) ? ((is_icon ? ';color:' : ';background:') + intToCol(color)) : '';
@@ -822,24 +825,35 @@ function moveSlider(arg, sendf = true) {
 function showCanvases() {
   Object.values(canvases).forEach(canvas => {
     let cv = EL('#' + canvas.name);
-    cv.width = cv.parentNode.clientWidth;
-    canvas.scale = cv.width / canvas.width;
-    cv.height = canvas.height * canvas.scale;
+    if (!cv || !cv.parentNode.clientWidth) return;
+    let rw = cv.parentNode.clientWidth;
+    canvas.scale = rw / canvas.width;
+    let rh = Math.floor(canvas.height * canvas.scale);
+    cv.style.width = rw + 'px';
+    cv.style.height = rh + 'px';
+    cv.width = Math.floor(rw * ratio());
+    cv.height = Math.floor(rh * ratio());
+    canvas.scale *= ratio();
     drawCanvas(canvas);
   });
 }
 function drawCanvas(canvas) {
-  function cv_map(cv, v, h) {
+  if (!canvas.scale) return;
+  let ev_str = '';
+  let cv = EL('#' + canvas.name);
+
+  function cv_map(v, h) {
     v *= canvas.scale;
     return v >= 0 ? v : (h ? cv.height : cv.width) - v;
   }
+  function scale() {
+    return canvas.scale;
+  }
 
-  if (!canvas.scale) return;
-  let cv = EL('#' + canvas.name);
   let cx = cv.getContext("2d");
   const cmd_list = ['fillStyle', 'strokeStyle', 'shadowColor', 'shadowBlur', 'shadowOffsetX', 'shadowOffsetY', 'lineWidth', 'miterLimit', 'font', 'textAlign', 'textBaseline', 'lineCap', 'lineJoin', 'globalCompositeOperation', 'globalAlpha', 'scale', 'rotate', 'rect', 'fillRect', 'strokeRect', 'clearRect', 'moveTo', 'lineTo', 'quadraticCurveTo', 'bezierCurveTo', 'translate', 'arcTo', 'arc', 'fillText', 'strokeText', 'drawImage', 'fill', 'stroke', 'beginPath', 'closePath', 'clip', 'save', 'restore'];
   const const_list = ['butt', 'round', 'square', 'square', 'bevel', 'miter', 'start', 'end', 'center', 'left', 'right', 'alphabetic', 'top', 'hanging', 'middle', 'ideographic', 'bottom', 'source-over', 'source-atop', 'source-in', 'source-out', 'destination-over', 'destination-atop', 'destination-in', 'destination-out', 'lighter', 'copy', 'xor', 'top', 'bottom', 'middle', 'alphabetic'];
-  let ev_str = '';
+  
   for (d of canvas.value) {
     let div = d.indexOf(':');
     let cmd = parseInt(d, 10);
@@ -857,18 +871,18 @@ function drawCanvas(canvas) {
           let str = 'cx.' + cmd_list[cmd] + '(';
           for (let i in vals) {
             if (i > 0) str += ',';
-            str += `cv_map(cv,${vals[i]},${(i % 2)})`;
+            str += `cv_map(${vals[i]},${(i % 2)})`;
           }
           ev_str += (str + ');');
         } else if (cmd == 27) {
-          ev_str += (`cx.${cmd_list[cmd]}(cv_map(cv,${vals[0]},0),cv_map(cv,${vals[1]},1),cv_map(cv,${vals[2]},0),${vals[3]},${vals[4]},${vals[5]});`);
+          ev_str += (`cx.${cmd_list[cmd]}(cv_map(${vals[0]},0),cv_map(${vals[1]},1),cv_map(${vals[2]},0),${vals[3]},${vals[4]},${vals[5]});`);
         } else if (cmd <= 29) {
-          ev_str += (`cx.${cmd_list[cmd]}(${vals[0]},cv_map(cv,${vals[1]},0),cv_map(cv,${vals[2]},1),${vals[3]});`);
+          ev_str += (`cx.${cmd_list[cmd]}(${vals[0]},cv_map(${vals[1]},0),cv_map(${vals[2]},1),${vals[3]});`);
         } else if (cmd == 30) {
           let str = 'cx.' + cmd_list[cmd] + '(';
           for (let i in vals) {
             if (i > 0) {
-              str += `,cv_map(cv,${vals[i]},${!(i % 2)})`;
+              str += `,cv_map(${vals[i]},${!(i % 2)})`;
             } else str += vals[i];
           }
           ev_str += (str + ');');
@@ -885,13 +899,8 @@ function drawCanvas(canvas) {
 }
 function drawGauge(g) {
   let cv = EL('#' + g.name);
-  if (!cv) return;
-  cv.width = cv.parentNode.clientWidth;
-  if (!cv.width) return;
+  if (!cv || !cv.parentNode.clientWidth) return;
 
-  let cx = cv.getContext("2d");
-  let col = g.color == null ? intToCol(colors[cfg.maincolor]) : intToCol(g.color);
-  let v = themes[cfg.theme];
   let perc = (g.value - g.min) * 100 / (g.max - g.min);
   if (perc < 0) perc = 0;
   if (perc > 100) perc = 100;
@@ -902,7 +911,16 @@ function drawGauge(g) {
     if (g.perc != perc) setTimeout(() => drawGauge(g), 30);
   }
 
-  cv.height = cv.width * 0.47;
+  let cx = cv.getContext("2d");
+  let v = themes[cfg.theme];
+  let col = g.color == null ? intToCol(colors[cfg.maincolor]) : intToCol(g.color);
+  let rw = cv.parentNode.clientWidth;
+  let rh = Math.floor(rw * 0.47);
+  cv.style.width = rw + 'px';
+  cv.style.height = rh + 'px';
+  cv.width = Math.floor(rw * ratio());
+  cv.height = Math.floor(rh * ratio());
+
   cx.clearRect(0, 0, cv.width, cv.height);
   cx.lineWidth = cv.width / 8;
   cx.strokeStyle = theme_cols[v][4];

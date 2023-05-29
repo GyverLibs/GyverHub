@@ -1,5 +1,5 @@
 const app_title = 'GyverHUB';
-const version_notes = 'Средние фиксы, мелкие фиксы, добавлена ширина в Canvas. Версия библиотеки от 26.05';
+const version_notes = 'Увеличено разрешение Canvas и Gauge на устройствах с высокой плотностью пикселей. Версия библиотеки от 26.05';
 const ota_url = 'hub.gyver.ru/ota/projects.json';
 const non_esp = '__ESP__';
 const app_version = '__VER__';
@@ -91,7 +91,6 @@ function log(text) {
   if (!log_network && (texts.indexOf('discover') > 0 || texts.startsWith('Post') || texts.startsWith('Got'))) return;
   console.log(text);
 }
-
 function window_ip() {
   return window.location.href.split('/')[2].split(':')[0];
 }
@@ -109,6 +108,9 @@ function isPWA() {
 }
 function isESP() {
   return !non_esp;
+}
+function isTouch() {
+  return navigator.maxTouchPoints || 'ontouchstart' in document.documentElement;
 }
 String.prototype.hashCode = function () {
   if (!this.length) return 0;
@@ -164,6 +166,10 @@ function enableScroll() {
 function refreshSpin(val) {
   if (val) EL('icon_refresh').classList.add('spinning');
   else EL('icon_refresh').classList.remove('spinning');
+}
+function ratio() {
+  return 2;
+  return window.devicePixelRatio;
 }
 
 function resize_h() {
