@@ -7,6 +7,7 @@
 #include "macro.hpp"
 #include "utils/build.h"
 #include "utils/color.h"
+#include "utils/joy.h"
 #include "utils/datatypes.h"
 #include "utils/log.h"
 #include "utils/misc.h"
@@ -148,7 +149,7 @@ class HubBuilder {
         _display(true, name, value, label, color, rows, size);
     }
     void Display(CSREF name, const String& value = "", CSREF label = "", uint32_t color = GH_DEFAULT, int rows = 2, int size = 40) {
-        _display(true, name.c_str(), value.c_str(), label.c_str(), color, rows, size);
+        _display(false, name.c_str(), value.c_str(), label.c_str(), color, rows, size);
     }
     void _display(bool fstr, VSPTR name, VSPTR value, VSPTR label, uint32_t color, int rows, int size) {
         if (_isUI()) {
@@ -160,7 +161,7 @@ class HubBuilder {
             _quot();
             _label(label, fstr);
             _color(color);
-            _tag(F("rows"));
+            _add(F(",'rows':"));
             *sptr += rows;
             _size(size);
             _tabw();
@@ -290,7 +291,7 @@ class HubBuilder {
         _gauge(true, name, value, text, label, minv, maxv, step, color);
     }
     void Gauge(CSREF name, float value = 0, CSREF text = "", CSREF label = "", float minv = 0, float maxv = 100, float step = 1, uint32_t color = GH_DEFAULT) {
-        _gauge(true, name.c_str(), value, text.c_str(), label.c_str(), minv, maxv, step, color);
+        _gauge(false, name.c_str(), value, text.c_str(), label.c_str(), minv, maxv, step, color);
     }
 
     void _gauge(bool fstr, VSPTR name, float value, VSPTR text, VSPTR label, float minv, float maxv, float step, uint32_t color) {
@@ -499,7 +500,8 @@ class HubBuilder {
     void Space(int height = 0) {
         if (_isUI()) {
             _begin(F("spacer"));
-            _height(height);
+            _add(F(",'height':"));
+            *sptr += height;
             _tabw();
             _end();
         }
@@ -539,7 +541,7 @@ class HubBuilder {
         _canvas(false, name.c_str(), width, height, cv, label.c_str(), false);
     }
     void BeginCanvas(FSTR name, int width = 400, int height = 300, GHcanvas* cv = nullptr, FSTR label = nullptr) {
-        _canvas(false, name, width, height, cv, label, true);
+        _canvas(true, name, width, height, cv, label, true);
     }
     void BeginCanvas(CSREF name, int width = 400, int height = 300, GHcanvas* cv = nullptr, CSREF label = "") {
         _canvas(false, name.c_str(), width, height, cv, label.c_str(), true);
@@ -570,13 +572,66 @@ class HubBuilder {
         }
     }
 
+    // ========================= IMAGE =========================
+    void Image(FSTR url, int prd = 0, FSTR label = nullptr) {
+        _image(true, url, prd, label);
+    }
+    void Image(CSREF url, int prd = 0, CSREF label = "") {
+        _image(false, url.c_str(), prd, label.c_str());
+    }
+    void _image(bool fstr, VSPTR url, int prd, VSPTR label) {
+        if (_isUI()) {
+            _begin(F("image"));
+            _value(url, fstr);
+            _label(label, fstr);
+            _add(F(",'prd':"));
+            *sptr += prd;
+            _tabw();
+            _end();
+        }
+    }
+
+    // ========================= STREAM =========================
+    void Stream() {
+        if (_isUI()) {
+            _begin(F("stream"));
+            _tabw();
+            _end();
+        }
+    }
+
+    // =========================== JOY ===========================
+    bool Joy(FSTR name, GHjoy* value, FSTR label = nullptr) {
+        return _joy(true, name, value, label);
+    }
+    bool Joy(CSREF name, GHjoy* value, CSREF label = "") {
+        return _joy(false, name.c_str(), value, label.c_str());
+    }
+
+    bool _joy(bool fstr, VSPTR name, GHjoy* value, VSPTR label) {
+        if (_isUI()) {
+            _begin(F("joy"));
+            _name(name, fstr);
+            _label(label, fstr);
+            _value();
+            //GHtypeToStr(sptr, value, GH_STAMP);
+            _tabw();
+            _end();
+        } else if (bptr->type == GH_BUILD_ACTION) {
+            //return bptr->parseSet(name, value, GH_STAMP, fstr);
+        }
+        return 0;
+    }
+
+    // ======================== PROTECTED ========================
+
    protected:
     String* sptr = nullptr;
     GHbuild* bptr = nullptr;
     virtual void _afterComponent() = 0;
     virtual void refresh() = 0;
 
-    // ========================== PRIVATE ==========================
+    // ========================= PRIVATE =========================
    private:
     int tab_width = 0;
     bool _checkName(VSPTR name, bool fstr = true) {
@@ -664,10 +719,6 @@ class HubBuilder {
     }
 
     // ================
-    void _height(int& height) {
-        _add(F(",'height':"));
-        *sptr += height;
-    }
     void _color(uint32_t& col) {
         if (col == GH_DEFAULT) return;
         _add(F(",'color':"));
@@ -692,12 +743,5 @@ class HubBuilder {
     void _step(float val) {
         _add(F(",'step':"));
         *sptr += val;
-    }
-
-    // ================
-    void _tag(FSTR tag) {
-        _add(F(",'"));
-        *sptr += tag;
-        _add(F("':"));
     }
 };
