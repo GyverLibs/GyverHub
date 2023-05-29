@@ -1,6 +1,6 @@
 #pragma once
-#include "config.hpp"
-#include "macro.hpp"
+#include "../config.hpp"
+#include "../macro.hpp"
 
 #ifdef GH_ESP_BUILD
 #ifdef GH_NO_WS
@@ -13,7 +13,7 @@ class HubMQTT {
 #include <Arduino.h>
 #include <AsyncMqttClient.h>
 
-#include "utils/stats.h"
+#include "../utils/stats.h"
 
 class HubMQTT {
     // ============ PUBLIC =============

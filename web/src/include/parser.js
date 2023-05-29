@@ -106,11 +106,13 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
         devices[id] = { prefix: cfg.prefix, break_widgets: false, show_names: false, skip_version: device.version, ip: ip };
         updateDevice(devices[id], device);
 
+        /*NON-ESP*/
         if (mq_state()) {
           mq_client.subscribe(devices[id].prefix + '/hub/' + id + '/get/#');
           mq_client.subscribe(devices[id].prefix + '/hub/' + cfg.hub_id + '/#');
           if (!mq_pref_list.includes(devices[id].prefix)) mq_pref_list.push(devices[id].prefix);
         }
+        /*/NON-ESP*/
         addDevice(id);
       }
 

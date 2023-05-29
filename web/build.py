@@ -72,10 +72,12 @@ import base64
 ##############################################################
 
 if os.path.exists('esp'): shutil.rmtree('esp')
+if os.path.exists('esp_inc'): shutil.rmtree('esp_inc')
 if os.path.exists('host'): shutil.rmtree('host')
 if os.path.exists('local'): shutil.rmtree('local')
 
 os.mkdir('esp')
+os.mkdir('esp_inc')
 os.mkdir('host')
 os.mkdir('host/icons')
 os.mkdir('local')
@@ -234,26 +236,33 @@ with open('esp/index.html', "r+") as f:
 with open('esp/index.html', 'rb') as f_in, gzip.open('esp/index.html.gz', 'wb') as f_out: f_out.writelines(f_in)
 os.remove("esp/index.html")
 
+###############################################################
+###                         ESP INC                         ###
+###############################################################
+
+def file_to_h(src, dest, name):
+    with open(src, "rb") as f:
+        bytes = bytearray(f.read())
+        data = '#pragma once\n'
+        data += '#define ' + name + '_len ' + str(len(bytes)) + '\n\n'
+        data += 'const uint8_t ' + name + '[] PROGMEM = {\n\t'
+        count = 0
+        for b in bytes:
+            data += "0x{:02x}".format(b) + ', '
+            count += 1
+            if (count % 16 == 0): data += '\n\t'
+
+        data += '\n};'
+        with open(dest, "w") as f: f.write(data)
+
+file_to_h('esp/index.html.gz', 'esp_inc/index.h', 'hub_index_h')
+file_to_h('esp/style.css.gz', 'esp_inc/style.h', 'hub_style_h')
+file_to_h('esp/script.js.gz', 'esp_inc/script.h', 'hub_script_h')
+
 # OTHER
 '''
 #with open('local/fa-solid-900.ttf', 'rb') as f_in, gzip.open('esp/fa-solid-900.ttf.gz', 'wb') as f_out: f_out.writelines(f_in)
 #with open('local/test.html', 'rb') as f_in, gzip.open('esp/test.html.gz', 'wb') as f_out: f_out.writelines(f_in)
 #with open('local/favicon.svg', 'rb') as f_in, gzip.open('esp/favicon.svg.gz', 'wb') as f_out: f_out.writelines(f_in)
 with open('local/index.html', 'rb') as f_in, gzip.open('esp/index.html.gz', 'wb') as f_out: f_out.writelines(f_in)
-with open('esp/index.html.gz', "rb") as f: ba = bytearray(f.read())
-
-index_h = '#pragma once\n'
-index_h += '#define hub_index_gz_len ' + str(len(ba)) + '\n\n'
-index_h += 'const uint8_t hub_index_gz[] PROGMEM = {\n\t'
-count = 0
-for b in ba:
-    index_h += "0x{:02x}".format(b) + ', '
-    count += 1
-    if (count % 16 == 0): index_h += '\n\t'
-
-index_h += '\n};'
-with open('esp/index.h', "w") as f:
-    f.write(index_h)
-
-os.remove("esp/index.html.gz")
 '''

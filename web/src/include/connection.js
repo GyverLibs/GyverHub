@@ -49,10 +49,11 @@ function post(cmd, name = '', value = '') {
     case Conn.WS:
       ws_send(id, uri);
       break;
-
+/*NON-ESP*/
     case Conn.MQTT:
       mq_send(uri0 + (name.length ? ('/' + name) : ''), value);
       break;
+/*/NON-ESP*/
   }
   reset_ping();
   reset_tout();

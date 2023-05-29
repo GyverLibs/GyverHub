@@ -8,6 +8,9 @@
 #define ATOMIC_FS_UPDATE  // OTA обновление GZIP файлом
 //#define GH_ASYNC          // использовать ASYNC библиотеки
 
+// включить сайт в память программы (не нужно загружать файлы в память)
+//#define GH_INCLUDE_PORTAL
+
 // отключение модулей
 //#define GH_NO_PORTAL    // открытие сайта из памяти esp
 //#define GH_NO_WS        // WebSocket

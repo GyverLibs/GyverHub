@@ -531,7 +531,9 @@ function sendCLI() {
 
 // ============== DISCOVER =============
 function sendDiscover() {
+  /*NON-ESP*/
   if (cfg.use_mqtt) mq_discover();
+  /*/NON-ESP*/
   if (cfg.use_ws && !isSSL()) ws_discover();
 }
 function discover() {
@@ -554,17 +556,21 @@ function discover() {
   sendDiscover();
 }
 function discover_all() {
+  /*NON-ESP*/
   if (cfg.use_mqtt) mq_discover_all();
+  /*/NON-ESP*/
   if (cfg.use_ws && !isSSL()) ws_discover_all();
   back_h();
 }
 
 // ============= CFG ==============
+/*NON-ESP*/
 function mq_change(start = false) {
   mq_show_err(1);
   mq_stop();
   if (start) mq_start();
 }
+/*/NON-ESP*/
 function update_cfg(el) {
   cfg_changed = true;
   if (el.type == 'text') el.value = el.value.trim();
