@@ -168,7 +168,6 @@ function refreshSpin(val) {
   else EL('icon_refresh').classList.remove('spinning');
 }
 function ratio() {
-  return 2;
   return window.devicePixelRatio;
 }
 

@@ -339,7 +339,7 @@ function browser(){if(navigator.userAgent.indexOf("Opera")!=-1||navigator.userAg
 function disableScroll(){TopScroll=window.pageYOffset||document.documentElement.scrollTop;LeftScroll=window.pageXOffset||document.documentElement.scrollLeft,window.onscroll=function(){window.scrollTo(LeftScroll,TopScroll);};}
 function enableScroll(){window.onscroll=function(){};}
 function refreshSpin(val){if(val)EL('icon_refresh').classList.add('spinning');else EL('icon_refresh').classList.remove('spinning');}
-function ratio(){return 2;return window.devicePixelRatio;}
+function ratio(){return window.devicePixelRatio;}
 function resize_h(){showGauges();}
 let popupT1=null,popupT2=null;function showPopup(text,color='#37a93c'){if(popupT1)clearTimeout(popupT1);if(popupT2)clearTimeout(popupT2);EL('notice').innerHTML=text;EL('notice').style.background=color;EL('notice').style.display='block';EL('notice').style.animation="fade-in 0.5s forwards";popupT1=setTimeout(()=>{popupT1=null;EL('notice').style.display='none'},3500);popupT2=setTimeout(()=>{popupT2=null;EL('notice').style.animation="fade-out 0.5s forwards"},3000);}
 function showPopupError(text){showPopup(text,'#a93737');}
@@ -787,7 +787,7 @@ window.addEventListener('beforeinstallprompt',(e)=>deferredPrompt=e);window.hist
 render_main(app_version);EL('title').innerHTML=app_title;load_cfg();let title='GyverHUB v'+app_version+' ['+cfg.hub_id+'] '+(isPWA()?'PWA ':'')+(isSSL()?'SSL ':'')+(isLocal()?'Local ':'')+(isESP()?'ESP':'');EL('title').title=title;log(title);if(cfg.use_pin)show_keypad(true);else startup();started=true;}
 function startup(){if(isESP())cfg.use_ws=true;render_selects();render_info();show_screen('main');apply_cfg();load_devices();render_devices();discover();if(isSSL()){EL('http_only_http').style.display='block';EL('http_settings').style.display='none';EL('pwa_unsafe').style.display='none';}
 if(isPWA()||isLocal()){EL('app_block').style.display='none';}
-if(cfg.use_mqtt)mq_start();setInterval(()=>{if(cfg.use_mqtt&&!mq_state()){log('MQTT reconnect');mq_start();}},5000);setTimeout(()=>{if(show_version)alert('Версия '+app_version+'!\n'+version_notes);},500);}
+if(cfg.use_mqtt)mq_start();setInterval(()=>{if(cfg.use_mqtt&&!mq_state()){log('MQTT reconnect');mq_start();}},5000);setTimeout(()=>{if(show_version)alert('Версия '+app_version+'!\n'+version_notes);},1000);}
 function checkUpdates(id,force=false){if(force&&isLocal())showPopupError('Offline!');if(!projects||!devices[id].version||!devices[id].skip_version)return;let namever=devices[id].version.split('@');if(namever.length!=2)return;if(!(namever[0]in projects))return;let proj=projects[namever[0]];let newver=namever[0]+'@'+proj.version;if(force){if(devices[id].version==newver){alert('No updates!');return;}}else{if(devices[id].version==newver||devices[id].skip_version==newver)return;}
 let res=confirm('Available new version v'+proj.version+' for device ['+namever[0]+']. Notes:\n'+proj.notes+'\n\nUpdate firmware?');if(res)otaUrl(proj.url,'flash');else devices[id].skip_version=newver;save_devices();return res;return false;}
 async function pwa_install(ssl){if(ssl&&!isSSL()){if(confirm("Redirect to HTTPS?"))window.location.href=window.location.href.replace('http:','https:');else return;}

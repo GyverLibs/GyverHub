@@ -96,7 +96,7 @@ function startup() {
 
   setTimeout(() => {
     if (show_version) alert('Версия ' + app_version + '!\n' + version_notes);
-  }, 500);
+  }, 1000);
   /*/NON-ESP*/
 }
 function checkUpdates(id, force = false) {
