@@ -197,6 +197,7 @@ function showErr(v) {
 
 // ============ IP ================
 function getLocalIP() {
+  /*NON-ESP*/
   return new Promise(function (resolve, reject) {
     var RTCPeerConnection = window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
     if (!RTCPeerConnection) reject('Not supported');
@@ -241,7 +242,8 @@ function getLocalIP() {
       rtc.setLocalDescription(offerDesc);
     }, function (e) { return; });
   });
-
+  /*/NON-ESP*/
+  return window_ip();
 }
 function update_ip() {
   if (!Boolean(window.webkitRTCPeerConnection || window.mozRTCPeerConnection)) notSupported();

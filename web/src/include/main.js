@@ -35,7 +35,9 @@ function render_main(v) {
   footer_cont.innerHTML = `
   <div class="footer_inner">
     <a href="https://alexgyver.ru/support_alex/" target="_blank"><span class="icon info_icon info_icon_u"></span>Support</a>
+    <!--NON-ESP-->
     <a style="cursor:pointer" onclick="test_h()"><span class="icon info_icon info_icon_u"></span>Test</a>
+    <!--/NON-ESP-->
     <a href="https://github.com/GyverLibs/GyverHUB/wiki" target="_blank"><span class="icon info_icon info_icon_u"></span>Docs</a>
   </div>
   `;

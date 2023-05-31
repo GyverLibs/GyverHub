@@ -1,12 +1,12 @@
 #pragma once
 #include <Arduino.h>
 
-#include "config.hpp"
+#include "../config.hpp"
+#include "../macro.hpp"
 #include "action.h"
 #include "datatypes.h"
 #include "hub.h"
 #include "stats.h"
-#include "macro.hpp"
 
 // тип билда
 enum GHbuild_t {

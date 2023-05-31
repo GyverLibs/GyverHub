@@ -1,5 +1,5 @@
 #pragma once
-#include "config.hpp"
+#include "../config.hpp"
 
 // причина перезагрузки
 enum GHreason_t {

@@ -1,7 +1,7 @@
 #pragma once
 #include <Arduino.h>
-#include "config.hpp"
-#include "macro.hpp"
+#include "../config.hpp"
+#include "../macro.hpp"
 #include "stats.h"
 #include "action.h"
 #include "build.h"

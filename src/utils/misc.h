@@ -1,8 +1,8 @@
 #pragma once
 #include <Arduino.h>
 
-#include "config.hpp"
-#include "macro.hpp"
+#include "../config.hpp"
+#include "../macro.hpp"
 #include "utils/b64.h"
 
 #ifdef GH_ESP_BUILD

@@ -1,7 +1,7 @@
 #pragma once
 #include <Arduino.h>
 
-#include "config.hpp"
+#include "../config.hpp"
 
 enum GHmodule_t {
     GH_MOD_INFO = (1ul << 0),

@@ -17,6 +17,14 @@ class HubHTTP {
 #include <WiFi.h>
 #endif
 
+#ifndef GH_NO_FS
+#if (GH_FS == LittleFS)
+#include <LittleFS.h>
+#elif (GH_FS == SPIFFS)
+#include <SPIFFS.h>
+#endif
+#endif
+
 #ifdef GH_INCLUDE_PORTAL
 #include "../esp_inc/index.h"
 #include "../esp_inc/script.h"
