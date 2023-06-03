@@ -735,7 +735,7 @@ function showPickers() {
       }
     }).on('save', (color) => {
       let col = color.toHEXA().toString();
-      set_h('color', colToInt(col));
+      set_h(picker, colToInt(col));
       EL('color_btn' + id).style.color = col;
     });
   });

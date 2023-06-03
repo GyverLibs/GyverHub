@@ -1,5 +1,5 @@
 const app_title = 'GyverHUB';
-const version_notes = 'Добавлено отключение подписей компонентов и клики по Canvas';
+const version_notes = 'Fixed Color component';
 const ota_url = 'hub.gyver.ru/ota/projects.json';
 const non_esp = '__ESP__';
 const app_version = '__VER__';
