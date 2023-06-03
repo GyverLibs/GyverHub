@@ -565,6 +565,7 @@ class GyverHUB : public HubBuilder {
         }
 
         // p.size == 5
+        setFocus(conn);
         char* name = p.str[4];
         switch (GH_getCmdN(p.str[3])) {
             // set
