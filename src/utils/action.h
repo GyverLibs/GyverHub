@@ -18,4 +18,24 @@ struct GHaction {
 
     // значение компонента
     const char* value = nullptr;
+
+    // получить значение как int (32 бит)
+    int32_t valueInt() {
+        return atol(value);
+    }
+
+    // получить значение как float
+    float valueFloat() {
+        return atof(value);
+    }
+
+    // получить значение как String
+    String valueString() {
+        return value;
+    }
+
+    // получить имя как String
+    String nameString() {
+        return name;
+    }
 };

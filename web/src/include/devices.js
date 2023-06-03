@@ -47,10 +47,10 @@ function addButton(ctrl) {
   if (wid_row_id) {
     endButtons();
     let inner = renderButton(ctrl.name, 'icon btn_icon', ctrl.name, '', ctrl.size * 3, ctrl.color, true);
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label, inner);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     if (!btn_row_id) beginButtons();
-    EL(btn_row_id).innerHTML += `${renderButton(ctrl.name, 'c_btn', ctrl.name, ctrl.label, ctrl.size, ctrl.color, false)}`;
+    EL(btn_row_id).innerHTML += `${renderButton(ctrl.name, 'c_btn', ctrl.name, ctrl.clabel, ctrl.size, ctrl.color, false)}`;
   }
 }
 function addButtonIcon(ctrl) {
@@ -85,7 +85,7 @@ function addTabs(ctrl) {
       </ul>
     </div>
     `;
-    addWidget(ctrl.tab_w, '', ctrl.label, inner);
+    addWidget(ctrl.tab_w, '', ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="navtab">
@@ -124,32 +124,29 @@ function addLED(ctrl) {
   endButtons();
   let ch = ctrl.value ? 'checked' : '';
   if (ctrl.text) {
-
     if (wid_row_id) {
       let inner = `
       <label id="swlabel_${ctrl.name}" class="led_i_cont led_i_cont_tab"><input type="checkbox" class="switch_t" id='#${ctrl.name}' ${ch} disabled><span class="switch_i led_i led_i_tab">${ctrl.text}</span></label>
       `;
-      addWidget(ctrl.tab_w, ctrl.name, ctrl.label, inner);
+      addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
     } else {
       EL('controls').innerHTML += `
       <div class="control">
-        <label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Switch'}</label>
+        <label title='${ctrl.name}'>${ctrl.clabel}</label>
         <label id="swlabel_${ctrl.name}" class="led_i_cont"><input type="checkbox" class="switch_t" id='#${ctrl.name}' ${ch} disabled><span class="switch_i led_i">${ctrl.text}</span></label>
       </div>
     `;
     }
-
-
   } else {
     if (wid_row_id) {
       let inner = `
     <label class="led_cont"><input type="checkbox" class="switch_t" id='#${ctrl.name}' ${ch} disabled><span class="led"></span></label>
     `;
-      addWidget(ctrl.tab_w, ctrl.name, ctrl.label, inner);
+      addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
     } else {
       EL('controls').innerHTML += `
       <div class="control">
-        <label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'LED'}</label>
+        <label title='${ctrl.name}'>${ctrl.clabel}</label>
         <label class="led_cont"><input type="checkbox" class="switch_t" id='#${ctrl.name}' ${ch} disabled><span class="led"></span></label>
       </div>
     `;
@@ -165,11 +162,11 @@ function addIcon(ctrl) {
     let inner = `
     <span class="icon icon_t" id='#${ctrl.name}' style="${col}">${ctrl.text}</span>
     `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label, inner);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
       <div class="control">
-        <label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Icon'}</label>
+        <label title='${ctrl.name}'>${ctrl.clabel}</label>
         <span class="icon icon_t" id='#${ctrl.name}' style="${col}">${ctrl.text}</span>
       </div>
     `;
@@ -184,11 +181,11 @@ function addLabel(ctrl) {
     let inner = `
     <label class="c_label text_t c_label_tab" id='#${ctrl.name}' style="${col};font-size:${ctrl.size}px">${ctrl.value}</label>
     `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label, inner);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="control">
-      <label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Label'}</label>
+      <label title='${ctrl.name}'>${ctrl.clabel}</label>
       <label class="c_label text_t" id='#${ctrl.name}' style="${col};font-size:${ctrl.size}px">${ctrl.value}</label>
     </div>
   `;
@@ -209,11 +206,11 @@ function addInput(ctrl) {
         </div>
       </div>
     `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label, inner);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="control">
-      <label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Input'}</label>
+      <label title='${ctrl.name}'>${ctrl.clabel}</label>
       <div class="cfg_inp_row">
         <input class="cfg_inp c_inp input_t" style="${col}" type="text" value="${ctrl.value}" id="#${ctrl.name}" name="${ctrl.name}" onkeydown="checkEnter(this)" oninput="checkLen(this,${ctrl.max})">
         <div class="cfg_btn_block">
@@ -239,11 +236,11 @@ function addPass(ctrl) {
         </div>
       </div>
     `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label, inner);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="control">
-      <label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Password'}</label>
+      <label title='${ctrl.name}'>${ctrl.clabel}</label>
       <div class="cfg_inp_row">
         <input class="cfg_inp c_inp input_t" style="${col}" type="password" value="${ctrl.value}" id="#${ctrl.name}" name="${ctrl.name}" onkeydown="checkEnter(this)" oninput="checkLen(this,${ctrl.max})">
         <div class="cfg_btn_block2">
@@ -256,7 +253,7 @@ function addPass(ctrl) {
   }
 }
 
-function addSliderW(ctrl) {
+/*function addSliderW(ctrl) {
   if (checkDup(ctrl)) return;
   checkWidget(ctrl);
   endButtons();
@@ -270,7 +267,7 @@ function addSliderW(ctrl) {
     </div>
   </div>
   `;
-}
+}*/
 function addSlider(ctrl) {
   if (checkDup(ctrl)) return;
   checkWidget(ctrl);
@@ -281,12 +278,12 @@ function addSlider(ctrl) {
     let inner = `
     <input ontouchstart="dis_scroll_f=2" ontouchend="dis_scroll_f=0;enableScroll()" name="${ctrl.name}" id="#${ctrl.name}" oninput="moveSlider(this)" type="range" class="c_rangeW slider_t" style="${col}" value="${ctrl.value}" min="${ctrl.min}" max="${ctrl.max}" step="${ctrl.step}"><div class="sldW_out"><output id="out#${ctrl.name}">${formatted}</output></div>
     `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label, inner);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="control">
       <div class="sld_name">
-        <label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Slider'}</label>
+        <label title='${ctrl.name}'>${ctrl.clabel}</label>
         <label>:&nbsp;</label>
         <output id="out#${ctrl.name}">${formatted}</output>
       </div>
@@ -308,11 +305,11 @@ function addSwitch(ctrl) {
     let inner = `${col}
     <label id="swlabel_${ctrl.name}" class="switch"><input type="checkbox" class="switch_t" id='#${ctrl.name}' onclick="set_h('${ctrl.name}',(this.checked ? 1 : 0))" ${ch}><span class="slider"></span></label>
     `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label, inner);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `${col}
     <div class="control">
-      <label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Switch'}</label>
+      <label title='${ctrl.name}'>${ctrl.clabel}</label>
       <label id="swlabel_${ctrl.name}" class="switch"><input type="checkbox" class="switch_t" id='#${ctrl.name}' onclick="set_h('${ctrl.name}',(this.checked ? 1 : 0))" ${ch}><span class="slider"></span></label>
     </div>
   `;
@@ -329,12 +326,12 @@ function addSwitchIcon(ctrl) {
     let inner = `${col}
     <label id="swlabel_${ctrl.name}" class="switch_i_cont switch_i_cont_tab"><input type="checkbox" onclick="set_h('${ctrl.name}',(this.checked ? 1 : 0))" class="switch_t" id='#${ctrl.name}' ${ch}><span class="switch_i switch_i_tab">${text}</span></label>
     `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label, inner, 120);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner, 120);
   } else {
     let col = (ctrl.color != null) ? `<style>#swlabel_${ctrl.name} input:checked+.switch_i{color:${intToCol(ctrl.color)}}</style>` : '';
     EL('controls').innerHTML += `${col}
     <div class="control">
-      <label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Switch'}</label>
+      <label title='${ctrl.name}'>${ctrl.clabel}</label>
       <label id="swlabel_${ctrl.name}" class="switch_i_cont"><input type="checkbox" onclick="set_h('${ctrl.name}',(this.checked ? 1 : 0))" class="switch_t" id='#${ctrl.name}' ${ch}><span class="switch_i">${text}</span></label>
     </div>
   `;
@@ -351,12 +348,12 @@ function addSwitchText(ctrl) {
     let inner = `${col}
     <label id="swlabel_${ctrl.name}" class="switch_i_cont switch_i_cont_tab"><input type="checkbox" onclick="set_h('${ctrl.name}',(this.checked ? 1 : 0))" class="switch_t" id='#${ctrl.name}' ${ch}><span class="switch_i switch_i_tab switch_txt switch_txt_tab">${text}</span></label>
     `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label, inner, 120);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner, 120);
   } else {
     let col = (ctrl.color != null) ? `<style>#swlabel_${ctrl.name} input:checked+.switch_i{color:${intToCol(ctrl.color)}}</style>` : '';
     EL('controls').innerHTML += `${col}
     <div class="control">
-      <label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Switch'}</label>
+      <label title='${ctrl.name}'>${ctrl.clabel}</label>
       <label id="swlabel_${ctrl.name}" class="switch_i_cont"><input type="checkbox" onclick="set_h('${ctrl.name}',(this.checked ? 1 : 0))" class="switch_t" id='#${ctrl.name}' ${ch}><span class="switch_i switch_txt">${text}</span></label>
     </div>
   `;
@@ -373,11 +370,11 @@ function addDate(ctrl) {
     let inner = `
     <input id='#${ctrl.name}' class="cfg_inp c_inp_block c_inp_block_tab date_t" style="${col}" type="date" value="${date}" onclick="this.showPicker()" onchange="set_h('${ctrl.name}',getUnix(this))">
     `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label, inner);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
       <div class="control">
-        <label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Date'}</label>
+        <label title='${ctrl.name}'>${ctrl.clabel}</label>
         <input id='#${ctrl.name}' class="cfg_inp c_inp_block datime date_t" style="${col}" type="date" value="${date}" onclick="this.showPicker()" onchange="set_h('${ctrl.name}',getUnix(this))">
       </div>
     `;
@@ -393,11 +390,11 @@ function addTime(ctrl) {
     let inner = `
     <input id='#${ctrl.name}' class="cfg_inp c_inp_block c_inp_block_tab time_t" style="${col}" type="time" value="${time}" onclick="this.showPicker()" onchange="set_h('${ctrl.name}',getUnix(this))" step="1">
     `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label, inner);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="control">
-      <label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Time'}</label>
+      <label title='${ctrl.name}'>${ctrl.clabel}</label>
       <input id='#${ctrl.name}' class="cfg_inp c_inp_block datime time_t" style="${col}" type="time" value="${time}" onclick="this.showPicker()" onchange="set_h('${ctrl.name}',getUnix(this))" step="1">
     </div>
   `;
@@ -413,11 +410,11 @@ function addDateTime(ctrl) {
     let inner = `
     <input id='#${ctrl.name}' class="cfg_inp c_inp_block c_inp_block_tab datetime_t" style="${col}" type="datetime-local" value="${datetime}" onclick="this.showPicker()" onchange="set_h('${ctrl.name}',getUnix(this))" step="1">
     `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label, inner);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="control">
-      <label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Datime'}</label>
+      <label title='${ctrl.name}'>${ctrl.clabel}</label>
       <input id='#${ctrl.name}' class="cfg_inp c_inp_block datime datime_w datetime_t" style="${col}" type="datetime-local" value="${datetime}" onclick="this.showPicker()" onchange="set_h('${ctrl.name}',getUnix(this))" step="1">
     </div>
   `;
@@ -441,11 +438,11 @@ function addSelect(ctrl) {
       ${options}
     </select>
     `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label, inner);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="control">
-    <label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Select'}</label>
+    <label title='${ctrl.name}'>${ctrl.clabel}</label>
       <select class="cfg_inp c_inp_block select_t" style="${col}" id='#${ctrl.name}' onchange="set_h('${ctrl.name}',this.value)">
         ${options}
       </select>
@@ -467,11 +464,11 @@ function addColor(ctrl) {
     `;
 
   if (wid_row_id) {
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label, inner);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="control">
-      <label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Color'}</label>
+      <label title='${ctrl.name}'>${ctrl.clabel}</label>
       ${inner}
     </div>
     `;
@@ -505,11 +502,11 @@ function addSpinner(ctrl) {
         <button class="icon cfg_btn btn_no_pad" onclick="spinSpinner(this, 1);set_h('${ctrl.name}',EL('#${ctrl.name}').value);"></button>
       </div>
     `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label, inner);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="control">
-      <label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Spinner'}</label>
+      <label title='${ctrl.name}'>${ctrl.clabel}</label>
       <div class="spinner_row">
         <button class="icon cfg_btn btn_no_pad" onclick="spinSpinner(this, -1);set_h('${ctrl.name}',EL('#${ctrl.name}').value);"></button>
         <input id="#${ctrl.name}" class="cfg_inp spinner input_t" type="number" oninput="resizeSpinner(this)" value="${formatted}" min="${ctrl.min}"
@@ -520,41 +517,6 @@ function addSpinner(ctrl) {
   `;
   }
 }
-
-/*function addWeek(ctrl) {
-  if (checkDup(ctrl)) return;
-  checkWidget(ctrl);
-  endButtons();
-  let week = "";
-  let val = ctrl.value;
-  for (let i = 0; i < 7; i++) {
-    let ch = (!(val & 1)) ? '' : 'checked';
-    val >>= 1;
-    week += `<label id="swlabel_${ctrl.name}" class="chbutton">
-    <input name="${ctrl.name}" type="checkbox" onclick="set_h('${ctrl.name}',chbuttonEncode('${ctrl.name}'))" ${ch}>
-    <span class="chbutton_s">${i + 1}</span></label>`;
-  }
-  let col = (ctrl.color != null) ? `<style>#swlabel_${ctrl.name} input:checked+.chbutton_s{background:${intToCol(ctrl.color)}}</style>` : '';
-
-  if (wid_row_id) {
-    let inner = `${col}
-      <div id='#${ctrl.name}' class="chbutton_cont chbutton_cont_tab week_t">
-      ${week}
-      </div>
-    `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label, inner);
-  } else {
-    EL('controls').innerHTML += `${col}
-    <div class="control">
-      <label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Week'}</label>
-      <div id='#${ctrl.name}' class="chbutton_cont week_t">
-      ${week}
-      </div>
-    </div>
-  `;
-  }
-  //<button class="icon cfg_btn" onclick=""></button>
-}*/
 function addFlags(ctrl) {
   if (checkDup(ctrl)) return;
   checkWidget(ctrl);
@@ -577,11 +539,11 @@ function addFlags(ctrl) {
         ${flags}
       </div>
     `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label, inner);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `${col}
     <div class="control">
-      <label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Flags'}</label>
+      <label title='${ctrl.name}'>${ctrl.clabel}</label>
       <div class="chbutton_cont flags_t" id='#${ctrl.name}'>
         ${flags}
       </div>
@@ -599,7 +561,7 @@ function addLog(ctrl) {
     let inner = `
     <textarea id="#${ctrl.name}" title='${ctrl.name}' class="cfg_inp c_log text_t" readonly>${ctrl.text}</textarea>
     `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label ? ctrl.label : 'Log', inner);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="control">
@@ -617,7 +579,7 @@ function addDisplay(ctrl) {
     let inner = `
     <textarea id="#${ctrl.name}" title='${ctrl.name}' class="cfg_inp c_area c_disp text_t" style="font-size:${ctrl.size}px;${col}" rows="${ctrl.rows}" readonly>${ctrl.value}</textarea>
     `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label ? ctrl.label : 'Display', inner);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="control">
@@ -634,10 +596,10 @@ function addHTML(ctrl) {
     let inner = `
     <div name="text" id="#${ctrl.name}" title='${ctrl.name}' class="c_text text_t">${ctrl.value}</div>
     `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label ? ctrl.label : 'HTML', inner);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
-    <div class="control">
+    <div class="control control_nob">
       <div name="text" id="#${ctrl.name}" title='${ctrl.name}' class="c_text text_t">${ctrl.value}</div>
     </div>
     `;
@@ -649,13 +611,13 @@ function addCanvas(ctrl) {
   endButtons();
   if (wid_row_id) {
     let inner = `
-    <canvas class="canvas_t" id="#${ctrl.name}"></canvas>
+    <canvas onclick="clickCanvas('${ctrl.name}',event)" class="canvas_t" id="#${ctrl.name}"></canvas>
     `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label ? ctrl.label : 'CANVAS', inner);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="cv_block">
-      <canvas class="canvas_t" id="#${ctrl.name}"></canvas>
+      <canvas onclick="clickCanvas('${ctrl.name}',event)" class="canvas_t" id="#${ctrl.name}"></canvas>
     </div>
     `;
   }
@@ -669,7 +631,7 @@ function addGauge(ctrl) {
     let inner = `
     <canvas class="gauge_t" id="#${ctrl.name}"></canvas>
     `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.label ? ctrl.label : 'GAUGE', inner);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="cv_block cv_block_back">
@@ -686,7 +648,7 @@ function addImage(ctrl) {
     let inner = `
     <img src="${ctrl.value}" style="width: 100%">
     `;
-    addWidget(ctrl.tab_w, '', ctrl.label ? ctrl.label : 'IMAGE', inner);
+    addWidget(ctrl.tab_w, '', ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="cv_block cv_block_back">
@@ -702,7 +664,7 @@ function addStream(ctrl) {
     let inner = `
     
     `;
-    addWidget(ctrl.tab_w, '', ctrl.label ? ctrl.label : 'STREAM', inner);
+    addWidget(ctrl.tab_w, '', ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="cv_block cv_block_back">
@@ -739,7 +701,7 @@ function addWidget(width, name, label, inner, height = 0, noback = false) {
   }
 
   let h = height ? ('height:' + height + 'px') : '';
-  let lbl = label ? `<div class="widget_label" title="${name}">${label}</div>` : '';
+  let lbl = (label && label != '_no') ? `<div class="widget_label" title="${name}">${label}</div>` : '';
   EL(wid_row_id).innerHTML += `
   <div class="widget" style="width:${width}%;${h}">
     <div class="widget_inner ${noback ? 'widget_space' : ''}">
@@ -896,6 +858,15 @@ function drawCanvas(canvas) {
   }
   eval(ev_str);
   canvas.value = "";
+}
+function clickCanvas(id, e) {
+  if (!(id in canvases)) return;
+  let rect = EL('#' + id).getBoundingClientRect();
+  let x = Math.floor((e.clientX - rect.left) / canvases[id].scale);
+  if (x < 0) x = 0;
+  let y = Math.floor((e.clientY - rect.top) / canvases[id].scale);
+  if (y < 0) y = 0;
+  set_h(id, (x << 16) | y);
 }
 function drawGauge(g) {
   let cv = EL('#' + g.name);

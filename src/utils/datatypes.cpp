@@ -52,6 +52,12 @@ void GHtypeFromStr(const char* str, void* val, GHdata_t type) {
         case GH_STAMP:
             ((Stamp*)val)->unix = atol(str);
             break;
+        case GH_POS: {
+            uint32_t xy = atol(str);
+            ((GHpos*)val)->_changed = true;
+            ((GHpos*)val)->_x = ((uint16_t*)&xy)[1];
+            ((GHpos*)val)->_y = ((uint16_t*)&xy)[0];
+        } break;
 
         case GH_NULL:
             break;
@@ -112,6 +118,8 @@ void GHtypeToStr(String* s, void* val, GHdata_t type) {
             break;
         case GH_STAMP:
             *s += ((Stamp*)val)->toSeconds();
+            break;
+        case GH_POS:
             break;
 
         case GH_NULL:

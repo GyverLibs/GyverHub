@@ -6,6 +6,7 @@
 #include "../macro.hpp"
 #include "color.h"
 #include "flags.h"
+#include "pos.h"
 
 enum GHdata_t {
     GH_NULL,
@@ -27,6 +28,7 @@ enum GHdata_t {
     GH_COLOR,
     GH_FLAGS,
     GH_STAMP,
+    GH_POS,
 };
 
 void GHtypeToStr(String* s, void* val, GHdata_t type);

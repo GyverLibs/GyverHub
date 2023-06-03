@@ -286,6 +286,10 @@ function showControls(controls) {
 
   for (ctrl of controls) {
     if (devices[focused].show_names && ctrl.name) ctrl.label = ctrl.name;
+    ctrl.wlabel = ctrl.label ? ctrl.label : ctrl.type;
+    ctrl.clabel = (ctrl.label && ctrl.label != '_no') ? ctrl.label : ctrl.type;
+    ctrl.clabel = ctrl.clabel.charAt(0).toUpperCase() + ctrl.clabel.slice(1);
+    
     switch (ctrl.type) {
       case 'image': addImage(ctrl); break;
       case 'stream': addStream(ctrl); break;

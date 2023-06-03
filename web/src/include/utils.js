@@ -1,5 +1,5 @@
 const app_title = 'GyverHUB';
-const version_notes = 'Увеличено разрешение Canvas и Gauge на устройствах с высокой плотностью пикселей. Версия библиотеки от 26.05';
+const version_notes = 'Добавлено отключение подписей компонентов и клики по Canvas';
 const ota_url = 'hub.gyver.ru/ota/projects.json';
 const non_esp = '__ESP__';
 const app_version = '__VER__';
@@ -65,18 +65,22 @@ const theme_cols = [
 
 function getMime(name) {
   const mime_table = {
+    'avi': 'video/x-msvideo',
     'bin': 'application/octet-stream',
     'bmp': 'image/bmp',
+    'css': 'text/css',
     'csv': 'text/csv',
     'gz': 'application/gzip',
     'gif': 'image/gif',
+    'html': 'text/html',
     'jpeg': 'image/jpeg',
     'jpg': 'image/jpeg',
+    'js': 'text/javascript',
     'json': 'application/json',
     'png': 'image/png',
+    'svg': 'image/svg+xml',
     'txt': 'text/plain',
     'wav': 'audio/wav',
-    'xls': 'application/vnd.ms-excel',
     'xml': 'application/xml',
   };
   let ext = name.split('.').pop();

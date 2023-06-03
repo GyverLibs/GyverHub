@@ -106,7 +106,11 @@ class GyverHUB : public HubBuilder {
         beginMQTT();
 #endif
 #ifndef GH_NO_FS
+#ifdef ESP8266
         fs_mounted = GH_FS.begin();
+#else
+        fs_mounted = GH_FS.begin(true);
+#endif
 #endif
 #endif
         running_f = true;
@@ -234,7 +238,7 @@ class GyverHUB : public HubBuilder {
 
     // обновить веб-интерфейс. Вызывать внутри обработчика build
     void refresh() {
-        send_f = true;
+        refresh_f = true;
     }
 
     // true - если билдер вызван для set или read операций
@@ -257,6 +261,7 @@ class GyverHUB : public HubBuilder {
     // отправить уведомление
     void sendPush(const String& text) {
         if (!running_f) return;
+        upd_f = 1;
         String answ;
         answ += '\n';
         answ += '{';
@@ -314,6 +319,7 @@ class GyverHUB : public HubBuilder {
         send(answ);
     }
     void _updateBegin(String& answ) {
+        upd_f = 1;
         answ += '\n';
         answ += '{';
         _jsID(answ);
@@ -568,14 +574,14 @@ class GyverHUB : public HubBuilder {
                 } else {
                     GHbuild build(GH_BUILD_ACTION, GH_ACTION_SET, name, value, hub);
                     bptr = &build;
-                    send_f = 0;
+                    upd_f = refresh_f = 0;
                     build_cb();
                     bptr = nullptr;
 #ifdef GH_ESP_BUILD
                     if (auto_f) sendGet(name, value);
 #endif
-                    if (send_f) answerUI();
-                    else answerType();
+                    if (refresh_f) answerUI();
+                    else if (!upd_f) answerType();
                 }
                 return sendEvent(GH_SET, conn);
 
@@ -585,12 +591,12 @@ class GyverHUB : public HubBuilder {
                     answerType();
                 } else {
                     GHbuild build(GH_BUILD_ACTION, (value[0] == '1') ? GH_ACTION_PRESS : GH_ACTION_RELEASE, name, 0, hub);
-                    send_f = 0;
+                    upd_f = refresh_f = 0;
                     bptr = &build;
                     build_cb();
                     bptr = nullptr;
-                    if (send_f) answerUI();
-                    else answerType();
+                    if (refresh_f) answerUI();
+                    else if (!upd_f) answerType();
                 }
                 return sendEvent(GH_CLICK, conn);
 
@@ -1198,7 +1204,8 @@ class GyverHUB : public HubBuilder {
     GHhub* hub_ptr = nullptr;
 
     bool running_f = 0;
-    bool send_f = 0;
+    bool refresh_f = 0;
+    bool upd_f = 0;
 
     enum GHbuildmode_t {
         GH_NORMAL,

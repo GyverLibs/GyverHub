@@ -124,9 +124,15 @@ drawImage	KEYWORD2
 save	KEYWORD2
 restore	KEYWORD2
 
+nameString	KEYWORD2
+valueInt	KEYWORD2
+valueFloat	KEYWORD2
+
 #######################################
 # Constants (LITERAL1)
 #######################################
+
+GH_NO_LABEL	LITERAL1
 
 BeginWidgets	LITERAL1
 EndWidgets	LITERAL1
@@ -179,6 +185,7 @@ GHtimer	LITERAL1
 GHbuild	LITERAL1
 GHhub	LITERAL1
 GHaction	LITERAL1
+GHpos	LITERAL1
 
 GHdata_t	LITERAL1
 GHreason_t	LITERAL1
@@ -213,6 +220,7 @@ GH_DOUBLE	LITERAL1
 GH_COLOR	LITERAL1
 GH_FLAGS	LITERAL1
 GH_STAMP	LITERAL1
+GH_POS	LITERAL1
 
 GH_REB_NONE	LITERAL1
 GH_REB_BUTTON	LITERAL1

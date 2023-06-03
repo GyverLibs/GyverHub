@@ -7,10 +7,10 @@
 #include "macro.hpp"
 #include "utils/build.h"
 #include "utils/color.h"
-#include "utils/joy.h"
 #include "utils/datatypes.h"
 #include "utils/log.h"
 #include "utils/misc.h"
+#include "utils/pos.h"
 
 class HubBuilder {
    public:
@@ -534,27 +534,22 @@ class HubBuilder {
     }
 
     // ========================= CANVAS =========================
-    void Canvas(FSTR name, int width = 400, int height = 300, GHcanvas* cv = nullptr, FSTR label = nullptr) {
-        _canvas(true, name, width, height, cv, label, false);
+    bool Canvas(FSTR name, int width = 400, int height = 300, GHcanvas* cv = nullptr, GHpos* pos = nullptr, FSTR label = nullptr) {
+        return _canvas(true, name, width, height, cv, label, pos, false);
     }
-    void Canvas(CSREF name, int width = 400, int height = 300, GHcanvas* cv = nullptr, CSREF label = "") {
-        _canvas(false, name.c_str(), width, height, cv, label.c_str(), false);
+    bool Canvas(CSREF name, int width = 400, int height = 300, GHcanvas* cv = nullptr, GHpos* pos = nullptr, CSREF label = "") {
+        return _canvas(false, name.c_str(), width, height, cv, label.c_str(), pos, false);
     }
-    void BeginCanvas(FSTR name, int width = 400, int height = 300, GHcanvas* cv = nullptr, FSTR label = nullptr) {
-        _canvas(true, name, width, height, cv, label, true);
+    bool BeginCanvas(FSTR name, int width = 400, int height = 300, GHcanvas* cv = nullptr, GHpos* pos = nullptr, FSTR label = nullptr) {
+        return _canvas(true, name, width, height, cv, label, pos, true);
     }
-    void BeginCanvas(CSREF name, int width = 400, int height = 300, GHcanvas* cv = nullptr, CSREF label = "") {
-        _canvas(false, name.c_str(), width, height, cv, label.c_str(), true);
-    }
-    void EndCanvas() {
-        if (_isUI()) {
-            *sptr += ']';
-            _tabw();
-            _end();
-        }
+    bool BeginCanvas(CSREF name, int width = 400, int height = 300, GHcanvas* cv = nullptr, GHpos* pos = nullptr, CSREF label = "") {
+        return _canvas(false, name.c_str(), width, height, cv, label.c_str(), pos, true);
     }
 
-    void _canvas(bool fstr, VSPTR name, int width, int height, GHcanvas* cv, VSPTR label, bool begin) {
+    bool _canvas(bool fstr, VSPTR name, int width, int height, GHcanvas* cv, VSPTR label, GHpos* pos, bool begin) {
+        if (!_isUI() && cv) cv->extBuffer(nullptr);
+
         if (_isUI()) {
             _begin(F("canvas"));
             _name(name, fstr);
@@ -567,8 +562,17 @@ class HubBuilder {
             *sptr += '[';
             if (begin && cv) cv->extBuffer(sptr);
             else EndCanvas();
-        } else {
-            cv->extBuffer(nullptr);
+        } else if (bptr->type == GH_BUILD_ACTION) {
+            return bptr->parseSet(name, pos, GH_POS, fstr);
+        }
+        return 0;
+    }
+
+    void EndCanvas() {
+        if (_isUI()) {
+            *sptr += ']';
+            _tabw();
+            _end();
         }
     }
 
@@ -601,24 +605,26 @@ class HubBuilder {
     }
 
     // =========================== JOY ===========================
-    bool Joy(FSTR name, GHjoy* value, FSTR label = nullptr) {
-        return _joy(true, name, value, label);
+    bool Joy(FSTR name, GHpos* pos, FSTR label = nullptr) {
+        return _joy(true, name, pos, label);
     }
-    bool Joy(CSREF name, GHjoy* value, CSREF label = "") {
-        return _joy(false, name.c_str(), value, label.c_str());
+    bool Joy(CSREF name, GHpos* pos, CSREF label = "") {
+        return _joy(false, name.c_str(), pos, label.c_str());
     }
 
-    bool _joy(bool fstr, VSPTR name, GHjoy* value, VSPTR label) {
+    bool _joy(bool fstr, VSPTR name, GHpos* pos, VSPTR label) {
         if (_isUI()) {
             _begin(F("joy"));
             _name(name, fstr);
             _label(label, fstr);
-            _value();
-            //GHtypeToStr(sptr, value, GH_STAMP);
             _tabw();
             _end();
         } else if (bptr->type == GH_BUILD_ACTION) {
-            //return bptr->parseSet(name, value, GH_STAMP, fstr);
+            bool act = bptr->parseSet(name, pos, GH_POS, fstr);
+            if (act) {
+                
+            }
+            return act;
         }
         return 0;
     }
@@ -634,6 +640,7 @@ class HubBuilder {
     // ========================= PRIVATE =========================
    private:
     int tab_width = 0;
+
     bool _checkName(VSPTR name, bool fstr = true) {
         if (fstr ? (!strcmp_P(bptr->action.name, (PGM_P)name)) : (!strcmp(bptr->action.name, (PGM_P)name))) {
             bptr->type = GH_BUILD_NONE;

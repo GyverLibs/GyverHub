@@ -318,7 +318,7 @@ Contribution:
 </div>
 <div id="bottom_space"></div>
 `;}
-const app_title='GyverHUB';const version_notes='Увеличено разрешение Canvas и Gauge на устройствах с высокой плотностью пикселей. Версия библиотеки от 26.05';const ota_url='hub.gyver.ru/ota/projects.json';const non_esp='__ESP__';const app_version='0.26b';const log_enable=true;const log_network=false;const info_labels_version={info_lib_v:'Library',info_firm_v:'Firmware',};const info_labels_esp={info_mode:'WiFi Mode',info_ssid:'SSID',info_l_ip:'Local IP',info_ap_ip:'AP IP',info_mac:'MAC',info_rssi:'RSSI',info_uptime:'Uptime',info_heap:'Free Heap',info_sketch:'Sketch (Free)',info_flash:'Flash Size',info_cpu:'Cpu Freq.',};const info_labels_topics={info_id:'ID',info_set:'Set',info_read:'Read',info_get:'Get',info_status:'Status',};const colors={ORANGE:0xd55f30,YELLOW:0xd69d27,GREEN:0x37A93C,MINT:0x25b18f,AQUA:0x2ba1cd,BLUE:0x297bcd,VIOLET:0x825ae7,PINK:0xc8589a,};const fonts=['monospace','system-ui','cursive','Arial','Verdana','Tahoma','Trebuchet MS','Georgia','Garamond',];const themes={DARK:0,LIGHT:1};const theme_cols=[['#1b1c20','#26272c','#eee','#ccc','#141516','#444','#0e0e0e','dark','#222','#000'],['#eee','#fff','#111','#333','#ddd','#999','#bdbdbd','light','#fff','#000000a3']];function getMime(name){const mime_table={'bin':'application/octet-stream','bmp':'image/bmp','csv':'text/csv','gz':'application/gzip','gif':'image/gif','jpeg':'image/jpeg','jpg':'image/jpeg','json':'application/json','png':'image/png','txt':'text/plain','wav':'audio/wav','xls':'application/vnd.ms-excel','xml':'application/xml',};let ext=name.split('.').pop();if(ext in mime_table)return mime_table[ext];else return'text/plain';}
+const app_title='GyverHUB';const version_notes='Добавлено отключение подписей компонентов и клики по Canvas';const ota_url='hub.gyver.ru/ota/projects.json';const non_esp='__ESP__';const app_version='0.27b';const log_enable=true;const log_network=false;const info_labels_version={info_lib_v:'Library',info_firm_v:'Firmware',};const info_labels_esp={info_mode:'WiFi Mode',info_ssid:'SSID',info_l_ip:'Local IP',info_ap_ip:'AP IP',info_mac:'MAC',info_rssi:'RSSI',info_uptime:'Uptime',info_heap:'Free Heap',info_sketch:'Sketch (Free)',info_flash:'Flash Size',info_cpu:'Cpu Freq.',};const info_labels_topics={info_id:'ID',info_set:'Set',info_read:'Read',info_get:'Get',info_status:'Status',};const colors={ORANGE:0xd55f30,YELLOW:0xd69d27,GREEN:0x37A93C,MINT:0x25b18f,AQUA:0x2ba1cd,BLUE:0x297bcd,VIOLET:0x825ae7,PINK:0xc8589a,};const fonts=['monospace','system-ui','cursive','Arial','Verdana','Tahoma','Trebuchet MS','Georgia','Garamond',];const themes={DARK:0,LIGHT:1};const theme_cols=[['#1b1c20','#26272c','#eee','#ccc','#141516','#444','#0e0e0e','dark','#222','#000'],['#eee','#fff','#111','#333','#ddd','#999','#bdbdbd','light','#fff','#000000a3']];function getMime(name){const mime_table={'avi':'video/x-msvideo','bin':'application/octet-stream','bmp':'image/bmp','css':'text/css','csv':'text/csv','gz':'application/gzip','gif':'image/gif','html':'text/html','jpeg':'image/jpeg','jpg':'image/jpeg','js':'text/javascript','json':'application/json','png':'image/png','svg':'image/svg+xml','txt':'text/plain','wav':'audio/wav','xml':'application/xml',};let ext=name.split('.').pop();if(ext in mime_table)return mime_table[ext];else return'text/plain';}
 function EL(id){return document.getElementById(id);}
 function log(text){let texts=text.toString();if(!log_network&&(texts.indexOf('discover')>0||texts.startsWith('Post')||texts.startsWith('Got')))return;console.log(text);}
 function window_ip(){return window.location.href.split('/')[2].split(':')[0];}
@@ -366,7 +366,7 @@ function addDevice(id){EL('devices').innerHTML+=`<div class="device offline" id=
 <div class="d_delete" onclick="delete_h('${id}')">x</div>
 </div>
 </div>`;}
-function addButton(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);if(wid_row_id){endButtons();let inner=renderButton(ctrl.name,'icon btn_icon',ctrl.name,'',ctrl.size*3,ctrl.color,true);addWidget(ctrl.tab_w,ctrl.name,ctrl.label,inner);}else{if(!btn_row_id)beginButtons();EL(btn_row_id).innerHTML+=`${renderButton(ctrl.name, 'c_btn', ctrl.name, ctrl.label, ctrl.size, ctrl.color, false)}`;}}
+function addButton(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);if(wid_row_id){endButtons();let inner=renderButton(ctrl.name,'icon btn_icon',ctrl.name,'',ctrl.size*3,ctrl.color,true);addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{if(!btn_row_id)beginButtons();EL(btn_row_id).innerHTML+=`${renderButton(ctrl.name, 'c_btn', ctrl.name, ctrl.clabel, ctrl.size, ctrl.color, false)}`;}}
 function addButtonIcon(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);if(wid_row_id){endButtons();let inner=renderButton(ctrl.name,'icon btn_icon',ctrl.name,ctrl.label,ctrl.size,ctrl.color,true);addWidget(ctrl.tab_w,ctrl.name,'',inner,0,true);}else{if(!btn_row_id)beginButtons();EL(btn_row_id).innerHTML+=`${renderButton(ctrl.name, 'icon btn_icon', ctrl.name, ctrl.label, ctrl.size, ctrl.color, true)}`;}}
 function addTabs(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();let tabs='';let labels=ctrl.text.toString().split(',');for(let i in labels){let sel=(i==ctrl.value)?'class="tab_act"':'';tabs+=`<li onclick="set_h('${ctrl.name}','${i}')" ${sel}>${labels[i]}</li>`;}
 if(wid_row_id){let inner=`
@@ -375,7 +375,7 @@ if(wid_row_id){let inner=`
 ${tabs}
 </ul>
 </div>
-`;addWidget(ctrl.tab_w,'',ctrl.label,inner);}else{EL('controls').innerHTML+=`
+`;addWidget(ctrl.tab_w,'',ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
 <div class="navtab">
 <ul>
 ${tabs}
@@ -392,32 +392,32 @@ function addTitle(ctrl){endWidgets();endButtons();EL('controls').innerHTML+=`
 `;}
 function addLED(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();let ch=ctrl.value?'checked':'';if(ctrl.text){if(wid_row_id){let inner=`
 <label id="swlabel_${ctrl.name}" class="led_i_cont led_i_cont_tab"><input type="checkbox" class="switch_t" id='#${ctrl.name}' ${ch} disabled><span class="switch_i led_i led_i_tab">${ctrl.text}</span></label>
-`;addWidget(ctrl.tab_w,ctrl.name,ctrl.label,inner);}else{EL('controls').innerHTML+=`
+`;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
 <div class="control">
-<label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Switch'}</label>
+<label title='${ctrl.name}'>${ctrl.clabel}</label>
 <label id="swlabel_${ctrl.name}" class="led_i_cont"><input type="checkbox" class="switch_t" id='#${ctrl.name}' ${ch} disabled><span class="switch_i led_i">${ctrl.text}</span></label>
 </div>
 `;}}else{if(wid_row_id){let inner=`
 <label class="led_cont"><input type="checkbox" class="switch_t" id='#${ctrl.name}' ${ch} disabled><span class="led"></span></label>
-`;addWidget(ctrl.tab_w,ctrl.name,ctrl.label,inner);}else{EL('controls').innerHTML+=`
+`;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
 <div class="control">
-<label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'LED'}</label>
+<label title='${ctrl.name}'>${ctrl.clabel}</label>
 <label class="led_cont"><input type="checkbox" class="switch_t" id='#${ctrl.name}' ${ch} disabled><span class="led"></span></label>
 </div>
 `;}}}
 function addIcon(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();let col=(ctrl.color!=null)?`color:${intToCol(ctrl.color)}`:'';if(wid_row_id){let inner=`
 <span class="icon icon_t" id='#${ctrl.name}' style="${col}">${ctrl.text}</span>
-`;addWidget(ctrl.tab_w,ctrl.name,ctrl.label,inner);}else{EL('controls').innerHTML+=`
+`;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
 <div class="control">
-<label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Icon'}</label>
+<label title='${ctrl.name}'>${ctrl.clabel}</label>
 <span class="icon icon_t" id='#${ctrl.name}' style="${col}">${ctrl.text}</span>
 </div>
 `;}}
 function addLabel(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();let col=(ctrl.color)?(`color:${intToCol(ctrl.color)}`):'';if(wid_row_id){let inner=`
 <label class="c_label text_t c_label_tab" id='#${ctrl.name}' style="${col};font-size:${ctrl.size}px">${ctrl.value}</label>
-`;addWidget(ctrl.tab_w,ctrl.name,ctrl.label,inner);}else{EL('controls').innerHTML+=`
+`;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
 <div class="control">
-<label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Label'}</label>
+<label title='${ctrl.name}'>${ctrl.clabel}</label>
 <label class="c_label text_t" id='#${ctrl.name}' style="${col};font-size:${ctrl.size}px">${ctrl.value}</label>
 </div>
 `;}}
@@ -428,9 +428,9 @@ function addInput(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();
 <button class="icon cfg_btn" onclick="set_h('${ctrl.name}',EL('#${ctrl.name}').value)"></button>
 </div>
 </div>
-`;addWidget(ctrl.tab_w,ctrl.name,ctrl.label,inner);}else{EL('controls').innerHTML+=`
+`;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
 <div class="control">
-<label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Input'}</label>
+<label title='${ctrl.name}'>${ctrl.clabel}</label>
 <div class="cfg_inp_row">
 <input class="cfg_inp c_inp input_t" style="${col}" type="text" value="${ctrl.value}" id="#${ctrl.name}" name="${ctrl.name}" onkeydown="checkEnter(this)" oninput="checkLen(this,${ctrl.max})">
 <div class="cfg_btn_block">
@@ -447,9 +447,9 @@ function addPass(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();l
 <button class="icon cfg_btn" onclick="set_h('${ctrl.name}',EL('#${ctrl.name}').value)"></button>
 </div>
 </div>
-`;addWidget(ctrl.tab_w,ctrl.name,ctrl.label,inner);}else{EL('controls').innerHTML+=`
+`;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
 <div class="control">
-<label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Password'}</label>
+<label title='${ctrl.name}'>${ctrl.clabel}</label>
 <div class="cfg_inp_row">
 <input class="cfg_inp c_inp input_t" style="${col}" type="password" value="${ctrl.value}" id="#${ctrl.name}" name="${ctrl.name}" onkeydown="checkEnter(this)" oninput="checkLen(this,${ctrl.max})">
 <div class="cfg_btn_block2">
@@ -459,22 +459,12 @@ function addPass(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();l
 </div>
 </div>
 `;}}
-function addSliderW(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();EL('controls').innerHTML+=`
-<div class="control">
-<div class="sld_name">
-<label title='${ctrl.name}'>${ctrl.label}</label>
-</div>
-<div class="cfg_inp_row">
-<input name="${ctrl.name}" id="#${ctrl.name}" onchange="set_h('${ctrl.name}',this.value)" oninput="moveSlider(this)" type="range" class="c_rangeW slider_t" value="${ctrl.value}" min="${ctrl.min}" max="${ctrl.max}" step="${ctrl.step}"><div class="sldW_out"><output id="out#${ctrl.name}">${ctrl.value}</output></div>
-</div>
-</div>
-`;}
 function addSlider(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();let col=(ctrl.color!=null)?`background-image: linear-gradient(${intToCol(ctrl.color)}, ${intToCol(ctrl.color)})`:'';let formatted=formatToStep(ctrl.value,ctrl.step);if(wid_row_id){let inner=`
 <input ontouchstart="dis_scroll_f=2" ontouchend="dis_scroll_f=0;enableScroll()" name="${ctrl.name}" id="#${ctrl.name}" oninput="moveSlider(this)" type="range" class="c_rangeW slider_t" style="${col}" value="${ctrl.value}" min="${ctrl.min}" max="${ctrl.max}" step="${ctrl.step}"><div class="sldW_out"><output id="out#${ctrl.name}">${formatted}</output></div>
-`;addWidget(ctrl.tab_w,ctrl.name,ctrl.label,inner);}else{EL('controls').innerHTML+=`
+`;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
 <div class="control">
 <div class="sld_name">
-<label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Slider'}</label>
+<label title='${ctrl.name}'>${ctrl.clabel}</label>
 <label>:&nbsp;</label>
 <output id="out#${ctrl.name}">${formatted}</output>
 </div>
@@ -485,49 +475,49 @@ function addSlider(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons()
 `;}}
 function addSwitch(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();let ch=ctrl.value?'checked':'';let col=(ctrl.color!=null)?`<style>#swlabel_${ctrl.name} input:checked+.slider{background:${intToCol(ctrl.color)}}</style>`:'';if(wid_row_id){let inner=`${col}
 <label id="swlabel_${ctrl.name}" class="switch"><input type="checkbox" class="switch_t" id='#${ctrl.name}' onclick="set_h('${ctrl.name}',(this.checked ? 1 : 0))" ${ch}><span class="slider"></span></label>
-`;addWidget(ctrl.tab_w,ctrl.name,ctrl.label,inner);}else{EL('controls').innerHTML+=`${col}
+`;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`${col}
 <div class="control">
-<label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Switch'}</label>
+<label title='${ctrl.name}'>${ctrl.clabel}</label>
 <label id="swlabel_${ctrl.name}" class="switch"><input type="checkbox" class="switch_t" id='#${ctrl.name}' onclick="set_h('${ctrl.name}',(this.checked ? 1 : 0))" ${ch}><span class="slider"></span></label>
 </div>
 `;}}
 function addSwitchIcon(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();let ch=ctrl.value?'checked':'';let text=ctrl.text?ctrl.text:'';if(wid_row_id){let col=(ctrl.color!=null)?`<style>#swlabel_${ctrl.name} input:checked+.switch_i_tab{background:${intToCol(ctrl.color)};color:var(--font_inv)} #swlabel_${ctrl.name} .switch_i_tab{box-shadow: 0 0 0 2px ${intToCol(ctrl.color)};color:${intToCol(ctrl.color)}}</style>`:'';let inner=`${col}
 <label id="swlabel_${ctrl.name}" class="switch_i_cont switch_i_cont_tab"><input type="checkbox" onclick="set_h('${ctrl.name}',(this.checked ? 1 : 0))" class="switch_t" id='#${ctrl.name}' ${ch}><span class="switch_i switch_i_tab">${text}</span></label>
-`;addWidget(ctrl.tab_w,ctrl.name,ctrl.label,inner,120);}else{let col=(ctrl.color!=null)?`<style>#swlabel_${ctrl.name} input:checked+.switch_i{color:${intToCol(ctrl.color)}}</style>`:'';EL('controls').innerHTML+=`${col}
+`;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner,120);}else{let col=(ctrl.color!=null)?`<style>#swlabel_${ctrl.name} input:checked+.switch_i{color:${intToCol(ctrl.color)}}</style>`:'';EL('controls').innerHTML+=`${col}
 <div class="control">
-<label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Switch'}</label>
+<label title='${ctrl.name}'>${ctrl.clabel}</label>
 <label id="swlabel_${ctrl.name}" class="switch_i_cont"><input type="checkbox" onclick="set_h('${ctrl.name}',(this.checked ? 1 : 0))" class="switch_t" id='#${ctrl.name}' ${ch}><span class="switch_i">${text}</span></label>
 </div>
 `;}}
 function addSwitchText(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();let ch=ctrl.value?'checked':'';let text=ctrl.text?ctrl.text:'ON';if(wid_row_id){let col=(ctrl.color!=null)?`<style>#swlabel_${ctrl.name} input:checked+.switch_i_tab{background:${intToCol(ctrl.color)};color:var(--font_inv)} #swlabel_${ctrl.name} .switch_i_tab{box-shadow: 0 0 0 2px ${intToCol(ctrl.color)};color:${intToCol(ctrl.color)}}</style>`:'';let inner=`${col}
 <label id="swlabel_${ctrl.name}" class="switch_i_cont switch_i_cont_tab"><input type="checkbox" onclick="set_h('${ctrl.name}',(this.checked ? 1 : 0))" class="switch_t" id='#${ctrl.name}' ${ch}><span class="switch_i switch_i_tab switch_txt switch_txt_tab">${text}</span></label>
-`;addWidget(ctrl.tab_w,ctrl.name,ctrl.label,inner,120);}else{let col=(ctrl.color!=null)?`<style>#swlabel_${ctrl.name} input:checked+.switch_i{color:${intToCol(ctrl.color)}}</style>`:'';EL('controls').innerHTML+=`${col}
+`;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner,120);}else{let col=(ctrl.color!=null)?`<style>#swlabel_${ctrl.name} input:checked+.switch_i{color:${intToCol(ctrl.color)}}</style>`:'';EL('controls').innerHTML+=`${col}
 <div class="control">
-<label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Switch'}</label>
+<label title='${ctrl.name}'>${ctrl.clabel}</label>
 <label id="swlabel_${ctrl.name}" class="switch_i_cont"><input type="checkbox" onclick="set_h('${ctrl.name}',(this.checked ? 1 : 0))" class="switch_t" id='#${ctrl.name}' ${ch}><span class="switch_i switch_txt">${text}</span></label>
 </div>
 `;}}
 function addDate(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();let date=new Date(ctrl.value*1000).toISOString().split('T')[0];let col=(ctrl.color!=null)?`color:${intToCol(ctrl.color)}`:'';if(wid_row_id){let inner=`
 <input id='#${ctrl.name}' class="cfg_inp c_inp_block c_inp_block_tab date_t" style="${col}" type="date" value="${date}" onclick="this.showPicker()" onchange="set_h('${ctrl.name}',getUnix(this))">
-`;addWidget(ctrl.tab_w,ctrl.name,ctrl.label,inner);}else{EL('controls').innerHTML+=`
+`;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
 <div class="control">
-<label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Date'}</label>
+<label title='${ctrl.name}'>${ctrl.clabel}</label>
 <input id='#${ctrl.name}' class="cfg_inp c_inp_block datime date_t" style="${col}" type="date" value="${date}" onclick="this.showPicker()" onchange="set_h('${ctrl.name}',getUnix(this))">
 </div>
 `;}}
 function addTime(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();let time=new Date(ctrl.value*1000).toISOString().split('T')[1].split('.')[0];let col=(ctrl.color!=null)?`color:${intToCol(ctrl.color)}`:'';if(wid_row_id){let inner=`
 <input id='#${ctrl.name}' class="cfg_inp c_inp_block c_inp_block_tab time_t" style="${col}" type="time" value="${time}" onclick="this.showPicker()" onchange="set_h('${ctrl.name}',getUnix(this))" step="1">
-`;addWidget(ctrl.tab_w,ctrl.name,ctrl.label,inner);}else{EL('controls').innerHTML+=`
+`;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
 <div class="control">
-<label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Time'}</label>
+<label title='${ctrl.name}'>${ctrl.clabel}</label>
 <input id='#${ctrl.name}' class="cfg_inp c_inp_block datime time_t" style="${col}" type="time" value="${time}" onclick="this.showPicker()" onchange="set_h('${ctrl.name}',getUnix(this))" step="1">
 </div>
 `;}}
 function addDateTime(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();let datetime=new Date(ctrl.value*1000).toISOString().split('.')[0];let col=(ctrl.color!=null)?`color:${intToCol(ctrl.color)}`:'';if(wid_row_id){let inner=`
 <input id='#${ctrl.name}' class="cfg_inp c_inp_block c_inp_block_tab datetime_t" style="${col}" type="datetime-local" value="${datetime}" onclick="this.showPicker()" onchange="set_h('${ctrl.name}',getUnix(this))" step="1">
-`;addWidget(ctrl.tab_w,ctrl.name,ctrl.label,inner);}else{EL('controls').innerHTML+=`
+`;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
 <div class="control">
-<label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Datime'}</label>
+<label title='${ctrl.name}'>${ctrl.clabel}</label>
 <input id='#${ctrl.name}' class="cfg_inp c_inp_block datime datime_w datetime_t" style="${col}" type="datetime-local" value="${datetime}" onclick="this.showPicker()" onchange="set_h('${ctrl.name}',getUnix(this))" step="1">
 </div>
 `;}}
@@ -536,9 +526,9 @@ let col=(ctrl.color!=null)?`color:${intToCol(ctrl.color)}`:'';if(wid_row_id){let
 <select class="cfg_inp c_inp_block select_t" style="${col}" id='#${ctrl.name}' onchange="set_h('${ctrl.name}',this.value)">
 ${options}
 </select>
-`;addWidget(ctrl.tab_w,ctrl.name,ctrl.label,inner);}else{EL('controls').innerHTML+=`
+`;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
 <div class="control">
-<label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Select'}</label>
+<label title='${ctrl.name}'>${ctrl.clabel}</label>
 <select class="cfg_inp c_inp_block select_t" style="${col}" id='#${ctrl.name}' onchange="set_h('${ctrl.name}',this.value)">
 ${options}
 </select>
@@ -549,9 +539,9 @@ function addColor(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();
 <div id='#${ctrl.name}'></div>
 </div>
 <button id="color_btn#${ctrl.name}" style="margin-left:-30px;color:${color}" class="icon cfg_btn_tab" onclick="openPicker('${ctrl.name}')"></button>
-`;if(wid_row_id){addWidget(ctrl.tab_w,ctrl.name,ctrl.label,inner);}else{EL('controls').innerHTML+=`
+`;if(wid_row_id){addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
 <div class="control">
-<label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Color'}</label>
+<label title='${ctrl.name}'>${ctrl.clabel}</label>
 ${inner}
 </div>
 `;}
@@ -563,9 +553,9 @@ function addSpinner(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons(
 max="${ctrl.max}" step="${ctrl.step}">
 <button class="icon cfg_btn btn_no_pad" onclick="spinSpinner(this, 1);set_h('${ctrl.name}',EL('#${ctrl.name}').value);"></button>
 </div>
-`;addWidget(ctrl.tab_w,ctrl.name,ctrl.label,inner);}else{EL('controls').innerHTML+=`
+`;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
 <div class="control">
-<label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Spinner'}</label>
+<label title='${ctrl.name}'>${ctrl.clabel}</label>
 <div class="spinner_row">
 <button class="icon cfg_btn btn_no_pad" onclick="spinSpinner(this, -1);set_h('${ctrl.name}',EL('#${ctrl.name}').value);"></button>
 <input id="#${ctrl.name}" class="cfg_inp spinner input_t" type="number" oninput="resizeSpinner(this)" value="${formatted}" min="${ctrl.min}"
@@ -581,9 +571,9 @@ let col=(ctrl.color!=null)?`<style>#swlabel_${ctrl.name} input:checked+.chbutton
 <div class="chbutton_cont chbutton_cont_tab flags_t" id='#${ctrl.name}'>
 ${flags}
 </div>
-`;addWidget(ctrl.tab_w,ctrl.name,ctrl.label,inner);}else{EL('controls').innerHTML+=`${col}
+`;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`${col}
 <div class="control">
-<label title='${ctrl.name}'>${ctrl.label ? ctrl.label : 'Flags'}</label>
+<label title='${ctrl.name}'>${ctrl.clabel}</label>
 <div class="chbutton_cont flags_t" id='#${ctrl.name}'>
 ${flags}
 </div>
@@ -591,36 +581,36 @@ ${flags}
 `;}}
 function addLog(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();if(ctrl.text.endsWith('\n'))ctrl.text=ctrl.text.slice(0,-1);if(wid_row_id){let inner=`
 <textarea id="#${ctrl.name}" title='${ctrl.name}' class="cfg_inp c_log text_t" readonly>${ctrl.text}</textarea>
-`;addWidget(ctrl.tab_w,ctrl.name,ctrl.label?ctrl.label:'Log',inner);}else{EL('controls').innerHTML+=`
+`;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
 <div class="control">
 <textarea id="#${ctrl.name}" title='${ctrl.name}' class="cfg_inp c_log text_t" readonly>${ctrl.text}</textarea>
 </div>
 `;}}
 function addDisplay(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();let col=(ctrl.color!=null)?('background:'+intToCol(ctrl.color)):'';if(wid_row_id){let inner=`
 <textarea id="#${ctrl.name}" title='${ctrl.name}' class="cfg_inp c_area c_disp text_t" style="font-size:${ctrl.size}px;${col}" rows="${ctrl.rows}" readonly>${ctrl.value}</textarea>
-`;addWidget(ctrl.tab_w,ctrl.name,ctrl.label?ctrl.label:'Display',inner);}else{EL('controls').innerHTML+=`
+`;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
 <div class="control">
 <textarea id="#${ctrl.name}" title='${ctrl.name}' class="cfg_inp c_area c_disp text_t" style="font-size:${ctrl.size}px;${col}" rows="${ctrl.rows}" readonly>${ctrl.value}</textarea>
 </div>
 `;}}
 function addHTML(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();if(wid_row_id){let inner=`
 <div name="text" id="#${ctrl.name}" title='${ctrl.name}' class="c_text text_t">${ctrl.value}</div>
-`;addWidget(ctrl.tab_w,ctrl.name,ctrl.label?ctrl.label:'HTML',inner);}else{EL('controls').innerHTML+=`
-<div class="control">
+`;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
+<div class="control control_nob">
 <div name="text" id="#${ctrl.name}" title='${ctrl.name}' class="c_text text_t">${ctrl.value}</div>
 </div>
 `;}}
 function addCanvas(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();if(wid_row_id){let inner=`
-<canvas class="canvas_t" id="#${ctrl.name}"></canvas>
-`;addWidget(ctrl.tab_w,ctrl.name,ctrl.label?ctrl.label:'CANVAS',inner);}else{EL('controls').innerHTML+=`
+<canvas onclick="clickCanvas('${ctrl.name}',event)" class="canvas_t" id="#${ctrl.name}"></canvas>
+`;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
 <div class="cv_block">
-<canvas class="canvas_t" id="#${ctrl.name}"></canvas>
+<canvas onclick="clickCanvas('${ctrl.name}',event)" class="canvas_t" id="#${ctrl.name}"></canvas>
 </div>
 `;}
 canvases[ctrl.name]={name:ctrl.name,width:ctrl.width,height:ctrl.height,value:ctrl.value};}
 function addGauge(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();if(wid_row_id){let inner=`
 <canvas class="gauge_t" id="#${ctrl.name}"></canvas>
-`;addWidget(ctrl.tab_w,ctrl.name,ctrl.label?ctrl.label:'GAUGE',inner);}else{EL('controls').innerHTML+=`
+`;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
 <div class="cv_block cv_block_back">
 <canvas class="gauge_t" id="#${ctrl.name}"></canvas>
 </div>
@@ -628,13 +618,13 @@ function addGauge(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();
 gauges[ctrl.name]={perc:null,name:ctrl.name,value:Number(ctrl.value),min:Number(ctrl.min),max:Number(ctrl.max),step:Number(ctrl.step),text:ctrl.text,color:ctrl.color};}
 function addImage(ctrl){checkWidget(ctrl);endButtons();if(wid_row_id){let inner=`
 <img src="${ctrl.value}" style="width: 100%">
-`;addWidget(ctrl.tab_w,'',ctrl.label?ctrl.label:'IMAGE',inner);}else{EL('controls').innerHTML+=`
+`;addWidget(ctrl.tab_w,'',ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
 <div class="cv_block cv_block_back">
 <img src="${ctrl.value}" style="width: 100%">
 </div>
 `;}}
 function addStream(ctrl){checkWidget(ctrl);endButtons();if(wid_row_id){let inner=`
-`;addWidget(ctrl.tab_w,'',ctrl.label?ctrl.label:'STREAM',inner);}else{EL('controls').innerHTML+=`
+`;addWidget(ctrl.tab_w,'',ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
 <div class="cv_block cv_block_back">
 </div>
 `;}}
@@ -644,7 +634,7 @@ function beginWidgets(ctrl=null,check=false){if(!check)endButtons();wid_row_size
 `;}
 function endWidgets(){endButtons();wid_row_id=null;}
 function addWidget(width,name,label,inner,height=0,noback=false){wid_row_size+=width;if(wid_row_size>100){beginWidgets();wid_row_size=width;}
-let h=height?('height:'+height+'px'):'';let lbl=label?`<div class="widget_label" title="${name}">${label}</div>`:'';EL(wid_row_id).innerHTML+=`
+let h=height?('height:'+height+'px'):'';let lbl=(label&&label!='_no')?`<div class="widget_label" title="${name}">${label}</div>`:'';EL(wid_row_id).innerHTML+=`
 <div class="widget" style="width:${width}%;${h}">
 <div class="widget_inner ${noback ? 'widget_space' : ''}">
 ${lbl}
@@ -675,6 +665,7 @@ let cx=cv.getContext("2d");const cmd_list=['fillStyle','strokeStyle','shadowColo
 ev_str+=(str+');');}else if(cmd==27){ev_str+=(`cx.${cmd_list[cmd]}(cv_map(${vals[0]},0),cv_map(${vals[1]},1),cv_map(${vals[2]},0),${vals[3]},${vals[4]},${vals[5]});`);}else if(cmd<=29){ev_str+=(`cx.${cmd_list[cmd]}(${vals[0]},cv_map(${vals[1]},0),cv_map(${vals[2]},1),${vals[3]});`);}else if(cmd==30){let str='cx.'+cmd_list[cmd]+'(';for(let i in vals){if(i>0){str+=`,cv_map(${vals[i]},${!(i % 2)})`;}else str+=vals[i];}
 ev_str+=(str+');');}}else{if(cmd>=31)ev_str+=('cx.'+cmd_list[cmd]+'();');}}else{ev_str+=d+';';}}
 eval(ev_str);canvas.value="";}
+function clickCanvas(id,e){if(!(id in canvases))return;let rect=EL('#'+id).getBoundingClientRect();let x=Math.floor((e.clientX-rect.left)/canvases[id].scale);if(x<0)x=0;let y=Math.floor((e.clientY-rect.top)/canvases[id].scale);if(y<0)y=0;set_h(id,(x<<16)|y);}
 function drawGauge(g){let cv=EL('#'+g.name);if(!cv||!cv.parentNode.clientWidth)return;let perc=(g.value-g.min)*100/(g.max-g.min);if(perc<0)perc=0;if(perc>100)perc=100;if(g.perc==null)g.perc=perc;else{if(Math.abs(g.perc-perc)<=0.2)g.perc=perc;else g.perc+=(perc-g.perc)*0.2;if(g.perc!=perc)setTimeout(()=>drawGauge(g),30);}
 let cx=cv.getContext("2d");let v=themes[cfg.theme];let col=g.color==null?intToCol(colors[cfg.maincolor]):intToCol(g.color);let rw=cv.parentNode.clientWidth;let rh=Math.floor(rw*0.47);cv.style.width=rw+'px';cv.style.height=rh+'px';cv.width=Math.floor(rw*ratio());cv.height=Math.floor(rh*ratio());cx.clearRect(0,0,cv.width,cv.height);cx.lineWidth=cv.width/8;cx.strokeStyle=theme_cols[v][4];cx.beginPath();cx.arc(cv.width/2,cv.height*0.97,cv.width/2-cx.lineWidth,Math.PI*(1+g.perc/100),Math.PI*2);cx.stroke();cx.strokeStyle=col;cx.beginPath();cx.arc(cv.width/2,cv.height*0.97,cv.width/2-cx.lineWidth,Math.PI,Math.PI*(1+g.perc/100));cx.stroke();cx.fillStyle=col;cx.font='10px '+cfg.font;cx.textAlign="center";let text=g.text;let len=Math.max((formatToStep(g.value,g.step)+text).length,(formatToStep(g.min,g.step)+text).length,(formatToStep(g.max,g.step)+text).length);if(len==1)text+='  ';else if(len==2)text+=' ';let w=Math.max(cx.measureText(formatToStep(g.value,g.step)+text).width,cx.measureText(formatToStep(g.min,g.step)+text).width,cx.measureText(formatToStep(g.max,g.step)+text).width);cx.fillStyle=theme_cols[v][3];cx.font=cv.width*0.5*10/w+'px '+cfg.font;cx.fillText(formatToStep(g.value,g.step)+g.text,cv.width/2,cv.height*0.93);cx.font='10px '+cfg.font;w=Math.max(cx.measureText(Math.round(g.min)).width,cx.measureText(Math.round(g.max)).width);cx.fillStyle=theme_cols[v][2];cx.font=cx.lineWidth*0.6*10/w+'px '+cfg.font;cx.fillText(g.min,cx.lineWidth,cv.height*0.92);cx.fillText(g.max,cv.width-cx.lineWidth,cv.height*0.92);}
 function showGauges(){Object.values(gauges).forEach(gauge=>{drawGauge(gauge);});}
@@ -778,7 +769,7 @@ addDevice(id);}
 if(!(id in devices_t)){devices_t[id]={conn:Conn.NONE,ws:null,controls:null,granted:false,buffer:{ws:'',mq:'',serial:'',bt:''}};}
 EL(`device#${id}`).className="device";EL(`${ConnNames[conn]}#${id}`).style.display='unset';if(conn<devices_t[id].conn)devices_t[id].conn=conn;break;case'print':if(id!=focused)return;printCLI(device.text,device.color);break;case'update':if(id!=focused)return;if(!(id in devices))return;Object.keys(device.updates).forEach(name=>{applyUpdate(name,device.updates[name]);});break;case'ui':if(id!=focused)return;devices_t[id].controls=device.controls;showControls(device.controls,id);break;case'info':if(id!=focused)return;showInfo(device);break;case'push':if(!(id in devices))return;let date=(new Date).getTime();if(date-push_timer<3000)return;push_timer=date;showNotif(device.text,devices[id].name);break;case'fsbr':if(id!=focused)return;showFsbr(device);break;case'fs_error':if(id!=focused)return;EL('fsbr_inner').innerHTML='<div class="fs_err">FS ERROR</div>';break;case'fetch_err':if(id!=focused)return;EL('process#'+fetch_index).innerHTML='Aborted';showPopupError('Fetch aborted');stopFS();break;case'fetch_start':if(id!=focused)return;fetching=focused;fetch_file='';post('fetch_chunk');reset_fetch_tout();break;case'fetch_next_chunk':if(id!=fetching)return;fetch_file+=device.data;if(device.chunk==device.amount-1){EL('download#'+fetch_index).style.display='unset';EL('download#'+fetch_index).href='data:'+getMime(fetch_name)+';base64,'+fetch_file;EL('download#'+fetch_index).download=fetch_name;EL('open#'+fetch_index).style.display='unset';EL('process#'+fetch_index).style.display='none';stopFS();}else{EL('process#'+fetch_index).innerHTML=Math.round(device.chunk/device.amount*100)+'%';post('fetch_chunk');reset_fetch_tout();}
 break;case'upload_err':showPopupError('Upload aborted');EL('file_upload_btn').innerHTML='Error!';setTimeout(()=>EL('file_upload_btn').innerHTML='Upload',2000);stopFS();break;case'upload_start':if(id!=focused)return;uploading=focused;uploadNextChunk();reset_upload_tout();break;case'upload_next_chunk':if(id!=uploading)return;uploadNextChunk();reset_upload_tout();break;case'upload_end':showPopup('Upload Done!');stopFS();EL('file_upload_btn').innerHTML='Done!';setTimeout(()=>EL('file_upload_btn').innerHTML='Upload',2000);post('fsbr');break;case'ota_err':showPopupError('Ota aborted');EL('ota_label').innerHTML='Error!';setTimeout(()=>EL('ota_label').innerHTML='',3000);stopFS();break;case'ota_start':if(id!=focused)return;uploading=focused;otaNextChunk();reset_ota_tout();break;case'ota_next_chunk':if(id!=uploading)return;otaNextChunk();reset_ota_tout();break;case'ota_end':showPopup('OTA Done! Reboot');stopFS();EL('ota_label').innerHTML='Done!';setTimeout(()=>EL('ota_label').innerHTML='',3000);break;case'ota_url_ok':showPopup('OTA Done!');break;case'ota_url_err':showPopupError('OTA Error!');break;}}
-function showControls(controls){EL('controls').innerHTML='';if(!controls)return;gauges={};canvases={};pickers={};dup_names=[];wid_row_count=0;btn_row_count=0;wid_row_id=null;btn_row_id=null;for(ctrl of controls){if(devices[focused].show_names&&ctrl.name)ctrl.label=ctrl.name;switch(ctrl.type){case'image':addImage(ctrl);break;case'stream':addStream(ctrl);break;case'gauge':addGauge(ctrl);break;case'js':eval(ctrl.value);break;case'canvas':addCanvas(ctrl);break;case'button':addButton(ctrl);break;case'button_i':addButtonIcon(ctrl);break;case'spacer':addSpace(ctrl);break;case'tabs':addTabs(ctrl);break;case'title':addTitle(ctrl);break;case'led':addLED(ctrl);break;case'label':addLabel(ctrl);break;case'icon':addIcon(ctrl);break;case'input':addInput(ctrl);break;case'pass':addPass(ctrl);break;case'slider':addSlider(ctrl);break;case'sliderW':addSliderW(ctrl);break;case'switch':addSwitch(ctrl);break;case'switch_i':addSwitchIcon(ctrl);break;case'switch_t':addSwitchText(ctrl);break;case'date':addDate(ctrl);break;case'time':addTime(ctrl);break;case'datetime':addDateTime(ctrl);break;case'select':addSelect(ctrl);break;case'week':addWeek(ctrl);break;case'color':addColor(ctrl);break;case'spinner':addSpinner(ctrl);break;case'display':addDisplay(ctrl);break;case'html':addHTML(ctrl);break;case'flags':addFlags(ctrl);break;case'log':addLog(ctrl);break;case'widget_b':beginWidgets(ctrl);break;case'widget_e':endWidgets();break;}}
+function showControls(controls){EL('controls').innerHTML='';if(!controls)return;gauges={};canvases={};pickers={};dup_names=[];wid_row_count=0;btn_row_count=0;wid_row_id=null;btn_row_id=null;for(ctrl of controls){if(devices[focused].show_names&&ctrl.name)ctrl.label=ctrl.name;ctrl.wlabel=ctrl.label?ctrl.label:ctrl.type;ctrl.clabel=(ctrl.label&&ctrl.label!='_no')?ctrl.label:ctrl.type;ctrl.clabel=ctrl.clabel.charAt(0).toUpperCase()+ctrl.clabel.slice(1);switch(ctrl.type){case'image':addImage(ctrl);break;case'stream':addStream(ctrl);break;case'gauge':addGauge(ctrl);break;case'js':eval(ctrl.value);break;case'canvas':addCanvas(ctrl);break;case'button':addButton(ctrl);break;case'button_i':addButtonIcon(ctrl);break;case'spacer':addSpace(ctrl);break;case'tabs':addTabs(ctrl);break;case'title':addTitle(ctrl);break;case'led':addLED(ctrl);break;case'label':addLabel(ctrl);break;case'icon':addIcon(ctrl);break;case'input':addInput(ctrl);break;case'pass':addPass(ctrl);break;case'slider':addSlider(ctrl);break;case'sliderW':addSliderW(ctrl);break;case'switch':addSwitch(ctrl);break;case'switch_i':addSwitchIcon(ctrl);break;case'switch_t':addSwitchText(ctrl);break;case'date':addDate(ctrl);break;case'time':addTime(ctrl);break;case'datetime':addDateTime(ctrl);break;case'select':addSelect(ctrl);break;case'week':addWeek(ctrl);break;case'color':addColor(ctrl);break;case'spinner':addSpinner(ctrl);break;case'display':addDisplay(ctrl);break;case'html':addHTML(ctrl);break;case'flags':addFlags(ctrl);break;case'log':addLog(ctrl);break;case'widget_b':beginWidgets(ctrl);break;case'widget_e':endWidgets();break;}}
 if(devices[focused].show_names){let labels=document.querySelectorAll(".widget_label");for(let lbl of labels)lbl.classList.add('widget_label_name');}
 resizeChbuttons();moveSliders();scrollDown();resizeSpinners();setTimeout(()=>{if(dup_names.length)showPopupError('Duplicated names: '+dup_names);showCanvases();showGauges();showPickers();},10);}
 function showInfo(device){EL('info_lib_v').innerHTML=device.info[0];EL('info_firm_v').innerHTML=device.info[1];if(device.info.length==2)return;let count=2;Object.keys(info_labels_esp).forEach(id=>{EL(id).innerHTML=device.info[count];count++;});let ver=EL('info_firm_v').innerHTML;if(projects&&ver.split('@')[0]in projects){EL('info_firm_v').onclick=function(){checkUpdates(focused,true);};EL('info_firm_v').classList.add('info_link');}else{EL('info_firm_v').onclick=function(){};EL('info_firm_v').classList.remove('info_link');}}

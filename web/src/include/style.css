@@ -41,10 +41,9 @@ body {
   background: var(--back);
   width: 100%;
   height: 100%;
-  /*box-shadow: 0px 60px 0px 0px var(--prim) inset;*/
   font-family: var(--font_f);
   font-size: 17px;
-  user-select: none;
+  cursor: default;
   height: 100%;
 }
 
@@ -810,7 +809,7 @@ select option {
 }
 
 .datime_w {
-  width: 210px;
+  width: 230px;
 }
 
 .c_col {

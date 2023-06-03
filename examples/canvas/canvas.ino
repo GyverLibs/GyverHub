@@ -8,6 +8,8 @@
 #include <GyverHUB.h>
 GyverHUB hub("MyDevices", "ESP8266", "");
 
+GHpos pos;  // обработка кликов по холсту
+
 void build() {
   hub.BeginWidgets();
 
@@ -27,7 +29,7 @@ void build() {
 
   // и ещё один
   GHcanvas cv2;
-  hub.BeginCanvas(F("cv2"), 300, 300, &cv2, F("circle")); // + название
+  hub.BeginCanvas(F("cv2"), 300, 300, &cv2, &pos);  // + обработка кликов
   cv2.fill(0x00ff00);
   cv2.noStroke();
   cv2.circle(150, 150, 50);
@@ -56,6 +58,13 @@ void setup() {
 
 void loop() {
   hub.tick();
+  
+  // обработка кликов
+  if (pos.changed()) {
+    Serial.println("Canvas 2 click:");
+    Serial.println(pos.x());
+    Serial.println(pos.y());
+  }
 
   // обновление холста по таймеру
   static GHtimer tmr(300);
