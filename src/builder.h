@@ -605,26 +605,27 @@ class HubBuilder {
     }
 
     // =========================== JOY ===========================
-    bool Joy(FSTR name, GHpos* pos, FSTR label = nullptr) {
-        return _joy(true, name, pos, label);
+    bool Joy(FSTR name, GHpos* pos, bool autoc = 1, bool exp = 0, FSTR label = nullptr, uint32_t color = GH_DEFAULT) {
+        return _joy(true, name, pos, autoc, exp, label, color);
     }
-    bool Joy(CSREF name, GHpos* pos, CSREF label = "") {
-        return _joy(false, name.c_str(), pos, label.c_str());
+    bool Joy(CSREF name, GHpos* pos, bool autoc = 1, bool exp = 0, CSREF label = "", uint32_t color = GH_DEFAULT) {
+        return _joy(false, name.c_str(), pos, autoc, exp, label.c_str(), color);
     }
 
-    bool _joy(bool fstr, VSPTR name, GHpos* pos, VSPTR label) {
+    bool _joy(bool fstr, VSPTR name, GHpos* pos, bool autoc, bool exp, VSPTR label, uint32_t color) {
         if (_isUI()) {
             _begin(F("joy"));
             _name(name, fstr);
+            _add(F(",'auto':"));
+            *sptr += autoc;
+            _add(F(",'exp':"));
+            *sptr += exp;
             _label(label, fstr);
+            _color(color);
             _tabw();
             _end();
         } else if (bptr->type == GH_BUILD_ACTION) {
-            bool act = bptr->parseSet(name, pos, GH_POS, fstr);
-            if (act) {
-                
-            }
-            return act;
+            return bptr->parseSet(name, pos, GH_POS, fstr);
         }
         return 0;
     }
@@ -636,11 +637,10 @@ class HubBuilder {
     GHbuild* bptr = nullptr;
     virtual void _afterComponent() = 0;
     virtual void refresh() = 0;
+    int tab_width = 0;
 
     // ========================= PRIVATE =========================
    private:
-    int tab_width = 0;
-
     bool _checkName(VSPTR name, bool fstr = true) {
         if (fstr ? (!strcmp_P(bptr->action.name, (PGM_P)name)) : (!strcmp(bptr->action.name, (PGM_P)name))) {
             bptr->type = GH_BUILD_NONE;

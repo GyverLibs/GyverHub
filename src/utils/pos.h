@@ -6,10 +6,10 @@ class GHpos {
     bool changed() {
         return _changed ? (_changed = 0, 1) : 0;
     }
-    virtual int16_t x() {
+    int16_t x() {
         return _x;
     }
-    virtual int16_t y() {
+    int16_t y() {
         return _y;
     }
 

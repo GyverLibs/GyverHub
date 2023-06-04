@@ -989,6 +989,7 @@ class GyverHUB : public HubBuilder {
             buf_count = 0;
             String count;
             sptr = &count;
+            tab_width = 0;
             build_cb();
         }
 
@@ -998,6 +999,7 @@ class GyverHUB : public HubBuilder {
         buf_mode = chunked ? GH_CHUNKED : GH_NORMAL;
         build.type = GH_BUILD_UI;
         sptr = &answ;
+        tab_width = 0;
         build_cb();
         sptr = nullptr;
         bptr = nullptr;

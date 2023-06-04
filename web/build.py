@@ -1,6 +1,6 @@
 # GyverHUB Web Builder
 
-version = '0.28b'
+version = '0.29b'
 fa_url = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-solid-900.ttf'
 
 js_files = [
@@ -15,6 +15,7 @@ js_files = [
     'src/include/sort-paths.min.js',
     'src/include/mqtt.min.js',
     'src/include/pickr.min.js',
+    'src/include/joy.js',
 ]
 
 js_files_esp = [
@@ -27,6 +28,7 @@ js_files_esp = [
     'src/include/ui.js',
     'src/include/sort-paths.min.js',
     'src/include/pickr.min.js',
+    'src/include/joy.js',
 ]
 
 css_files = [

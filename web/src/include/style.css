@@ -98,7 +98,7 @@ body::-webkit-scrollbar-thumb {
 .icon {
   font-weight: bold;
   font-family: 'Font Awesome 5 Free';
-  font-size: 30px;
+  font-size: 28px;
   background: none;
   border: none;
   user-select: none;
@@ -458,7 +458,7 @@ body::-webkit-scrollbar-thumb {
 }
 
 .d_name {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 25px;
 }
@@ -1236,6 +1236,11 @@ input:checked+.chbutton_s {
 
 .chtext {
   border-radius: 10px;
+}
+
+.joyCont {
+  width: 100%;
+  height: 100%;
 }
 
 /* =================================== */

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hub-cache-0.28b'
+const CACHE_NAME = 'hub-cache-0.29b'
 
 const CACHED_URLS = [
   

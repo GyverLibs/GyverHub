@@ -9,6 +9,7 @@ let dup_names = [];
 let gauges = {};
 let canvases = {};
 let pickers = {};
+let joys = {};
 
 let wid_row_id = null;
 let wid_row_count = 0;
@@ -673,6 +674,23 @@ function addStream(ctrl) {
     `;
   }
 }
+function addJoy(ctrl) {
+  if (checkDup(ctrl)) return;
+  checkWidget(ctrl);
+  endButtons();
+  let inner = `
+    <div id="joy#${ctrl.name}" class="joyCont"></div>
+  `;
+
+  if (wid_row_id) {
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
+  } else {
+    EL('controls').innerHTML += `
+    <div id="joy#${ctrl.name}" class="joyCont"></div>
+    `;
+  }
+  joys[ctrl.name] = ctrl;
+}
 
 // ================ UTILS =================
 function checkWidget(ctrl) {
@@ -815,7 +833,7 @@ function drawCanvas(canvas) {
   let cx = cv.getContext("2d");
   const cmd_list = ['fillStyle', 'strokeStyle', 'shadowColor', 'shadowBlur', 'shadowOffsetX', 'shadowOffsetY', 'lineWidth', 'miterLimit', 'font', 'textAlign', 'textBaseline', 'lineCap', 'lineJoin', 'globalCompositeOperation', 'globalAlpha', 'scale', 'rotate', 'rect', 'fillRect', 'strokeRect', 'clearRect', 'moveTo', 'lineTo', 'quadraticCurveTo', 'bezierCurveTo', 'translate', 'arcTo', 'arc', 'fillText', 'strokeText', 'drawImage', 'fill', 'stroke', 'beginPath', 'closePath', 'clip', 'save', 'restore'];
   const const_list = ['butt', 'round', 'square', 'square', 'bevel', 'miter', 'start', 'end', 'center', 'left', 'right', 'alphabetic', 'top', 'hanging', 'middle', 'ideographic', 'bottom', 'source-over', 'source-atop', 'source-in', 'source-out', 'destination-over', 'destination-atop', 'destination-in', 'destination-out', 'lighter', 'copy', 'xor', 'top', 'bottom', 'middle', 'alphabetic'];
-  
+
   for (d of canvas.value) {
     let div = d.indexOf(':');
     let cmd = parseInt(d, 10);
@@ -997,4 +1015,15 @@ function chbuttonEncode(name) {
 function scrollDown() {
   let logs = document.querySelectorAll(".c_log");
   logs.forEach((log) => log.scrollTop = log.scrollHeight);
+}
+function showJoys() {
+  Object.keys(joys).forEach(joy => {
+    joys[joy].joy = new Joy(joy,
+      intToCol(joys[joy].color == null ? colors[cfg.maincolor] : joys[joy].color),
+      joys[joy].auto,
+      joys[joy].exp,
+      function (data) {
+        input_h(joy, (data.x << 16) | data.y);
+      });
+  });
 }

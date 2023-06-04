@@ -278,6 +278,7 @@ function showControls(controls) {
   gauges = {};
   canvases = {};
   pickers = {};
+  joys = {};
   dup_names = [];
   wid_row_count = 0;
   btn_row_count = 0;
@@ -291,11 +292,6 @@ function showControls(controls) {
     ctrl.clabel = ctrl.clabel.charAt(0).toUpperCase() + ctrl.clabel.slice(1);
     
     switch (ctrl.type) {
-      case 'image': addImage(ctrl); break;
-      case 'stream': addStream(ctrl); break;
-      case 'gauge': addGauge(ctrl); break;
-      case 'js': eval(ctrl.value); break;
-      case 'canvas': addCanvas(ctrl); break;
       case 'button': addButton(ctrl); break;
       case 'button_i': addButtonIcon(ctrl); break;
       case 'spacer': addSpace(ctrl); break;
@@ -324,6 +320,12 @@ function showControls(controls) {
       case 'log': addLog(ctrl); break;
       case 'widget_b': beginWidgets(ctrl); break;
       case 'widget_e': endWidgets(); break;
+      case 'canvas': addCanvas(ctrl); break;
+      case 'gauge': addGauge(ctrl); break;
+      case 'image': addImage(ctrl); break;
+      case 'stream': addStream(ctrl); break;
+      case 'joy': addJoy(ctrl); break;
+      case 'js': eval(ctrl.value); break;
     }
   }
   if (devices[focused].show_names) {
@@ -341,6 +343,7 @@ function showControls(controls) {
     showCanvases();
     showGauges();
     showPickers();
+    showJoys();
   }, 10);
 }
 function showInfo(device) {
