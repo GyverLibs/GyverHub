@@ -1,5 +1,5 @@
 const app_title = 'GyverHUB';
-const version_notes = 'Added Joystick component';
+const version_notes = 'Some fixes';
 const ota_url = 'hub.gyver.ru/ota/projects.json';
 const non_esp = '__ESP__';
 const app_version = '__VER__';

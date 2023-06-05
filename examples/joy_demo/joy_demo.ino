@@ -16,13 +16,13 @@ void build() {
 
     // первый обработаем в билдере
     GHpos pos1;
-    if (hub.Joy("joy1", &pos1)) {
+    if (hub.Joystick("joy1", &pos1)) {
         Serial.println(pos1.x());
         Serial.println(pos1.y());
     }
 
     // второй в loop
-    hub.Joy("joy2", &pos2, 0, 1, F("my joy"), GH_RED);
+    hub.Joystick("joy2", &pos2, 0, 1, F("my joy"), GH_RED);
 }
 
 void setup() {

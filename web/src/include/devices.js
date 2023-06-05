@@ -612,13 +612,13 @@ function addCanvas(ctrl) {
   endButtons();
   if (wid_row_id) {
     let inner = `
-    <canvas onclick="clickCanvas('${ctrl.name}',event)" class="canvas_t" id="#${ctrl.name}"></canvas>
+    <canvas onclick="clickCanvas('${ctrl.name}',event)" class="${ctrl.active ? 'canvas_act' : ''} canvas_t" id="#${ctrl.name}"></canvas>
     `;
     addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="cv_block">
-      <canvas onclick="clickCanvas('${ctrl.name}',event)" class="canvas_t" id="#${ctrl.name}"></canvas>
+      <canvas onclick="clickCanvas('${ctrl.name}',event)" class="${ctrl.active ? 'canvas_act' : ''} canvas_t" id="#${ctrl.name}"></canvas>
     </div>
     `;
   }
@@ -818,7 +818,6 @@ function showCanvases() {
   });
 }
 function drawCanvas(canvas) {
-  if (!canvas.scale) return;
   let ev_str = '';
   let cv = EL('#' + canvas.name);
 
@@ -875,14 +874,15 @@ function drawCanvas(canvas) {
     }
   }
   eval(ev_str);
-  canvas.value = "";
+  canvas.value = null;
 }
 function clickCanvas(id, e) {
   if (!(id in canvases)) return;
   let rect = EL('#' + id).getBoundingClientRect();
-  let x = Math.floor((e.clientX - rect.left) / canvases[id].scale);
+  let scale = canvases[id].scale;
+  let x = Math.round((e.clientX - rect.left) / scale * ratio());
   if (x < 0) x = 0;
-  let y = Math.floor((e.clientY - rect.top) / canvases[id].scale);
+  let y = Math.round((e.clientY - rect.top) / scale * ratio());
   if (y < 0) y = 0;
   set_h(id, (x << 16) | y);
 }

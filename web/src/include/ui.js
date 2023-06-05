@@ -12,7 +12,7 @@ let cfg = {
   use_bt: false, use_serial: false,
   use_mqtt: false, mq_host: 'test.mosquitto.org', mq_port: '8081', mq_login: '', mq_pass: '',
   use_pin: false, hub_pin: '',
-  hub_id: new Date().getTime().toString().hashCode(),/*navigator.userAgent.toString().hashCode().toString(16)*/
+  hub_id: new Date().getTime().toString().hashCode().toString(16),
   ui_width: 450, theme: 'DARK', maincolor: 'GREEN', font: 'monospace', version: app_version
 };
 
@@ -56,6 +56,7 @@ window.onload = function () {
   render_main(app_version);
   EL('title').innerHTML = app_title;
   load_cfg();
+  if (typeof cfg.hub_id != 'string') cfg.hub_id = cfg.hub_id.toString(16);
   let title = 'GyverHUB v' + app_version + ' [' + cfg.hub_id + '] ' + (isPWA() ? 'PWA ' : '') + (isSSL() ? 'SSL ' : '') + (isLocal() ? 'Local ' : '') + (isESP() ? 'ESP' : '');
   EL('title').title = title;
   log(title);

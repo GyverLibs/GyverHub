@@ -15,9 +15,10 @@ function applyUpdate(name, value) {
   else if (cl.contains('select_t')) el.value = value;
   else if (cl.contains('canvas_t')) {
     if (name in canvases) {
-      if (canvases[name].value.length) return;
-      canvases[name].value = value;
-      drawCanvas(canvases[name]);
+      if (!canvases[name].value) {
+        canvases[name].value = value;
+        drawCanvas(canvases[name]);
+      }
     }
   }
   else if (cl.contains('gauge_t')) {
@@ -261,9 +262,9 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
       setTimeout(() => EL('ota_label').innerHTML = '', 3000);
       break;
 
-    
+
     // ============ OTA URL ============
-      case 'ota_url_ok':
+    case 'ota_url_ok':
       showPopup('OTA Done!');
       break;
 
@@ -290,7 +291,7 @@ function showControls(controls) {
     ctrl.wlabel = ctrl.label ? ctrl.label : ctrl.type;
     ctrl.clabel = (ctrl.label && ctrl.label != '_no') ? ctrl.label : ctrl.type;
     ctrl.clabel = ctrl.clabel.charAt(0).toUpperCase() + ctrl.clabel.slice(1);
-    
+
     switch (ctrl.type) {
       case 'button': addButton(ctrl); break;
       case 'button_i': addButtonIcon(ctrl); break;

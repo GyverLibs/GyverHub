@@ -8,7 +8,7 @@
 #include <GyverHUB.h>
 GyverHUB hub("MyDevices", "ESP8266", "");
 
-GHpos pos;  // обработка кликов по холсту
+GHpos pos1;  // обработка кликов по холсту
 
 void build() {
   hub.BeginWidgets();
@@ -19,17 +19,18 @@ void build() {
   hub.WidgetSize(50);
 
   // холст с рисунком. Обязательный порядок вызова: создать, начать, рисовать, закончить
-  GHcanvas cv1;                                 // создать холст
-  hub.BeginCanvas(F("cv1"), 200, 200, &cv1);    // начать рисование, холст 200x200
+  GHcanvas cv1;         // создать холст
+  // начать рисование, холст 200x200, обработка кликов
+  hub.BeginCanvas(F("cv1"), 200, 200, &cv1, &pos1);
   cv1.stroke(0xff0000);
   cv1.strokeWeight(5);
   cv1.line(0, 0, -1, -1);
   cv1.line(0, -1, -1, 0);
-  hub.EndCanvas();                        // закончить
+  hub.EndCanvas();      // закончить холст
 
   // и ещё один
   GHcanvas cv2;
-  hub.BeginCanvas(F("cv2"), 300, 300, &cv2, &pos);  // + обработка кликов
+  hub.BeginCanvas(F("cv2"), 300, 300, &cv2);
   cv2.fill(0x00ff00);
   cv2.noStroke();
   cv2.circle(150, 150, 50);
@@ -60,10 +61,16 @@ void loop() {
   hub.tick();
   
   // обработка кликов
-  if (pos.changed()) {
-    Serial.println("Canvas 2 click:");
-    Serial.println(pos.x());
-    Serial.println(pos.y());
+  if (pos1.changed()) {
+    Serial.println("Canvas 1 click:");
+    Serial.println(pos1.x());
+    Serial.println(pos1.y());
+
+    // выведем кружок в место клика
+    GHcanvas cv;
+    hub.sendCanvasBegin(F("cv1"), cv);
+    cv.circle(pos1.x(), pos1.y(), 10);
+    hub.sendCanvasEnd(cv);
   }
 
   // обновление холста по таймеру

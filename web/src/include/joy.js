@@ -12,6 +12,7 @@ let Joy = (function (cont, color, auto, exp, callback) {
     size *= ratio;
     cv.width = size;
     cv.height = size;
+    cv.style.cursor = 'pointer';
     cont.appendChild(cv);
 
     let cx = cv.getContext("2d");
@@ -21,7 +22,6 @@ let Joy = (function (cont, color, auto, exp, callback) {
     let centerY = size / 2;
     let movedX = centerX;
     let movedY = centerY;
-
     let pressed = 0;
 
     if ("ontouchstart" in document.documentElement) {
@@ -46,7 +46,7 @@ let Joy = (function (cont, color, auto, exp, callback) {
     }
 
     function onTouchMove(event) {
-        if (pressed && event.targetTouches[0].target === canvas) {
+        if (pressed && event.targetTouches[0].target === cv) {
             movedX = event.targetTouches[0].pageX * ratio;
             movedY = event.targetTouches[0].pageY * ratio;
             if (cv.offsetParent.tagName.toUpperCase() === "BODY") {
@@ -66,12 +66,13 @@ let Joy = (function (cont, color, auto, exp, callback) {
             movedY = centerY;
             redraw();
         }
-        pressed = 0;
+        if (!event.targetTouches.length) pressed = 0;
     }
 
     function onMouseDown(event) {
         pressed = 1;
         document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'pointer';
     }
 
     function onMouseMove(event) {
@@ -97,6 +98,7 @@ let Joy = (function (cont, color, auto, exp, callback) {
         }
         pressed = 0;
         document.body.style.userSelect = 'unset';
+        document.body.style.cursor = 'default';
     }
 
     function redraw() {

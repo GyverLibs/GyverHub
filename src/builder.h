@@ -558,6 +558,7 @@ class HubBuilder {
             _add(F(",'height':"));
             *sptr += height;
             _label(label, fstr);
+            if (pos) _add(F(",'active':1"));
             _value();
             *sptr += '[';
             if (begin && cv) cv->extBuffer(sptr);
@@ -605,10 +606,10 @@ class HubBuilder {
     }
 
     // =========================== JOY ===========================
-    bool Joy(FSTR name, GHpos* pos, bool autoc = 1, bool exp = 0, FSTR label = nullptr, uint32_t color = GH_DEFAULT) {
+    bool Joystick(FSTR name, GHpos* pos, bool autoc = 1, bool exp = 0, FSTR label = nullptr, uint32_t color = GH_DEFAULT) {
         return _joy(true, name, pos, autoc, exp, label, color);
     }
-    bool Joy(CSREF name, GHpos* pos, bool autoc = 1, bool exp = 0, CSREF label = "", uint32_t color = GH_DEFAULT) {
+    bool Joystick(CSREF name, GHpos* pos, bool autoc = 1, bool exp = 0, CSREF label = "", uint32_t color = GH_DEFAULT) {
         return _joy(false, name.c_str(), pos, autoc, exp, label.c_str(), color);
     }
 

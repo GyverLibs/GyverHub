@@ -125,8 +125,10 @@ save	KEYWORD2
 restore	KEYWORD2
 
 nameString	KEYWORD2
+valueString	KEYWORD2
 valueInt	KEYWORD2
 valueFloat	KEYWORD2
+changed	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
@@ -166,6 +168,9 @@ Canvas	LITERAL1
 BeginCanvas	LITERAL1
 EndCanvas	LITERAL1
 Gauge	LITERAL1
+Joystick	LITERAL1
+Image	LITERAL1
+Stream	LITERAL1
 
 GH_RED	LITERAL1
 GH_ORANGE	LITERAL1
