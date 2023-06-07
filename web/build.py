@@ -86,6 +86,9 @@ os.mkdir('host')
 os.mkdir('host/icons')
 os.mkdir('local')
 
+with open('version.txt', "w") as f:
+    f.write(version)
+
 ###############################################################
 ###                           HOST                          ###
 ###############################################################
