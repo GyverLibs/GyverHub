@@ -631,6 +631,50 @@ class HubBuilder {
         return 0;
     }
 
+    // ======================= CONFIRM ========================
+    bool Confirm(VSPTR name, bool* value = nullptr, FSTR label = nullptr) {
+        return _confirm(true, name, value, label);
+    }
+    bool Confirm(CSREF name, bool* value = nullptr, CSREF label = "") {
+        return _confirm(false, name.c_str(), value, label.c_str());
+    }
+
+    bool _confirm(bool fstr, VSPTR name, bool* value, VSPTR label) {
+        if (_isUI()) {
+            _begin(F("confirm"));
+            _name(name, fstr);
+            _label(label, fstr);
+            _end();
+        } else if (bptr->type == GH_BUILD_ACTION) {
+            return bptr->parseSet(name, value, GH_BOOL, fstr);
+        }
+        return 0;
+    }
+
+    // ========================= PROMPT ========================
+    bool Prompt(VSPTR name, void* value = nullptr, GHdata_t type = GH_NULL, FSTR label = nullptr) {
+        return _prompt(true, name, value, type, label);
+    }
+    bool Prompt(CSREF name, void* value = nullptr, GHdata_t type = GH_NULL, CSREF label = "") {
+        return _prompt(false, name.c_str(), value, type, label.c_str());
+    }
+
+    bool _prompt(bool fstr, VSPTR name, void* value, GHdata_t type, VSPTR label) {
+        if (_isUI()) {
+            _begin(F("prompt"));
+            _name(name, fstr);
+            _value();
+            _quot();
+            GHtypeToStr(sptr, value, type);
+            _quot();
+            _label(label, fstr);
+            _end();
+        } else if (bptr->type == GH_BUILD_ACTION) {
+            return bptr->parseSet(name, value, type, fstr);
+        }
+        return 0;
+    }
+
     // ======================== PROTECTED ========================
 
    protected:

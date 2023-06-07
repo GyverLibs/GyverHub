@@ -1,6 +1,22 @@
 let push_timer = 0;
 
 function applyUpdate(name, value) {
+  if (name in prompts) {
+    release_all();
+    let res = prompt(value ? value : prompts[name].label, prompts[name].value);
+    if (res !== null) {
+      prompts[name].value = res;
+      set_h(name, res);
+    }
+    return;
+  }
+  if (name in confirms) {
+    release_all();log(confirms[name].label);
+    let res = confirm(value ? value : confirms[name].label);
+    set_h(name, res ? 1 : 0);
+    return;
+  }
+
   let el = EL('#' + name);
   if (!el) return;
   cl = el.classList;
@@ -78,6 +94,14 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
   }
 
   switch (device.type) {
+    case 'alert':
+      alert(device.text);
+      break;
+
+    case 'notice':
+      showPopup(device.text, intToCol(device.color));
+      break;
+
     case 'OK':
       break;
 
@@ -280,6 +304,8 @@ function showControls(controls) {
   canvases = {};
   pickers = {};
   joys = {};
+  prompts = {};
+  confirms = {};
   dup_names = [];
   wid_row_count = 0;
   btn_row_count = 0;
@@ -327,6 +353,8 @@ function showControls(controls) {
       case 'stream': addStream(ctrl); break;
       case 'joy': addJoy(ctrl); break;
       case 'js': eval(ctrl.value); break;
+      case 'confirm': confirms[ctrl.name] = {label: ctrl.label}; break;
+      case 'prompt': prompts[ctrl.name] = {label: ctrl.label, value: ctrl.value}; break;
     }
   }
   if (devices[focused].show_names) {

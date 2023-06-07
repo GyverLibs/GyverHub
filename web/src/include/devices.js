@@ -10,6 +10,8 @@ let gauges = {};
 let canvases = {};
 let pickers = {};
 let joys = {};
+let prompts = {};
+let confirms = {};
 
 let wid_row_id = null;
 let wid_row_count = 0;
@@ -1018,7 +1020,7 @@ function scrollDown() {
 }
 function showJoys() {
   Object.keys(joys).forEach(joy => {
-    joys[joy].joy = new Joy(joy,
+    joys[joy].joy = new Joystick(joy,
       intToCol(joys[joy].color == null ? colors[cfg.maincolor] : joys[joy].color),
       joys[joy].auto,
       joys[joy].exp,

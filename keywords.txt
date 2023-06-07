@@ -38,6 +38,8 @@ onCLI	KEYWORD2
 print	KEYWORD2
 sendPush	KEYWORD2
 sendUpdate	KEYWORD2
+sendNotice	KEYWORD2
+sendAlert	KEYWORD2
 sendCanvas	KEYWORD2
 sendCanvasBegin	KEYWORD2
 sendCanvasEnd	KEYWORD2
@@ -171,6 +173,8 @@ Gauge	LITERAL1
 Joystick	LITERAL1
 Image	LITERAL1
 Stream	LITERAL1
+Prompt	LITERAL1
+Confirm	LITERAL1
 
 GH_RED	LITERAL1
 GH_ORANGE	LITERAL1

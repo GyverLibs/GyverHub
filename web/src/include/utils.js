@@ -1,5 +1,5 @@
 const app_title = 'GyverHUB';
-const version_notes = 'Some fixes';
+const version_notes = 'Add Alert/Prompt/Confirm components';
 const ota_url = 'hub.gyver.ru/ota/projects.json';
 const non_esp = '__ESP__';
 const app_version = '__VER__';
@@ -105,7 +105,10 @@ function isSSL() {
   return window.location.protocol == 'https:';
 }
 function isLocal() {
-  return window.location.href.startsWith('file') || checkIP(window_ip());
+  return window.location.href.startsWith('file') || checkIP(window_ip()) || window_ip() == 'localhost';
+}
+function isApp() {
+  return 'AppInventor' in window;
 }
 function isPWA() {
   return (window.matchMedia('(display-mode: standalone)').matches) || (window.navigator.standalone) || document.referrer.includes('android-app://');

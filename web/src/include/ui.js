@@ -42,7 +42,7 @@ document.addEventListener('keydown', function (e) {
 // ============= STARTUP ============
 window.onload = function () {
   /*NON-ESP*/
-  if ('serviceWorker' in navigator && !isLocal()) {
+  if ('serviceWorker' in navigator && !isLocal() && !isApp()) {
     navigator.serviceWorker.register('/sw.js');
   }
   window.addEventListener('beforeinstallprompt', (e) => deferredPrompt = e);
@@ -57,7 +57,7 @@ window.onload = function () {
   EL('title').innerHTML = app_title;
   load_cfg();
   if (typeof cfg.hub_id != 'string') cfg.hub_id = cfg.hub_id.toString(16);
-  let title = 'GyverHUB v' + app_version + ' [' + cfg.hub_id + '] ' + (isPWA() ? 'PWA ' : '') + (isSSL() ? 'SSL ' : '') + (isLocal() ? 'Local ' : '') + (isESP() ? 'ESP' : '');
+  let title = 'GyverHUB v' + app_version + ' [' + cfg.hub_id + '] ' + (isPWA() ? 'PWA ' : '') + (isSSL() ? 'SSL ' : '') + (isLocal() ? 'Local ' : '') + (isESP() ? 'ESP ' : '') + (isApp() ? 'App ' : '');
   EL('title').title = title;
   log(title);
 
@@ -285,6 +285,7 @@ function refresh_h() {
 function back_h() {
   switch (screen) {
     case 'device':
+      release_all();
       close_device();
       break;
     case 'info':

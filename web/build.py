@@ -1,6 +1,6 @@
 # GyverHUB Web Builder
 
-version = '0.31b'
+version = '0.32b'
 fa_url = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-solid-900.ttf'
 
 js_files = [
@@ -73,11 +73,13 @@ import base64
 
 ##############################################################
 
+if os.path.exists('app'): shutil.rmtree('app')
 if os.path.exists('esp'): shutil.rmtree('esp')
 if os.path.exists('esp_inc'): shutil.rmtree('esp_inc')
 if os.path.exists('host'): shutil.rmtree('host')
 if os.path.exists('local'): shutil.rmtree('local')
 
+os.mkdir('app')
 os.mkdir('esp')
 os.mkdir('esp_inc')
 os.mkdir('host')
@@ -175,6 +177,29 @@ with open('local/GyverHUB.html', "r+") as f:
     data = re.sub(r'<!--INC-->([\s\S]*?)<!--\/INC-->', '__INC__', data)
     data = data.replace('__INC__', inc_local)
     data = re.sub(r'<!--ICON-->([\s\S]*?)<!--\/ICON-->', icon_b64, data)
+    data = re.sub(r'<!--PWA-->([\s\S]*?)<!--\/PWA-->', '', data)
+    data = re.sub(r'<!--METRIKA-->', '', data)
+    data = re.sub(r'__VER__', version, data)
+    data = re.sub(r'<!--([\s\S]*?)-->', '', data)
+    data = re.sub(r'<!--\/([\s\S]*?)-->', '', data)
+    data = "".join([s for s in data.strip().splitlines(True) if s.strip()])
+    f.seek(0)
+    f.write(data)
+    f.truncate()
+
+###############################################################
+###                           APP                           ###
+###############################################################
+shutil.copyfile('host/fa-solid-900.ttf', 'app/fa-solid-900.ttf')
+shutil.copyfile('host/style.css', 'app/style.css')
+shutil.copyfile('host/script.js', 'app/script.js')
+shutil.copyfile('src/index.html', 'app/index.html')
+
+with open('app/index.html', "r+") as f:
+    data = f.read()
+    data = re.sub(r'<!--INC-->([\s\S]*?)<!--\/INC-->', '__INC__', data)
+    data = data.replace('__INC__', inc_min.replace('?__VER__=', ''))
+    data = re.sub(r'<!--ICON-->([\s\S]*?)<!--\/ICON-->', '', data)
     data = re.sub(r'<!--PWA-->([\s\S]*?)<!--\/PWA-->', '', data)
     data = re.sub(r'<!--METRIKA-->', '', data)
     data = re.sub(r'__VER__', version, data)

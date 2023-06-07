@@ -59,6 +59,10 @@ function post(cmd, name = '', value = '') {
   reset_tout();
   log('Post to #' + id + ' via ' + ConnNames[devices_t[id].conn] + ', cmd=' + cmd + (name ? (', name=' + name) : '') + (value ? (', value=' + value) : ''))
 }
+function release_all() {
+  if (pressId) post('click', pressId, 0);
+  pressId = null;
+}
 function click_h(name, dir) {
   pressId = (dir == 1) ? name : null;
   post('click', name, dir);

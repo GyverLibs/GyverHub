@@ -1,4 +1,4 @@
-let Joy = (function (cont, color, auto, exp, callback) {
+let Joystick = (function (cont, color, auto, exp, callback) {
     // based on https://github.com/bobboteck/JoyStick
     cont = EL('joy#' + cont);
     if (!cont) return;
