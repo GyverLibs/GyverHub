@@ -20,7 +20,7 @@
 
 GyverHUB - это программный комплекс, включающий в себя библиотеку для микроконтроллеров и программу для управления. Программа написана на JavaScript и по сути является сайтом, который доступен:
 - С официального сайта [hub.gyver.ru](http://hub.gyver.ru/)
-- [Android приложение](https://play.google.com/store/apps/details?id=ru.alexgyver.GyverHub)
+- Android приложение: [Google Play](https://play.google.com/store/apps/details?id=ru.alexgyver.GyverHub), [скачать APK](https://github.com/GyverLibs/GyverHUB/raw/main/app/GyverHUB.apk) (правой кнопкой - *сохранить ссылку как*)
 - Сайт можно [установить](https://github.com/GyverLibs/GyverHUB/wiki/%D0%9D%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B#%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0-%D0%B2%D0%B5%D0%B1-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F) как веб-приложение (PWA) на любое устройство (Android/iOS/Windows...)
 - Локально с компьютера, для этого нужно [скачать сайт](https://github.com/GyverLibs/GyverHUB/raw/main/web/local/GyverHUB.html) (правой кнопкой - *сохранить ссылку как*) и открыть его в браузере
 - [Из памяти ESP8266/32](https://github.com/GyverLibs/GyverHUB/wiki/2.-%D0%9D%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D0%B8%D0%B7-esp)
