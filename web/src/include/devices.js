@@ -34,7 +34,7 @@ function load_devices() {
 function addDevice(id) {
   EL('devices').innerHTML += `<div class="device offline" id="device#${id}" onclick="device_h('${id}')" title="${id} [${devices[id].prefix}]">
   <div class="device_inner">
-    <div class="d_icon"><span class="icon" id="icon#${id}">${devices[id].icon}</span></div>
+    <div class="d_icon"><span class="icon icon_min" id="icon#${id}">${devices[id].icon}</span></div>
       <div class="d_head">
         <span><span class="d_name" id="name#${id}">${devices[id].name}</span><sup class="conn_dev" id="Serial#${id}">S</sup><sup class="conn_dev" id="BT#${id}">B</sup><sup class="conn_dev" id="WS#${id}">W</sup><sup class="conn_dev" id="MQTT#${id}">M</sup></span>
       </div>

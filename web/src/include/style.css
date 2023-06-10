@@ -98,12 +98,15 @@ body::-webkit-scrollbar-thumb {
 .icon {
   font-weight: bold;
   font-family: 'Font Awesome 5 Free';
-  font-size: 28px;
+  font-size: 30px;
   background: none;
   border: none;
   user-select: none;
 }
 
+.icon_min {
+  font-size: 25px;
+}
 .spinning {
   -webkit-animation: spin 0.7s linear infinite;
   -moz-animation: spin 0.7s linear infinite;

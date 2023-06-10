@@ -202,16 +202,16 @@ class GHcanvas {
         beginPath();
         switch (rMode) {
             case CV_CORNER:
-                _rect(x, y, w, h);
+                drawRect(x, y, w, h);
                 break;
             case CV_CORNERS:
-                _rect(x, y, w - x, h - y);
+                drawRect(x, y, w - x, h - y);
                 break;
             case CV_CENTER:
-                _rect(x - w / 2, y - h / 2, w, h);
+                drawRect(x - w / 2, y - h / 2, w, h);
                 break;
             case CV_RADIUS:
-                _rect(x - w, y - h, w * 2, h * 2);
+                drawRect(x - w, y - h, w * 2, h * 2);
                 break;
             default:
                 break;
@@ -406,7 +406,7 @@ class GHcanvas {
     }
 
     // прямоугольник
-    void _rect(int x, int y, int w, int h) {
+    void drawRect(int x, int y, int w, int h) {
         addCmd(17);
         _div();
         _params(4, x, y, w, h);

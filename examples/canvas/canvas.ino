@@ -63,13 +63,13 @@ void loop() {
   // обработка кликов
   if (pos1.changed()) {
     Serial.println("Canvas 1 click:");
-    Serial.println(pos1.x());
-    Serial.println(pos1.y());
+    Serial.println(pos1.x);
+    Serial.println(pos1.y);
 
     // выведем кружок в место клика
     GHcanvas cv;
     hub.sendCanvasBegin(F("cv1"), cv);
-    cv.circle(pos1.x(), pos1.y(), 10);
+    cv.circle(pos1.x, pos1.y, 10);
     hub.sendCanvasEnd(cv);
   }
 

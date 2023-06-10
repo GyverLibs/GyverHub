@@ -17,8 +17,8 @@ void build() {
     // первый обработаем в билдере
     GHpos pos1;
     if (hub.Joystick("joy1", &pos1)) {
-        Serial.println(pos1.x());
-        Serial.println(pos1.y());
+        Serial.println(pos1.x);
+        Serial.println(pos1.y);
     }
 
     // второй в loop
@@ -50,7 +50,7 @@ void loop() {
 
     if (pos2.changed()) {
         Serial.println("joy 2:");
-        Serial.println(pos2.x());
-        Serial.println(pos2.y());
+        Serial.println(pos2.x);
+        Serial.println(pos2.y);
     }
 }

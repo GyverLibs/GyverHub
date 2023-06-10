@@ -628,8 +628,8 @@ class HubBuilder {
         } else if (bptr->type == GH_BUILD_ACTION) {
             bool act = bptr->parseSet(name, pos, GH_POS, fstr);
             if (act) {
-                pos->_x -= 255;
-                pos->_y -= 255;
+                pos->x -= 255;
+                pos->y -= 255;
             }
             return act;
         }

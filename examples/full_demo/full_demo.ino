@@ -122,8 +122,8 @@ void build() {
   hub.Gauge(F("ga1"), random(-5, 30), F("°C"), F("Temp"), -5, 30, 0.1, GH_RED);
   if (hub.Joystick("joy", &pos)) {
     Serial.println("joy:");
-    Serial.println(pos.x());
-    Serial.println(pos.y());
+    Serial.println(pos.x);
+    Serial.println(pos.y);
   }
   // hub.EndWidgets();
 
