@@ -5,8 +5,8 @@
 #define AP_PASS ""
 
 #include <Arduino.h>
-#include <GyverHUB.h>
-GyverHUB hub("MyDevices", "ESP8266", "");
+#include <GyverHub.h>
+GyverHub hub("MyDevices", "ESP8266", "");
 
 GHpos pos2;
 

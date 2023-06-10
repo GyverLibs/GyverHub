@@ -1,4 +1,4 @@
-## GyverHUB Web
+## GyverHub Web
 
 Веб-приложение:
 - **app** - версия для Android

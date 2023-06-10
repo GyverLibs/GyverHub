@@ -21,8 +21,8 @@
 // =================================
 
 #include <Arduino.h>
-#include <GyverHUB.h>
-GyverHUB hub("MyDevices", "ESP8266", "");
+#include <GyverHub.h>
+GyverHub hub("MyDevices", "ESP8266", "");
 // иконки
 // https://fontawesome.com/v5/cheatsheet/free/solid
 // https://fontawesome.com/v5/search?o=r&m=free&s=solid

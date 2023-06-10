@@ -38,7 +38,7 @@ function render_main(v) {
     <!--NON-ESP-->
     <a style="cursor:pointer" onclick="test_h()"><span class="icon info_icon info_icon_u"></span>Test</a>
     <!--/NON-ESP-->
-    <a href="https://github.com/GyverLibs/GyverHUB/wiki" target="_blank"><span class="icon info_icon info_icon_u"></span>Docs</a>
+    <a href="https://github.com/GyverLibs/GyverHub/wiki" target="_blank"><span class="icon info_icon info_icon_u"></span>Docs</a>
   </div>
   `;
 
@@ -105,7 +105,7 @@ function render_main(v) {
           <label><span class="icon cfg_icon"></span>Upload</label>
         </div>
         <div class="upload_row">
-          <input class="cfg_inp upl_input" type="text" id="file_upload_path" value="/">
+          <input class="cfg_inp" type="text" id="file_upload_path" value="/">
           <input type="file" id="file_upload" style="display:none" onchange="uploadFile(this)">
           <button id="file_upload_btn" onclick="file_upload.click()" class="c_btn upl_button">Upload</button>
         </div>
@@ -131,11 +131,11 @@ function render_main(v) {
           <label><span class="icon cfg_icon"></span>OTA URL</label>
         </div>
         <div class="upload_row">
-          <input class="cfg_inp upl_input" type="text" id="ota_url_f" value="http://url_to_flash">
+          <input class="cfg_inp" type="text" id="ota_url_f">
           <button id="ota_url_btn" onclick="otaUrl(ota_url_f.value,'flash')" class="c_btn upl_button">Flash</button>
         </div>
         <div class="upload_row">
-          <input class="cfg_inp upl_input" type="text" id="ota_url_fs" value="http://url_to_filesystem">
+          <input class="cfg_inp" type="text" id="ota_url_fs">
           <button id="ota_url_btn" onclick="otaUrl(ota_url_fs.value,'fs')" class="c_btn upl_button">FS</button>
         </div>
       </div>
@@ -230,8 +230,8 @@ function render_main(v) {
 
         </div>
       </div>
-
-      <div class="cfg_col" id="serial_col">
+      
+      <div class="cfg_col" id="serial_col" style="display:none">
         <div class="cfg_row cfg_head">
           <label id="serial_label"><span class="icon cfg_icon"></span>Serial</label>
           <label class="switch"><input type="checkbox" id="use_serial" onchange="update_cfg(this)"><span class="slider"></span></label>
@@ -242,7 +242,7 @@ function render_main(v) {
 
       </div>
 
-      <div class="cfg_col" id="bt_col">
+      <div class="cfg_col" id="bt_col" style="display:none">
         <div class="cfg_row cfg_head">
           <label id="bt_label"><span class="icon cfg_icon"></span>Bluetooth</label>
           <label class="switch"><input type="checkbox" id="use_bt" onchange="update_cfg(this)"><span class="slider"></span></label>

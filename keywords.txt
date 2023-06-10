@@ -1,11 +1,11 @@
 #######################################
-# Syntax Coloring Map For GyverHUB
+# Syntax Coloring Map For GyverHub
 #######################################
 
 #######################################
 # Datatypes (KEYWORD1)
 #######################################
-GyverHUB	KEYWORD1
+GyverHub	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)

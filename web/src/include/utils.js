@@ -1,7 +1,8 @@
-const app_title = 'GyverHUB';
-const version_notes = 'Add Alert/Prompt/Confirm components';
+const app_title = 'GyverHub';
+const version_notes = 'Some fixes';
 const ota_url = 'hub.gyver.ru/ota/projects.json';
 const non_esp = '__ESP__';
+const non_app = '__APP__';
 const app_version = '__VER__';
 
 const log_enable = true;
@@ -62,7 +63,6 @@ const theme_cols = [
   ['#eee', '#fff', '#111', '#333', '#ddd', '#999', '#bdbdbd', 'light', '#fff', '#000000a3']
 ];  // back/tab/font/font2/dark/thumb/black/scheme/font4/shad/font3
 
-
 function getMime(name) {
   const mime_table = {
     'avi': 'video/x-msvideo',
@@ -108,7 +108,7 @@ function isLocal() {
   return window.location.href.startsWith('file') || checkIP(window_ip()) || window_ip() == 'localhost';
 }
 function isApp() {
-  return 'AppInventor' in window;
+  return !non_app;
 }
 function isPWA() {
   return (window.matchMedia('(display-mode: standalone)').matches) || (window.navigator.standalone) || document.referrer.includes('android-app://');

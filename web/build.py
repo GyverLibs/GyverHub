@@ -1,6 +1,6 @@
-# GyverHUB Web Builder
+# GyverHub Web Builder
 
-version = '0.32b'
+version = '0.33b'
 fa_url = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-solid-900.ttf'
 
 js_files = [
@@ -14,19 +14,6 @@ js_files = [
     'src/include/test.js',
     'src/include/sort-paths.min.js',
     'src/include/mqtt.min.js',
-    'src/include/pickr.min.js',
-    'src/include/joy.js',
-]
-
-js_files_esp = [
-    'src/include/main.js',
-    'src/include/utils.js',
-    'src/include/devices.js',
-    'src/include/connection.js',
-    'src/include/fs.js',
-    'src/include/parser.js',
-    'src/include/ui.js',
-    'src/include/sort-paths.min.js',
     'src/include/pickr.min.js',
     'src/include/joy.js',
 ]
@@ -170,12 +157,12 @@ icon_b64 = "<link rel='icon' href='data:image/svg+xml;base64,"
 with open("src/favicon.svg", "rb") as f:
     icon_b64 += (base64.b64encode(f.read())).decode('ascii') + "'>"
 
-shutil.copyfile('src/index.html', 'local/GyverHUB.html')
+shutil.copyfile('src/index.html', 'local/GyverHub.html')
 
 inc_local = '<style>\n' + css_min.replace('url(fa-solid-900.ttf)', 'url(' + fa_b64 + ')') + '\n</style>\n'
 inc_local += '<script>\n' + js_min + '\n</script>\n'
 
-with open('local/GyverHUB.html', "r+") as f:
+with open('local/GyverHub.html', "r+") as f:
     data = f.read()
     data = re.sub(r'<!--INC-->([\s\S]*?)<!--\/INC-->', '__INC__', data)
     data = data.replace('__INC__', inc_local)
@@ -193,15 +180,13 @@ with open('local/GyverHUB.html', "r+") as f:
 ###############################################################
 ###                           APP                           ###
 ###############################################################
-shutil.copyfile('host/fa-solid-900.ttf', 'app/fa-solid-900.ttf')
-shutil.copyfile('host/style.css', 'app/style.css')
-shutil.copyfile('host/script.js', 'app/script.js')
 shutil.copyfile('src/index.html', 'app/index.html')
+inc_app = inc_local.replace('__APP__', '')
 
 with open('app/index.html', "r+") as f:
     data = f.read()
     data = re.sub(r'<!--INC-->([\s\S]*?)<!--\/INC-->', '__INC__', data)
-    data = data.replace('__INC__', inc_min.replace('?__VER__=', ''))
+    data = data.replace('__INC__', inc_app)
     data = re.sub(r'<!--ICON-->([\s\S]*?)<!--\/ICON-->', '', data)
     data = re.sub(r'<!--PWA-->([\s\S]*?)<!--\/PWA-->', '', data)
     data = re.sub(r'<!--METRIKA-->', '', data)
@@ -213,12 +198,15 @@ with open('app/index.html', "r+") as f:
     f.write(data)
     f.truncate()
 
+with open('app/index.html', 'rb') as f_in, gzip.open('app/index.html.gz', 'wb') as f_out: f_out.writelines(f_in)
+#os.remove("app/index.html")
+
 ###############################################################
 ###                           ESP                           ###
 ###############################################################
 # JS
 js_min = ''
-for file in js_files_esp:
+for file in js_files:
     with open(file, 'r') as f:
         read = f.read()
         read = re.sub(r'\/\*NON-ESP\*\/([\s\S]*?)\/\*\/NON-ESP\*\/', '', read)

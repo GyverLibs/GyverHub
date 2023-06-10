@@ -681,14 +681,14 @@ function addJoy(ctrl) {
   checkWidget(ctrl);
   endButtons();
   let inner = `
-    <div id="joy#${ctrl.name}" class="joyCont"></div>
+    <div id="joy#${ctrl.name}" class="joyCont"><canvas id="#${ctrl.name}"></canvas></div>
   `;
 
   if (wid_row_id) {
     addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
-    <div id="joy#${ctrl.name}" class="joyCont"></div>
+    <div id="joy#${ctrl.name}" class="joyCont"><canvas id="#${ctrl.name}"></canvas></div>
     `;
   }
   joys[ctrl.name] = ctrl;
@@ -1025,7 +1025,7 @@ function showJoys() {
       joys[joy].auto,
       joys[joy].exp,
       function (data) {
-        input_h(joy, (data.x << 16) | data.y);
+        input_h(joy, ((data.x + 255) << 16) | (data.y + 255));
       });
   });
 }

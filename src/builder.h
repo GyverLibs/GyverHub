@@ -626,7 +626,12 @@ class HubBuilder {
             _tabw();
             _end();
         } else if (bptr->type == GH_BUILD_ACTION) {
-            return bptr->parseSet(name, pos, GH_POS, fstr);
+            bool act = bptr->parseSet(name, pos, GH_POS, fstr);
+            if (act) {
+                pos->_x -= 255;
+                pos->_y -= 255;
+            }
+            return act;
         }
         return 0;
     }

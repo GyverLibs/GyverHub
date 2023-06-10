@@ -5,8 +5,8 @@
 #define AP_SSID ""
 #define AP_PASS ""
 
-#include <GyverHUB.h>
-GyverHUB hub("MyDevices", "ESP8266", "");
+#include <GyverHub.h>
+GyverHub hub("MyDevices", "ESP8266", "");
 
 #define MAX_TEXT 20
 #define DYN_MAX 5

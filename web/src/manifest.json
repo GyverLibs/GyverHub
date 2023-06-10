@@ -3,8 +3,8 @@
     "background_color": "#1b1c20",
     "display": "standalone",
     "start_url": ".",
-    "name": "GyverHUB",
-    "short_name": "GyverHUB",
+    "name": "GyverHub",
+    "short_name": "GyverHub",
     "description": "ESP8266/32 controlling platform",
     "orientation": "portrait",
     "icons": [

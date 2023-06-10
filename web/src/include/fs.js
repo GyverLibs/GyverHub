@@ -81,6 +81,8 @@ function showFsbr(device) {
   let accept = device.gzip ? '.gz' : '.bin';
   EL('ota_upload').accept = accept;
   EL('ota_upload_fs').accept = accept;
+  EL('ota_url_f').value = "http://url_to_flash" + accept;
+  EL('ota_url_fs').value = "http://url_to_filesystem" + accept;
 }
 function openFSctrl(i) {
   let current = EL(`fs#${i}`).style.display == 'flex';

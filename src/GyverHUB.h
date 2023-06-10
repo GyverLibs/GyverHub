@@ -64,15 +64,15 @@
 
 // ========================== CLASS ==========================
 #ifdef GH_ESP_BUILD
-class GyverHUB : public HubBuilder, public HubHTTP, public HubMQTT, public HubWS {
+class GyverHub : public HubBuilder, public HubHTTP, public HubMQTT, public HubWS {
 #else
-class GyverHUB : public HubBuilder {
+class GyverHub : public HubBuilder {
 #endif
    public:
     // ========================== CONSTRUCT ==========================
 
     // настроить префикс, название и иконку. Опционально задать свой ID устройства (для esp он генерируется автоматически)
-    GyverHUB(const char* prefix = "", const char* name = "", const char* icon = "", uint32_t id = 0) {
+    GyverHub(const char* prefix = "", const char* name = "", const char* icon = "", uint32_t id = 0) {
         config(prefix, name, icon, id);
     }
 

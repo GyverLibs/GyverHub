@@ -44,8 +44,8 @@ window.onload = function () {
   /*NON-ESP*/
   if ('serviceWorker' in navigator && !isLocal() && !isApp()) {
     navigator.serviceWorker.register('/sw.js');
+    window.addEventListener('beforeinstallprompt', (e) => deferredPrompt = e);
   }
-  window.addEventListener('beforeinstallprompt', (e) => deferredPrompt = e);
   /*/NON-ESP*/
 
   window.history.pushState({ page: 1 }, "", "");    // back/refresh
@@ -57,7 +57,7 @@ window.onload = function () {
   EL('title').innerHTML = app_title;
   load_cfg();
   if (typeof cfg.hub_id != 'string') cfg.hub_id = cfg.hub_id.toString(16);
-  let title = 'GyverHUB v' + app_version + ' [' + cfg.hub_id + '] ' + (isPWA() ? 'PWA ' : '') + (isSSL() ? 'SSL ' : '') + (isLocal() ? 'Local ' : '') + (isESP() ? 'ESP ' : '') + (isApp() ? 'App ' : '');
+  let title = 'GyverHub v' + app_version + ' [' + cfg.hub_id + '] ' + (isPWA() ? 'PWA ' : '') + (isSSL() ? 'SSL ' : '') + (isLocal() ? 'Local ' : '') + (isESP() ? 'ESP ' : '') + (isApp() ? 'App ' : '');
   EL('title').title = title;
   log(title);
 
@@ -82,7 +82,7 @@ function startup() {
     EL('http_settings').style.display = 'none';
     EL('pwa_unsafe').style.display = 'none';
   }
-  if (isPWA() || isLocal()) {
+  if (isPWA() || isLocal() || isApp()) {
     EL('app_block').style.display = 'none';
   }
 

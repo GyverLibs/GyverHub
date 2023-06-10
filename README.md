@@ -1,16 +1,16 @@
-[![latest](https://img.shields.io/github/v/release/GyverLibs/GyverHUB.svg?color=brightgreen)](https://github.com/GyverLibs/GyverHUB/releases/latest/download/GyverHUB.zip)
+[![latest](https://img.shields.io/github/v/release/GyverLibs/GyverHub.svg?color=brightgreen)](https://github.com/GyverLibs/GyverHub/releases/latest/download/GyverHub.zip)
 [![Foo](https://img.shields.io/badge/Website-AlexGyver.ru-blue.svg?style=flat-square)](https://alexgyver.ru/)
 [![Foo](https://img.shields.io/badge/%E2%82%BD$%E2%82%AC%20%D0%9D%D0%B0%20%D0%BF%D0%B8%D0%B2%D0%BE-%D1%81%20%D1%80%D1%8B%D0%B1%D0%BA%D0%BE%D0%B9-orange.svg?style=flat-square)](https://alexgyver.ru/support_alex/)
-[![Foo](https://img.shields.io/badge/README-ENGLISH-blueviolet.svg?style=flat-square)](https://github-com.translate.goog/GyverLibs/GyverHUB?_x_tr_sl=ru&_x_tr_tl=en)  
+[![Foo](https://img.shields.io/badge/README-ENGLISH-blueviolet.svg?style=flat-square)](https://github-com.translate.goog/GyverLibs/GyverHub?_x_tr_sl=ru&_x_tr_tl=en)  
 
 [![Foo](https://img.shields.io/badge/ПОДПИСАТЬСЯ-НА%20ОБНОВЛЕНИЯ-brightgreen.svg?style=social&logo=telegram&color=blue)](https://t.me/GyverLibs)
 
-# GyverHUB
+# GyverHub
 Панель управления для esp8266, esp32 и других Arduino. Конструктор интерфейса, интеграция в умный дом
 
-> <br>**Документация находится в [Wiki репозитория](https://github.com/GyverLibs/GyverHUB/wiki). English docs - [translate](https://github-com.translate.goog/GyverLibs/GyverHUB/wiki?_x_tr_sl=ru&_x_tr_tl=en)**<br><br>
+> <br>**Документация находится в [Wiki репозитория](https://github.com/GyverLibs/GyverHub/wiki). English docs - [translate](https://github-com.translate.goog/GyverLibs/GyverHub/wiki?_x_tr_sl=ru&_x_tr_tl=en)**<br><br>
 
-|⚠️⚠️⚠️<br>**Бета-версия! Проект пока что тестируется, следите за коммитами. Известные проблемы, особенности версии, обсуждение, предложения, баги - всё [вот тут](https://github.com/GyverLibs/GyverHUB/issues/3)**<br>⚠️⚠️⚠️|
+|⚠️⚠️⚠️<br>**Бета-версия! Проект пока что тестируется, следите за коммитами. Известные проблемы, особенности версии, обсуждение, предложения, баги - всё [вот тут](https://github.com/GyverLibs/GyverHub/issues/3)**<br>⚠️⚠️⚠️|
 | --- |
 
 |☕☕☕<br>**Библиотека разработана благодаря народной поддержке [на Boosty](https://boosty.to/alexgyvershow). Также есть [другие способы](https://alexgyver.ru/support_alex/) поддержать автора**<br>☕☕☕|
@@ -18,15 +18,15 @@
 
 ![promo](/docs/promo.jpg)
 
-GyverHUB - это программный комплекс, включающий в себя библиотеку для микроконтроллеров и программу для управления. Программа написана на JavaScript и по сути является сайтом, который доступен:
+GyverHub - это программный комплекс, включающий в себя библиотеку для микроконтроллеров и программу для управления. Программа написана на JavaScript и по сути является сайтом, который доступен:
 - С официального сайта [hub.gyver.ru](http://hub.gyver.ru/)
-- Android приложение: [Google Play](https://play.google.com/store/apps/details?id=ru.alexgyver.GyverHub), [скачать APK](https://github.com/GyverLibs/GyverHUB/raw/main/app/GyverHUB.apk) - [особенности](https://github.com/GyverLibs/GyverHUB/wiki/2.-%D0%9D%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B#android-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
-- Сайт можно [установить](https://github.com/GyverLibs/GyverHUB/wiki/%D0%9D%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B#%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0-%D0%B2%D0%B5%D0%B1-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F) как веб-приложение (PWA) на любое устройство (Android/iOS/Windows...)
-- Локально с компьютера, для этого нужно [скачать сайт](https://github.com/GyverLibs/GyverHUB/raw/main/web/local/GyverHUB.html) (правой кнопкой - *сохранить ссылку как*) и открыть его в браузере
-- [Из памяти ESP8266/32](https://github.com/GyverLibs/GyverHUB/wiki/2.-%D0%9D%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D0%B8%D0%B7-esp)
+- Android приложение: [Google Play](https://play.google.com/store/apps/details?id=ru.alexgyver.GyverHub), [скачать APK](https://github.com/GyverLibs/GyverHub/raw/main/app/GyverHub.apk) - [особенности](https://github.com/GyverLibs/GyverHub/wiki/2.-%D0%9D%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B#android-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
+- Сайт можно [установить](https://github.com/GyverLibs/GyverHub/wiki/%D0%9D%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B#%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0-%D0%B2%D0%B5%D0%B1-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F) как веб-приложение (PWA) на любое устройство (Android/iOS/Windows...)
+- Локально с компьютера, для этого нужно [скачать сайт](https://github.com/GyverLibs/GyverHub/raw/main/web/local/GyverHub.html) (правой кнопкой - *сохранить ссылку как*) и открыть его в браузере
+- [Из памяти ESP8266/32](https://github.com/GyverLibs/GyverHub/wiki/2.-%D0%9D%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D0%B8%D0%B7-esp)
 - Из [Телеграм-бота](https://t.me/GyverHUB_bot)
 
-Микроконтроллер и приложение обмениваются данными по своему протоколу (см. [API](https://github.com/GyverLibs/GyverHUB/wiki#api)) через различные интерфейсы связи: 
+Микроконтроллер и приложение обмениваются данными по своему протоколу (см. [API](https://github.com/GyverLibs/GyverHub/wiki#api)) через различные интерфейсы связи: 
 - MQTT (через Интернет)
 - WebSocket (в локальной сети)
 - Serial (в разработке)
@@ -53,7 +53,7 @@ GyverHUB - это программный комплекс, включающий 
 - Приложение RemoteXY
 - Сервис Blynk
 
-В отличие от них GyverHUB полностью бесплатный, безопасный, не имеет ограничений и не нуждается в локальном сервере
+В отличие от них GyverHub полностью бесплатный, безопасный, не имеет ограничений и не нуждается в локальном сервере
 
 ### Совместимость
 Все Arduino
@@ -61,7 +61,7 @@ GyverHUB - это программный комплекс, включающий 
 
 ## Установка
 - Зависимости: [Stamp](https://github.com/GyverLibs/Stamp), [PubSubClient](https://github.com/knolleary/pubsubclient), [arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets), [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer), [ESPAsyncTCP](https://github.com/me-no-dev/ESPAsyncTCP), [AsyncTCP](https://github.com/me-no-dev/AsyncTCP), [async-mqtt-client](https://github.com/marvinroger/async-mqtt-client)
-- Подробнее читай [в документации](https://github.com/GyverLibs/GyverHUB/wiki/%D0%9D%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B)
+- Подробнее читай [в документации](https://github.com/GyverLibs/GyverHub/wiki/%D0%9D%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B)
 
 ### Обновление
 - Рекомендую всегда обновлять библиотеку: в новых версиях исправляются ошибки и баги, а также проводится оптимизация и добавляются новые фичи

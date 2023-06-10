@@ -1,19 +1,26 @@
 let Joystick = (function (cont, color, auto, exp, callback) {
     // based on https://github.com/bobboteck/JoyStick
-    cont = EL('joy#' + cont);
+    /*cont = EL('joy#' + cont);
     if (!cont) return;
     cont.style.touchAction = "none";
+    let cv = document.createElement("canvas");
+    let size = cont.clientWidth;*/
+
+    //
+    let cv = document.getElementById('#' + cont);
+    if (!cv || !cv.parentNode.clientWidth) return;
+    let size = cv.parentNode.clientWidth;
+    //
 
     let ratio = window.devicePixelRatio;
-    let cv = document.createElement("canvas");
-    let size = cont.clientWidth;
     cv.style.width = size + 'px';
     cv.style.height = size + 'px';
     size *= ratio;
     cv.width = size;
     cv.height = size;
     cv.style.cursor = 'pointer';
-    cont.appendChild(cv);
+    
+    //cont.appendChild(cv);
 
     let cx = cv.getContext("2d");
     let r = size * 0.23;
