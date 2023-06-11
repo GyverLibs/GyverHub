@@ -637,7 +637,7 @@ class HubBuilder {
     }
 
     // ======================= CONFIRM ========================
-    bool Confirm(VSPTR name, bool* value = nullptr, FSTR label = nullptr) {
+    bool Confirm(FSTR name, bool* value = nullptr, FSTR label = nullptr) {
         return _confirm(true, name, value, label);
     }
     bool Confirm(CSREF name, bool* value = nullptr, CSREF label = "") {
@@ -657,7 +657,7 @@ class HubBuilder {
     }
 
     // ========================= PROMPT ========================
-    bool Prompt(VSPTR name, void* value = nullptr, GHdata_t type = GH_NULL, FSTR label = nullptr) {
+    bool Prompt(FSTR name, void* value = nullptr, GHdata_t type = GH_NULL, FSTR label = nullptr) {
         return _prompt(true, name, value, type, label);
     }
     bool Prompt(CSREF name, void* value = nullptr, GHdata_t type = GH_NULL, CSREF label = "") {
