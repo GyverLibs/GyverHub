@@ -16,9 +16,18 @@
 |☕☕☕<br>**Библиотека разработана благодаря народной поддержке [на Boosty](https://boosty.to/alexgyvershow). Также есть [другие способы](https://alexgyver.ru/support_alex/) поддержать автора**<br>☕☕☕|
 | --- |
 
+## Совместимость
+Все Arduino
+- **НЕ РАБОТАЕТ НА ESP32 SDK 2.0.8**
+
+## Установка
+- Зависимости: [Stamp](https://github.com/GyverLibs/Stamp), [PubSubClient](https://github.com/knolleary/pubsubclient), [arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets), [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer), [ESPAsyncTCP](https://github.com/me-no-dev/ESPAsyncTCP), [AsyncTCP](https://github.com/me-no-dev/AsyncTCP), [async-mqtt-client](https://github.com/marvinroger/async-mqtt-client)
+- Подробнее читай [в документации](https://github.com/GyverLibs/GyverHub/wiki/2.-%D0%9D%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B)
+
+## О проекте
 ![promo](/docs/promo.jpg)
 
-GyverHub - это программный комплекс, включающий в себя библиотеку для микроконтроллеров и программу для управления. Программа написана на JavaScript и по сути является сайтом, который доступен:
+GyverHub - это платформа, включающая в себя библиотеку для микроконтроллеров и программу для управления. Программа написана на JavaScript и по сути является сайтом, который доступен:
 - С официального сайта [hub.gyver.ru](http://hub.gyver.ru/)
 - Android приложение: [Google Play](https://play.google.com/store/apps/details?id=ru.alexgyver.GyverHub), [скачать APK](https://github.com/GyverLibs/GyverHub/raw/main/app/GyverHub.apk) - [особенности](https://github.com/GyverLibs/GyverHub/wiki/2.-%D0%9D%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B#android-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
 - Сайт можно [установить](https://github.com/GyverLibs/GyverHub/wiki/%D0%9D%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B#%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0-%D0%B2%D0%B5%D0%B1-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F) как веб-приложение (PWA) на любое устройство (Android/iOS/Windows...)
@@ -55,15 +64,7 @@ GyverHub - это программный комплекс, включающий 
 
 В отличие от них GyverHub полностью бесплатный, безопасный, не имеет ограничений и не нуждается в локальном сервере
 
-### Совместимость
-Все Arduino
-- **НЕ РАБОТАЕТ НА ESP32 SDK 2.0.8**
-
-## Установка
-- Зависимости: [Stamp](https://github.com/GyverLibs/Stamp), [PubSubClient](https://github.com/knolleary/pubsubclient), [arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets), [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer), [ESPAsyncTCP](https://github.com/me-no-dev/ESPAsyncTCP), [AsyncTCP](https://github.com/me-no-dev/AsyncTCP), [async-mqtt-client](https://github.com/marvinroger/async-mqtt-client)
-- Подробнее читай [в документации](https://github.com/GyverLibs/GyverHub/wiki/%D0%9D%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B)
-
-### Обновление
+## Обновление
 - Рекомендую всегда обновлять библиотеку: в новых версиях исправляются ошибки и баги, а также проводится оптимизация и добавляются новые фичи
 - Через менеджер библиотек IDE: найти библиотеку как при установке и нажать "Обновить"
 - Вручную: **удалить папку со старой версией**, а затем положить на её место новую. "Замену" делать нельзя: иногда в новых версиях удаляются файлы, которые останутся при замене и могут привести к ошибкам!
