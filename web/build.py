@@ -1,7 +1,6 @@
 # GyverHub Web Builder
 
-version = '0.33b'
-fa_url = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-solid-900.ttf'
+version = '0.34b'
 
 js_files = [
     'src/include/main.js',
@@ -25,7 +24,8 @@ css_files = [
 
 sw_cache = '''
   '/',
-  '/fa-solid-900.ttf',
+  '/fa-solid-900.woff2',
+  '/PTSans-Narrow.woff2',
   '/favicon.svg',
   '/index.html',
   '/script.js',
@@ -96,7 +96,8 @@ metrika = '''
   </noscript>
 '''
 
-shutil.copyfile('src/include/fa-solid-900.ttf', 'host/fa-solid-900.ttf')
+shutil.copyfile('src/include/fa-solid-900.woff2', 'host/fa-solid-900.woff2')
+shutil.copyfile('src/include/PTSans-Narrow.woff2', 'host/PTSans-Narrow.woff2')
 
 for file in copy_web:
     shutil.copyfile('src/' + file, 'host/' + file)
@@ -149,9 +150,17 @@ with open('host/style.css', 'w') as f:
 #################################################################
 ###                           LOCAL                           ###
 #################################################################
-fa_b64 = 'data:font/truetype;charset=utf-8;base64,'
-with open("src/include/fa-solid-900.ttf", "rb") as f:
+fa_b64 = 'data:font/woff2;charset=utf-8;base64,'
+with open("src/include/fa-solid-900.woff2", "rb") as f:
     fa_b64 += (base64.b64encode(f.read())).decode('ascii')
+
+pt_b64 = 'data:font/woff2;charset=utf-8;base64,'
+with open("src/include/PTSans-Narrow.woff2", "rb") as f:
+    pt_b64 += (base64.b64encode(f.read())).decode('ascii')
+
+css_min_l = css_min
+css_min_l = css_min_l.replace('url(fa-solid-900.woff2)', 'url(' + fa_b64 + ')')
+css_min_l = css_min_l.replace('url(PTSans-Narrow.woff2)', 'url(' + pt_b64 + ')')
 
 icon_b64 = "<link rel='icon' href='data:image/svg+xml;base64,"
 with open("src/favicon.svg", "rb") as f:
@@ -159,7 +168,7 @@ with open("src/favicon.svg", "rb") as f:
 
 shutil.copyfile('src/index.html', 'local/GyverHub.html')
 
-inc_local = '<style>\n' + css_min.replace('url(fa-solid-900.ttf)', 'url(' + fa_b64 + ')') + '\n</style>\n'
+inc_local = '<style>\n' + css_min_l + '\n</style>\n'
 inc_local += '<script>\n' + js_min + '\n</script>\n'
 
 with open('local/GyverHub.html', "r+") as f:
@@ -223,12 +232,16 @@ with open('esp/script.js', 'rb') as f_in, gzip.open('esp/script.js.gz', 'wb') as
 os.remove("esp/script.js")
 
 # CSS
+fa_min_b64 = 'data:font/woff2;charset=utf-8;base64,'
+with open("src/include/fa-solid-900.min.woff2", "rb") as f:
+    fa_min_b64 += (base64.b64encode(f.read())).decode('ascii')
+
 css_min = ''
 for file in css_files:
     with open(file, 'r') as f:
         read = f.read()
         read = re.sub(r'\/\*NON-ESP\*\/([\s\S]*?)\/\*\/NON-ESP\*\/', '', read)
-        read = read.replace('url(fa-solid-900.ttf)', 'url(' + fa_url + ')')
+        read = read.replace('url(fa-solid-900.woff2)', 'url(' + fa_min_b64 + ')')
         if ('.min.' not in file): read = cssmin(read)
         css_min += read + '\n'
 
@@ -240,6 +253,7 @@ os.remove("esp/style.css")
 shutil.copyfile('src/index.html', 'esp/index.html')
 with open('esp/index.html', "r+") as f:
     data = f.read()
+    data = re.sub(r'<!--ICON-->([\s\S]*?)<!--\/ICON-->', '', data)
     data = re.sub(r'<!--INC-->([\s\S]*?)<!--\/INC-->', inc_min, data)
     data = re.sub(r'<!--PWA-->([\s\S]*?)<!--\/PWA-->', '', data)
     data = re.sub(r'<!--METRIKA-->', '', data)
@@ -276,11 +290,3 @@ def file_to_h(src, dest, name):
 file_to_h('esp/index.html.gz', 'esp_inc/index.h', 'hub_index_h')
 file_to_h('esp/style.css.gz', 'esp_inc/style.h', 'hub_style_h')
 file_to_h('esp/script.js.gz', 'esp_inc/script.h', 'hub_script_h')
-
-# OTHER
-'''
-#with open('local/fa-solid-900.ttf', 'rb') as f_in, gzip.open('esp/fa-solid-900.ttf.gz', 'wb') as f_out: f_out.writelines(f_in)
-#with open('local/test.html', 'rb') as f_in, gzip.open('esp/test.html.gz', 'wb') as f_out: f_out.writelines(f_in)
-#with open('local/favicon.svg', 'rb') as f_in, gzip.open('esp/favicon.svg.gz', 'wb') as f_out: f_out.writelines(f_in)
-with open('local/index.html', 'rb') as f_in, gzip.open('esp/index.html.gz', 'wb') as f_out: f_out.writelines(f_in)
-'''

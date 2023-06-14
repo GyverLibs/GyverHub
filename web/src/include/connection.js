@@ -166,13 +166,13 @@ function mq_start() {
     mq_pref_list = [cfg.prefix];
     mq_client.subscribe(cfg.prefix + '/hub/' + cfg.hub_id + '/#');
 
-    Object.keys(devices).forEach(id => {
+    for (let id in devices) {
       if (!mq_pref_list.includes(devices[id].prefix)) {
         mq_client.subscribe(devices[id].prefix + '/hub/' + cfg.hub_id + '/#');
         mq_pref_list.push(devices[id].prefix);
       }
       mq_client.subscribe(devices[id].prefix + '/hub/' + id + '/get/#');
-    });
+    }
 
     if (mq_discover_flag) {
       mq_discover_flag = false;
@@ -247,9 +247,9 @@ function mq_state() {
 }
 function mq_discover() {
   if (!mq_state()) mq_discover_flag = true;
-  else Object.keys(devices).forEach(id => {
+  else for (let id in devices) {
     mq_send(devices[id].prefix + '/' + id, cfg.hub_id);
-  });
+  }
   log('MQTT discover');
 }
 function mq_discover_all() {
@@ -324,11 +324,11 @@ function ws_send(id, text) {
   if (ws_state(id)) devices_t[id].ws.send(text.toString() + '\0');   // no '\0'
 }
 function ws_discover() {
-  Object.keys(devices).forEach(id => {
-    if (devices[id].ip == 'unset') return;
+  for (let id in devices) {
+    if (devices[id].ip == 'unset') continue;
     ws_discover_ip(devices[id].ip, id);
     log('WS discover');
-  });
+  }
 }
 function ws_discover_ip(ip, id = 'broadcast') {
   let ws = new WebSocket(`ws://${ip}:${ws_port}/`, ['hub']);
@@ -416,10 +416,10 @@ function http_send(ip, uri, id = 'broadcast') {
   }
 }
 function http_discover() {
-  Object.keys(devices).forEach(id => {
-    if (devices[id].ip == 'unset') return;
+  for (let id in devices) {
+    if (devices[id].ip == 'unset') continue;
     http_send(devices[id].ip, devices[id].prefix + '/' + id, id);
-  });
+  };
   log('HTTP discover');
 }
 function http_discover_ip(ip) {

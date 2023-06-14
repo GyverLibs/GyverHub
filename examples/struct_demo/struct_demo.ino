@@ -6,6 +6,7 @@
 
 #include <Arduino.h>
 #include <GyverHub.h>
+#include <Stamp.h>
 GyverHub hub("MyDevices", "ESP8266", "");
 
 struct Data {

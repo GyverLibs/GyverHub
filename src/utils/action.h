@@ -20,22 +20,22 @@ struct GHaction {
     const char* value = nullptr;
 
     // получить значение как int (32 бит)
-    int32_t valueInt() {
+    int32_t valueInt() const {
         return atol(value);
     }
 
     // получить значение как float
-    float valueFloat() {
+    float valueFloat() const {
         return atof(value);
     }
 
     // получить значение как String
-    String valueString() {
+    String valueString() const {
         return value;
     }
 
     // получить имя как String
-    String nameString() {
+    String nameString() const {
         return name;
     }
 };

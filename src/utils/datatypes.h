@@ -1,6 +1,5 @@
 #pragma once
 #include <Arduino.h>
-#include <Stamp.h>
 
 #include "../config.hpp"
 #include "../macro.hpp"
@@ -27,7 +26,6 @@ enum GHdata_t {
 
     GH_COLOR,
     GH_FLAGS,
-    GH_STAMP,
     GH_POS,
 };
 

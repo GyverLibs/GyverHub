@@ -25,6 +25,9 @@ struct GHtimer {
     bool ready() {
         return (tmr && millis() - tmr >= prd) ? (start(), true) : false;
     }
+    operator bool() {
+        return ready();
+    }
 
     uint32_t tmr = 0, prd = 0;
 };

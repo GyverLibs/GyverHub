@@ -1,6 +1,5 @@
 #pragma once
 #include <Arduino.h>
-#include <Stamp.h>
 
 #include "canvas.h"
 #include "config.hpp"
@@ -355,41 +354,41 @@ class HubBuilder {
     }
 
     // ========================== DATETIME ==========================
-    bool Date(FSTR name, Stamp* value, FSTR label = nullptr, uint32_t color = GH_DEFAULT) {
+    bool Date(FSTR name, void* value, FSTR label = nullptr, uint32_t color = GH_DEFAULT) {
         return _date(true, F("date"), name, value, label, color);
     }
-    bool Date(CSREF name, Stamp* value, CSREF label = "", uint32_t color = GH_DEFAULT) {
+    bool Date(CSREF name, void* value, CSREF label = "", uint32_t color = GH_DEFAULT) {
         return _date(false, F("date"), name.c_str(), value, label.c_str(), color);
     }
 
-    bool Time(FSTR name, Stamp* value, FSTR label = nullptr, uint32_t color = GH_DEFAULT) {
+    bool Time(FSTR name, void* value, FSTR label = nullptr, uint32_t color = GH_DEFAULT) {
         return _date(true, F("time"), name, value, label, color);
     }
-    bool Time(CSREF name, Stamp* value, CSREF label = "", uint32_t color = GH_DEFAULT) {
+    bool Time(CSREF name, void* value, CSREF label = "", uint32_t color = GH_DEFAULT) {
         return _date(false, F("time"), name.c_str(), value, label.c_str(), color);
     }
 
-    bool DateTime(FSTR name, Stamp* value, FSTR label = nullptr, uint32_t color = GH_DEFAULT) {
+    bool DateTime(FSTR name, void* value, FSTR label = nullptr, uint32_t color = GH_DEFAULT) {
         return _date(true, F("datetime"), name, value, label, color);
     }
-    bool DateTime(CSREF name, Stamp* value, CSREF label = "", uint32_t color = GH_DEFAULT) {
+    bool DateTime(CSREF name, void* value, CSREF label = "", uint32_t color = GH_DEFAULT) {
         return _date(false, F("datetime"), name.c_str(), value, label.c_str(), color);
     }
 
-    bool _date(bool fstr, FSTR tag, VSPTR name, Stamp* value, VSPTR label, uint32_t color) {
+    bool _date(bool fstr, FSTR tag, VSPTR name, void* value, VSPTR label, uint32_t color) {
         if (_isUI()) {
             _begin(tag);
             _name(name, fstr);
             _label(label, fstr);
             _value();
-            GHtypeToStr(sptr, value, GH_STAMP);
+            GHtypeToStr(sptr, value, GH_UINT32);
             _color(color);
             _tabw();
             _end();
         } else if (_isRead()) {
-            if (_checkName(name, fstr)) GHtypeToStr(sptr, value, GH_STAMP);
+            if (_checkName(name, fstr)) GHtypeToStr(sptr, value, GH_UINT32);
         } else if (bptr->type == GH_BUILD_ACTION) {
-            return bptr->parseSet(name, value, GH_STAMP, fstr);
+            return bptr->parseSet(name, value, GH_UINT32, fstr);
         }
         return 0;
     }
@@ -507,17 +506,25 @@ class HubBuilder {
         }
     }
 
-    // ========================== TABS ==========================
-    bool Tabs(FSTR name, uint8_t* value, FSTR text, FSTR label = nullptr) {
-        return _tabs(true, name, value, text, label);
+    // ========================== MENU ==========================
+    bool Menu(FSTR text) {
+        return _tabs(true, F("menu"), F("_menu"), &menu, text, nullptr);
     }
-    bool Tabs(CSREF name, uint8_t* value, CSREF text, CSREF label = "") {
-        return _tabs(false, name.c_str(), value, text.c_str(), label.c_str());
+    bool Menu(CSREF text) {
+        return _tabs(false, F("menu"), "_menu", &menu, text.c_str(), nullptr);
     }
 
-    bool _tabs(bool fstr, VSPTR name, uint8_t* value, VSPTR text, VSPTR label) {
+    // ========================== TABS ==========================
+    bool Tabs(FSTR name, uint8_t* value, FSTR text, FSTR label = nullptr) {
+        return _tabs(true, F("tabs"), name, value, text, label);
+    }
+    bool Tabs(CSREF name, uint8_t* value, CSREF text, CSREF label = "") {
+        return _tabs(false, F("tabs"), name.c_str(), value, text.c_str(), label.c_str());
+    }
+
+    bool _tabs(bool fstr, FSTR tag, VSPTR name, uint8_t* value, VSPTR text, VSPTR label) {
         if (_isUI()) {
-            _begin(F("tabs"));
+            _begin(tag);
             _name(name, fstr);
             _value();
             *sptr += *value;
@@ -680,8 +687,9 @@ class HubBuilder {
         return 0;
     }
 
-    // ======================== PROTECTED ========================
+    uint8_t menu = 0;
 
+    // ======================== PROTECTED ========================
    protected:
     String* sptr = nullptr;
     GHbuild* bptr = nullptr;
@@ -799,6 +807,7 @@ class HubBuilder {
 
     void _step(float val) {
         _add(F(",'step':"));
-        *sptr += val;
+        if (val < 0.01) *sptr += String(val, 4);
+        else *sptr += val;
     }
 };

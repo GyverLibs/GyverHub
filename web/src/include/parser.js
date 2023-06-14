@@ -123,7 +123,9 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
         if (upd) {
           log('Update device #' + id);
           updateDevice(devices[id], device);
+          /*NON-ESP*/
           EL(`icon#${id}`).innerHTML = device.icon ? device.icon : '';
+          /*/NON-ESP*/
           EL(`name#${id}`).innerHTML = device.name ? device.name : 'Unknown';
         }
       } else {
@@ -158,9 +160,7 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
     case 'update':
       if (id != focused) return;
       if (!(id in devices)) return;
-      Object.keys(device.updates).forEach(name => {
-        applyUpdate(name, device.updates[name]);
-      });
+      for (let name in device.updates) applyUpdate(name, device.updates[name]);
       break;
 
     case 'ui':
@@ -298,6 +298,7 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
   }
 }
 function showControls(controls) {
+  EL('controls').style.visibility = 'hidden';
   EL('controls').innerHTML = '';
   if (!controls) return;
   gauges = {};
@@ -311,7 +312,7 @@ function showControls(controls) {
   btn_row_count = 0;
   wid_row_id = null;
   btn_row_id = null;
-
+  
   for (ctrl of controls) {
     if (devices[focused].show_names && ctrl.name) ctrl.label = ctrl.name;
     ctrl.wlabel = ctrl.label ? ctrl.label : ctrl.type;
@@ -355,6 +356,7 @@ function showControls(controls) {
       case 'js': eval(ctrl.value); break;
       case 'confirm': confirms[ctrl.name] = {label: ctrl.label}; break;
       case 'prompt': prompts[ctrl.name] = {label: ctrl.label, value: ctrl.value}; break;
+      case 'menu': addMenu(ctrl);
     }
   }
   if (devices[focused].show_names) {
@@ -373,17 +375,20 @@ function showControls(controls) {
     showGauges();
     showPickers();
     showJoys();
+    EL('controls').style.visibility = 'visible';
   }, 10);
+
+  if (!gauges.length && !canvases.length && !pickers.length && !joys.length) EL('controls').style.visibility = 'visible';
 }
 function showInfo(device) {
   EL('info_lib_v').innerHTML = device.info[0];
   EL('info_firm_v').innerHTML = device.info[1];
   if (device.info.length == 2) return;
   let count = 2;
-  Object.keys(info_labels_esp).forEach(id => {
+  for (let id in info_labels_esp) {
     EL(id).innerHTML = device.info[count];
     count++;
-  });
+  }
   let ver = EL('info_firm_v').innerHTML;
   if (projects && ver.split('@')[0] in projects) {
     EL('info_firm_v').onclick = function () { checkUpdates(focused, true); };

@@ -1,5 +1,5 @@
 const app_title = 'GyverHub';
-const version_notes = 'Some fixes';
+const version_notes = 'Added Menu + some improvements';
 const ota_url = 'hub.gyver.ru/ota/projects.json';
 const non_esp = '__ESP__';
 const non_app = '__APP__';

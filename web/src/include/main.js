@@ -10,9 +10,8 @@ function render_main(v) {
       <div class="head_btns">
         <span id='head_err' style="display:none"><strike>MQTT</strike></span>
         <span class="icon i_hover" id='icon_refresh' onclick="refresh_h()"></span>
-        <span class="icon i_hover" id='icon_fsbr' style="display:none" onclick="fsbr_h()"></span>
-        <span class="icon i_hover" id='icon_info' style="display:none" onclick="info_h()"></span>
         <span class="icon i_hover" id='icon_cfg' style="display:none" onclick="config_h()"></span>
+        <span class="icon i_hover" id='icon_menu' style="display:none" onclick="menu_h()"></span>
       </div>
     </div>
   </div>
@@ -32,17 +31,28 @@ function render_main(v) {
   </div>
   `;
 
+  /*NON-ESP*/
   footer_cont.innerHTML = `
   <div class="footer_inner">
     <a href="https://alexgyver.ru/support_alex/" target="_blank"><span class="icon info_icon info_icon_u"></span>Support</a>
-    <!--NON-ESP-->
     <a style="cursor:pointer" onclick="test_h()"><span class="icon info_icon info_icon_u"></span>Test</a>
-    <!--/NON-ESP-->
     <a href="https://github.com/GyverLibs/GyverHub/wiki" target="_blank"><span class="icon info_icon info_icon_u"></span>Docs</a>
   </div>
   `;
+  /*/NON-ESP*/
 
   main_cont.innerHTML = `
+  <div id="menu_overlay" onclick="menu_show(0)"></div>
+  <div id="menu" class="main_col menu">
+    <div class="menu_inn">
+      <div id="menu_user"></div>
+      <div>
+        <div id="menu_info" class="menu_item" onclick="info_h()">Info</div>
+        <div id="menu_fsbr" class="menu_item" onclick="fsbr_h()">File & OTA</div>
+      </div>
+    </div>
+  </div>
+
   <div class="main_inn">
     <div id="devices" class="main_col"></div>
     <div id="controls" class="main_col" style="max-width:unset"></div>
@@ -84,7 +94,7 @@ function render_main(v) {
 
       <div class="cfg_col" id="info_esp">
         <div class="cfg_row cfg_head">
-          <label><span class="icon cfg_icon"></span>ESP info</label>
+          <label><span class="icon cfg_icon"></span>ESP info</label>
         </div>
       </div>
     </div>
@@ -128,7 +138,7 @@ function render_main(v) {
 
       <div class="cfg_col">
         <div class="cfg_row cfg_head">
-          <label><span class="icon cfg_icon"></span>OTA URL</label>
+          <label><span class="icon cfg_icon"></span>OTA URL</label>
         </div>
         <div class="upload_row">
           <input class="cfg_inp" type="text" id="ota_url_f">

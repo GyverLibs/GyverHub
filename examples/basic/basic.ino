@@ -60,7 +60,7 @@ void build() {
     // Слайдер -активный компонент, вернёт true при изменении значения
     if (hub.Slider(F("sld1"))) {
         Serial.print("Slider1 value: ");
-        Serial.println(hub.actionValue());
+        Serial.println(hub.action().valueInt());  // получим как целое число
     }
 
     hub.WidgetSize(50);

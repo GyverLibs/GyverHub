@@ -49,9 +49,6 @@ void GHtypeFromStr(const char* str, void* val, GHdata_t type) {
         case GH_FLAGS:
             ((GHflags*)val)->flags = atoi(str);
             break;
-        case GH_STAMP:
-            ((Stamp*)val)->unix = atol(str);
-            break;
         case GH_POS: {
             uint32_t xy = atol(str);
             ((GHpos*)val)->_changed = true;
@@ -115,9 +112,6 @@ void GHtypeToStr(String* s, void* val, GHdata_t type) {
             break;
         case GH_FLAGS:
             *s += ((GHflags*)val)->flags;
-            break;
-        case GH_STAMP:
-            *s += ((Stamp*)val)->toSeconds();
             break;
         case GH_POS:
             break;

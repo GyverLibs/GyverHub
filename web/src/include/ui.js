@@ -5,6 +5,7 @@ let started = false;
 let show_version = false;
 let cfg_changed = false;
 let projects = null;
+let menu_f = false;
 
 let cfg = {
   prefix: 'MyDevices',
@@ -196,41 +197,32 @@ function show_keypad(v) {
 // ============== RENDER ==============
 function render_devices() {
   EL('devices').innerHTML = '';
-  Object.keys(devices).forEach(id => {
-    addDevice(id);
-
-    // compatibility
-    if (devices[id].prefix == undefined) {
-      devices[id].prefix = cfg.prefix;
-      save_devices();
-    }
-
-  });
+  for (let id in devices) addDevice(id);
 }
 function render_info() {
-  Object.keys(info_labels_topics).forEach(id => {
+  for (let id in info_labels_topics) {
     EL('info_topics').innerHTML += `
     <div class="cfg_row info">
       <label>${info_labels_topics[id]}</label>
       <label id="${id}" class="lbl_info info_small">-</label>
     </div>`;
-  });
+  }
 
-  Object.keys(info_labels_version).forEach(id => {
+  for (let id in info_labels_version) {
     EL('info_version').innerHTML += `
     <div class="cfg_row info">
       <label>${info_labels_version[id]}</label>
       <label id="${id}" class="lbl_info">-</label>
     </div>`;
-  });
+  }
 
-  Object.keys(info_labels_esp).forEach(id => {
+  for (let id in info_labels_esp) {
     EL('info_esp').innerHTML += `
     <div class="cfg_row info">
       <label>${info_labels_esp[id]}</label>
       <label id="${id}" class="lbl_info">-</label>
     </div>`;
-  });
+  }
   EL('info_esp').innerHTML += '<div style="padding:10px"><button class="c_btn btn_mini" onclick="reboot_h()"><span class="icon info_icon"></span>Reboot</button></div>';
   EL('info_l_ip').onclick = function () { window.open('http://' + devices[focused].ip, '_blank').focus(); };
   EL('info_l_ip').classList.add('info_link');
@@ -248,20 +240,20 @@ function update_info() {
   EL('info_status').innerHTML = devices[id].prefix + '/hub/' + id + '/status';
 }
 function render_selects() {
-  Object.keys(colors).forEach(color => {
+  for (let color in colors) {
     EL('maincolor').innerHTML += `
     <option value="${color}">${color}</option>`;
-  });
+  }
 
   for (let font of fonts) {
     EL('font').innerHTML += `
     <option value="${font}">${font}</option>`;
   }
 
-  Object.keys(themes).forEach(theme => {
+  for (let theme in themes) {
     EL('theme').innerHTML += `
     <option value="${theme}">${theme}</option>`;
-  });
+  }
 
   for (let i = 0; i < 33; i++) {
     let imask;
@@ -283,16 +275,20 @@ function refresh_h() {
   else discover();
 }
 function back_h() {
+  if (menu_f) {
+    menu_show(false);
+    return;
+  }
   switch (screen) {
     case 'device':
       release_all();
       close_device();
       break;
     case 'info':
-      info_h();
+      show_screen('device');
       break;
     case 'fsbr':
-      fsbr_h();
+      show_screen('device');
       break;
     case 'config':
       config_h();
@@ -315,24 +311,31 @@ function config_h() {
     show_screen('config');
   }
 }
+function menu_show(state) {
+  menu_f = state;
+  let cl = EL('menu').classList;
+  if (menu_f) cl.add('menu_show');
+  else cl.remove('menu_show');
+  EL('icon_menu').innerHTML = menu_f ? '' : '';
+  EL('menu_overlay').style.display = menu_f ? 'block' : 'none';
+}
+function menu_h() {
+  menu_show(!menu_f);
+}
 function info_h() {
-  if (screen == 'device') {
-    post('info');
-    show_screen('info');
-  } else {
-    post('focus');
-    show_screen('device');
-  }
+  menu_deact();
+  menu_show(0);
+  post('info');
+  show_screen('info');
+  EL('menu_info').classList.add('menu_act');
 }
 function fsbr_h() {
-  if (screen == 'device') {
-    post('fsbr');
-    EL('fsbr_inner').innerHTML = '<div class="fsbr_wait"><span style="font-size:50px;color:var(--prim)" class="icon spinning"></span></div>';
-    show_screen('fsbr');
-  } else {
-    post('focus');
-    show_screen('device');
-  }
+  menu_deact();
+  menu_show(0);
+  post('fsbr');
+  EL('fsbr_inner').innerHTML = '<div class="fsbr_wait"><span style="font-size:50px;color:var(--prim)" class="icon spinning"></span></div>';
+  show_screen('fsbr');
+  EL('menu_fsbr').classList.add('menu_act');
 }
 function device_h(id) {
   if (discovering) return;
@@ -369,6 +372,7 @@ function open_device(id) {
   }
   log('Open device #' + id + ' via ' + ConnNames[devices_t[id].conn]);
 
+  EL('menu_user').innerHTML = '';
   showControls(devices_t[id].controls);
   show_screen('device');
   reset_ping();
@@ -417,9 +421,8 @@ function show_screen(nscreen) {
   let controls_s = EL('controls').style;
   let info_s = EL('info').style;
   let fsbr_s = EL('fsbr').style;
-  let icon_info_s = EL('icon_info').style;
   let icon_cfg_s = EL('icon_cfg').style;
-  let icon_fsbr_s = EL('icon_fsbr').style;
+  let icon_menu_s = EL('icon_menu').style;
   let icon_refresh_s = EL('icon_refresh').style;
   let back_s = EL('back').style;
   let version_s = EL('version').style;
@@ -431,9 +434,8 @@ function show_screen(nscreen) {
   devices_s.display = 'none';
   controls_s.display = 'none';
   info_s.display = 'none';
-  icon_info_s.display = 'none';
+  icon_menu_s.display = 'none';
   icon_cfg_s.display = 'none';
-  icon_fsbr_s.display = 'none';
   fsbr_s.display = 'none';
   back_s.display = 'none';
   icon_refresh_s.display = 'none';
@@ -442,7 +444,6 @@ function show_screen(nscreen) {
   EL('title').innerHTML = app_title;
 
   if (screen == 'main') {
-    //devices_s.display = 'block';
     version_s.display = 'unset';
     devices_s.display = 'grid';
     icon_cfg_s.display = 'inline-block';
@@ -459,10 +460,7 @@ function show_screen(nscreen) {
 
   } else if (screen == 'device') {
     controls_s.display = 'block';
-    icon_info_s.display = 'inline-block';
-    if (devices[focused].esp) {
-      icon_fsbr_s.display = 'inline-block';
-    }
+    icon_menu_s.display = 'inline-block';
     back_s.display = 'inline-block';
     icon_refresh_s.display = 'inline-block';
     EL('title').innerHTML = devices[focused].name;
@@ -475,16 +473,14 @@ function show_screen(nscreen) {
 
   } else if (screen == 'info') {
     info_s.display = 'block';
-    icon_info_s.display = 'inline-block';
-    icon_fsbr_s.display = 'inline-block';
+    icon_menu_s.display = 'inline-block';
     back_s.display = 'inline-block';
     EL('title').innerHTML = devices[focused].name + '/info';
     update_info();
 
   } else if (screen == 'fsbr') {
     fsbr_s.display = 'block';
-    icon_info_s.display = 'inline-block';
-    icon_fsbr_s.display = 'inline-block';
+    icon_menu_s.display = 'inline-block';
     back_s.display = 'inline-block';
     EL('title').innerHTML = devices[focused].name + '/fs';
 
@@ -541,12 +537,12 @@ function sendDiscover() {
 function discover() {
   if (isESP()) {
     let has = false;
-    Object.keys(devices).forEach(id => {
+    for (let id in devices) {
       if (window.location.href.includes(devices[id].ip)) has = true;
-    });
-    if (!has) ws_discover_ip(window_ip());
+    }
+    if (!has && checkIP(window_ip())) ws_discover_ip(window_ip());
   }
-  Object.keys(devices).forEach(id => {
+  for (let id in devices) {
     if (id in devices_t) devices_t[id].conn = Conn.NONE;
     EL(`device#${id}`).className = "device offline";
 
@@ -554,7 +550,7 @@ function discover() {
     EL(`BT#${id}`).style.display = 'none';
     EL(`WS#${id}`).style.display = 'none';
     EL(`MQTT#${id}`).style.display = 'none';
-  });
+  }
   sendDiscover();
 }
 function discover_all() {
@@ -588,12 +584,12 @@ function load_cfg() {
     let cfg_r = JSON.parse(localStorage.getItem('config'));
     let dif = false;
 
-    Object.keys(cfg).forEach(key => {
+    for (let key in cfg) {
       if (cfg_r[key] === undefined) {
         cfg_r[key] = cfg[key];
         dif = true;
       }
-    });
+    }
 
     if (cfg_r['version'] != cfg['version']) {
       cfg_r['version'] = cfg['version'];
@@ -609,13 +605,13 @@ function load_cfg() {
   updateTheme();
 }
 function apply_cfg() {
-  Object.keys(cfg).forEach(key => {
-    if (key == 'version') return;
+  for (let key in cfg) {
+    if (key == 'version') continue;
     let el = EL(key);
-    if (el == undefined) return;
+    if (el == undefined) continue;
     if (el.type == 'checkbox') el.checked = cfg[key];
     else el.value = cfg[key];
-  });
+  }
   updateTheme();
 }
 

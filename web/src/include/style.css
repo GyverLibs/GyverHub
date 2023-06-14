@@ -3,8 +3,19 @@
   font-style: normal;
   font-weight: 900;
   font-display: block;
-  src: url(fa-solid-900.ttf) format("truetype");
+  src: url(fa-solid-900.woff2) format("woff2");
 }
+
+/*NON-ESP*/
+@font-face {
+  font-family: "PTSans Narrow";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url(PTSans-Narrow.woff2) format("woff2");
+}
+
+/*/NON-ESP*/
 
 :root {
   --prim: #37a93c;
@@ -23,6 +34,7 @@
   --ui_width: 450px;
   --shad: #000000a3;
   --font_f: monospace;
+  --menu_h: 100px;
 }
 
 #title_cont,
@@ -76,7 +88,7 @@ body::-webkit-scrollbar-thumb {
   height: 50px;
   background: var(--prim);
   position: fixed;
-  z-index: 2;
+  z-index: 4;
   /*box-shadow: 0px 5px 0px 0px var(--back);*/
   box-shadow: 0px 0px 7px 0px var(--shad);
 }
@@ -88,6 +100,9 @@ body::-webkit-scrollbar-thumb {
   font-weight: bold;
   position: relative;
   top: 30%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .title_row {
@@ -105,8 +120,9 @@ body::-webkit-scrollbar-thumb {
 }
 
 .icon_min {
-  font-size: 25px;
+  font-size: 24px;
 }
+
 .spinning {
   -webkit-animation: spin 0.7s linear infinite;
   -moz-animation: spin 0.7s linear infinite;
@@ -134,6 +150,7 @@ body::-webkit-scrollbar-thumb {
 
 .i_hover {
   cursor: pointer;
+  width: 30px;
 }
 
 .i_hover:hover {
@@ -153,6 +170,7 @@ body::-webkit-scrollbar-thumb {
   display: none;
   font-size: 22px;
   padding: 0px;
+  width: unset !important;
 }
 
 .main {
@@ -475,7 +493,10 @@ body::-webkit-scrollbar-thumb {
 }
 
 .d_icon {
+  width: 10px;
+  /*NON-ESP*/
   width: 40px;
+  /*/NON-ESP*/
   display: flex;
   justify-content: center;
   margin: 0px 3px 0 7px;
@@ -488,7 +509,7 @@ body::-webkit-scrollbar-thumb {
 }
 
 .info_small {
-  font-size: 14px;
+  font-size: 13px;
   user-select: all;
   cursor: pointer;
 }
@@ -740,6 +761,7 @@ input[type=number] {
   font-weight: 500;
   background: none;
   justify-content: center;
+  margin: 0 auto;
 }
 
 .control_scroll {
@@ -1330,6 +1352,9 @@ input:checked+.chbutton_s {
   text-transform: uppercase;
   white-space: nowrap;
   overflow-x: clip;
+  /*NON-ESP*/
+  font-family: PTSans Narrow;
+  /*/NON-ESP*/
 }
 
 .widget_label_name {
@@ -1496,6 +1521,71 @@ input:checked+.chbutton_s {
 }
 
 /* =================================== */
+/* =============== MENU ============== */
+/* =================================== */
+@keyframes opac {
+  from {
+    opacity: 0
+  }
+
+  to {
+    opacity: 1
+  }
+}
+
+#menu_overlay {
+  cursor: pointer;
+  position: fixed;
+  left: 0;
+  top: 0;
+  display: none;
+  width: 100%;
+  height: 100%;
+  background-color: #0008;
+  z-index: 2;
+  animation: opac .1s;
+  backdrop-filter: blur(4px);
+}
+
+.menu {
+  display: block;
+  max-height: 0;
+  transition: max-height .1s ease-out;
+  overflow: hidden;
+  position: fixed;
+  top: 50px;
+  background: var(--tab);
+  z-index: 3;
+  border-radius: 0px 0px 3px 3px;
+}
+
+.menu_show {
+  max-height: var(--menu_h);
+  transition: max-height .1s ease-in;
+}
+
+.menu_inn {
+  padding-top: 10px;
+}
+
+.menu_item {
+  cursor: pointer;
+  height: 35px;
+  line-height: 35px;
+  font-size: 20px;
+  padding-left: 10px;
+  border: 5px solid transparent;
+  border-width: 0 0 0 5px;
+}
+.menu_item:hover {
+  background: var(--back);
+}
+
+.menu_act {
+  border-color: var(--prim);
+}
+
+/* =================================== */
 /* =============== TEST ============== */
 /* =================================== */
 /*NON-ESP*/
@@ -1504,8 +1594,10 @@ input:checked+.chbutton_s {
   height: 100%;
   display: none;
 }
+
 .test_text {
   padding-top: 75px;
   color: var(--font);
 }
+
 /*/NON-ESP*/

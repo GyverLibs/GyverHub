@@ -2,7 +2,6 @@
 #define _GyverHUB_h
 
 #include <Arduino.h>
-#include <Stamp.h>
 
 #include "builder.h"
 #include "canvas.h"
@@ -244,14 +243,9 @@ class GyverHub : public HubBuilder {
         return (bptr && (bptr->type == GH_BUILD_ACTION || bptr->type == GH_BUILD_READ));
     }
 
-    // вернёт имя компонента в текущем действии
-    const char* actionName() {
-        return (bptr) ? bptr->action.name : nullptr;
-    }
-
-    // вернёт значение компонента в текущем действии
-    const char* actionValue() {
-        return (bptr) ? bptr->action.value : nullptr;
+    // получить текущее действие для ручной обработки значений
+    const GHaction& action() const {
+        return bptr->action;
     }
 
     // ========================= NOTIF ==========================

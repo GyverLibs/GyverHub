@@ -34,7 +34,7 @@ function load_devices() {
 function addDevice(id) {
   EL('devices').innerHTML += `<div class="device offline" id="device#${id}" onclick="device_h('${id}')" title="${id} [${devices[id].prefix}]">
   <div class="device_inner">
-    <div class="d_icon"><span class="icon icon_min" id="icon#${id}">${devices[id].icon}</span></div>
+    <div class="d_icon"><!--NON-ESP--><span class="icon icon_min" id="icon#${id}">${devices[id].icon}</span><!--/NON-ESP--></div>
       <div class="d_head">
         <span><span class="d_name" id="name#${id}">${devices[id].name}</span><sup class="conn_dev" id="Serial#${id}">S</sup><sup class="conn_dev" id="BT#${id}">B</sup><sup class="conn_dev" id="WS#${id}">W</sup><sup class="conn_dev" id="MQTT#${id}">M</sup></span>
       </div>
@@ -99,6 +99,31 @@ function addTabs(ctrl) {
   `;
   }
 }
+function addMenu(ctrl) {
+  let inner = '';
+  let labels = ctrl.text.toString().split(',');
+  for (let i in labels) {
+    let sel = (i == ctrl.value) ? 'menu_act' : '';
+    inner += `<div onclick="menu_click(${i})" class="menu_item ${sel}">${labels[i]}</div>`;
+  }
+  document.querySelector(':root').style.setProperty('--menu_h', ((labels.length + 2) * 35 + 10) + 'px');
+  EL('menu_user').innerHTML = inner;
+}
+function menu_click(num) {
+  menu_show(0);
+  menu_deact();
+  if (screen != 'device') show_screen('device');
+  set_h('_menu', num);
+}
+function menu_deact() {
+  let els = document.getElementById('menu_user').children;
+  for (let el in els) {
+    if (els[el].tagName == 'DIV') els[el].classList.remove('menu_act');
+  }
+  EL('menu_info').classList.remove('menu_act');
+  EL('menu_fsbr').classList.remove('menu_act');
+}
+
 function addSpace(ctrl) {
   /*if (wid_row_id) {
     EL(wid_row_id).innerHTML += `
@@ -737,7 +762,7 @@ function openPicker(id) {
   EL('color_cont#' + id).getElementsByTagName('button')[0].click()
 }
 function showPickers() {
-  Object.keys(pickers).forEach(picker => {
+  for (let picker in pickers) {
     let id = '#' + picker;
     Pickr.create({
       el: EL(id),
@@ -758,7 +783,7 @@ function showPickers() {
       set_h(picker, colToInt(col));
       EL('color_btn' + id).style.color = col;
     });
-  });
+  }
 }
 function renderButton(title, className, name, label, size, color = null, is_icon = false) {
   let col = (color != null) ? ((is_icon ? ';color:' : ';background:') + intToCol(color)) : '';
@@ -924,8 +949,13 @@ function drawGauge(g) {
   cx.arc(cv.width / 2, cv.height * 0.97, cv.width / 2 - cx.lineWidth, Math.PI, Math.PI * (1 + g.perc / 100));
   cx.stroke();
 
+  let font = cfg.font;
+  /*NON-ESP*/
+  font = 'PTSans Narrow';
+  /*/NON-ESP*/
+
   cx.fillStyle = col;
-  cx.font = '10px ' + cfg.font;
+  cx.font = '10px ' + font;
   cx.textAlign = "center";
 
   let text = g.text;
@@ -944,16 +974,16 @@ function drawGauge(g) {
   );
 
   cx.fillStyle = theme_cols[v][3];
-  cx.font = cv.width * 0.5 * 10 / w + 'px ' + cfg.font;
+  cx.font = cv.width * 0.45 * 10 / w + 'px ' + font;
   cx.fillText(formatToStep(g.value, g.step) + g.text, cv.width / 2, cv.height * 0.93);
 
-  cx.font = '10px ' + cfg.font;
+  cx.font = '10px ' + font;
   w = Math.max(
     cx.measureText(Math.round(g.min)).width,
     cx.measureText(Math.round(g.max)).width
   );
   cx.fillStyle = theme_cols[v][2];
-  cx.font = cx.lineWidth * 0.6 * 10 / w + 'px ' + cfg.font;
+  cx.font = cx.lineWidth * 0.55 * 10 / w + 'px ' + font;
   cx.fillText(g.min, cx.lineWidth, cv.height * 0.92);
   cx.fillText(g.max, cv.width - cx.lineWidth, cv.height * 0.92);
 }
@@ -1019,7 +1049,7 @@ function scrollDown() {
   logs.forEach((log) => log.scrollTop = log.scrollHeight);
 }
 function showJoys() {
-  Object.keys(joys).forEach(joy => {
+  for (let joy in joys) {
     joys[joy].joy = new Joystick(joy,
       intToCol(joys[joy].color == null ? colors[cfg.maincolor] : joys[joy].color),
       joys[joy].auto,
@@ -1027,5 +1057,5 @@ function showJoys() {
       function (data) {
         input_h(joy, ((data.x + 255) << 16) | (data.y + 255));
       });
-  });
+  }
 }

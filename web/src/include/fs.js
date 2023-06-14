@@ -57,7 +57,7 @@ function reset_ota_tout() {
 // ============ FS BROWSER ============
 function showFsbr(device) {
   fs_arr = [];
-  Object.keys(device.fs).forEach(path => fs_arr.push(path));
+  for (let path in device.fs) fs_arr.push(path);
   fs_arr = sortPaths(fs_arr, '/');
 
   let inner = '';
