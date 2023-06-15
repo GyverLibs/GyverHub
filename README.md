@@ -28,7 +28,7 @@
 ![promo](/docs/promo.jpg)
 
 GyverHub - это платформа, включающая в себя библиотеку для микроконтроллеров и программу для управления. Программа написана на JavaScript и по сути является сайтом, который доступен:
-- С официального сайта [hub.gyver.ru](http://hub.gyver.ru/)
+- С официального сайта [hub.gyver.ru](http://hub.gyver.ru/), а также зеркала на [GitHub Pages](https://gyverlibs.github.io/GyverHub) (только HTTPS)
 - Android приложение: [Google Play](https://play.google.com/store/apps/details?id=ru.alexgyver.GyverHub), [скачать APK](https://github.com/GyverLibs/GyverHub/raw/main/app/GyverHub.apk) - [особенности](https://github.com/GyverLibs/GyverHub/wiki/3.-%D0%9F%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5#android-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
 - Сайт можно [установить](https://github.com/GyverLibs/GyverHub/wiki/3.-%D0%9F%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5#%D0%B2%D0%B5%D0%B1-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5-pwa) как веб-приложение (PWA) на любое устройство (Android/iOS/Windows...)
 - Локально с компьютера, для этого нужно [скачать сайт](https://github.com/GyverLibs/GyverHub/raw/main/web/local/GyverHub.html) (правой кнопкой - *сохранить ссылку как*) и открыть его в браузере
