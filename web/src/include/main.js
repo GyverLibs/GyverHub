@@ -17,7 +17,25 @@ function render_main(v) {
   </div>
   `;
   /*NON-ESP*/
-  test_cont.innerHTML = `<div class="test_text">А тут пока ничего нет. Но будет онлайн-тест интерфейса, в котором можно будет поиграться и проверить свой билд без загрузки прошивки</div>`;
+  test_cont.innerHTML = `
+  <div class="test_text">А тут пока ничего нет. Но будет онлайн-тест интерфейса, в котором можно будет поиграться и проверить свой билд без загрузки прошивки</div>
+  `;
+  
+  projects_cont.innerHTML = `
+  <div class="projects_inn">
+    <div id="projects" class="projects"></div>
+
+    <div class="projects">
+      <div class="proj">
+        <div class="proj_inn">
+          <div class="proj_name">
+            <a href="https://github.com/GyverLibs/GyverHub-projects" target="_blank">+ Add Project</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  `;
   /*/NON-ESP*/
 
   cli_cont.innerHTML = `
@@ -34,8 +52,9 @@ function render_main(v) {
   /*NON-ESP*/
   footer_cont.innerHTML = `
   <div class="footer_inner">
-    <a href="https://alexgyver.ru/support_alex/" target="_blank"><span class="icon info_icon info_icon_u"></span>Support</a>
-    <a style="cursor:pointer" onclick="test_h()"><span class="icon info_icon info_icon_u"></span>Test</a>
+    <!--<a href="https://alexgyver.ru/support_alex/" target="_blank"><span class="icon info_icon info_icon_u"></span>Support</a>-->
+    <a style="cursor:pointer" onclick="projects_h()"><span class="icon info_icon info_icon_u"></span>Projects</a>
+    <a style="cursor:pointer" onclick="test_h()"><span class="icon info_icon info_icon_u"></span>Test</a>
     <a href="https://github.com/GyverLibs/GyverHub/wiki" target="_blank"><span class="icon info_icon info_icon_u"></span>Docs</a>
   </div>
   `;
@@ -178,7 +197,7 @@ function render_main(v) {
               <div class="cfg_inp_row cfg_inp_row_fix">
                 <input class="cfg_inp" type="text" id="client_ip" onchange="update_cfg(this)">
                 <div class="cfg_btn_block">
-                  <button class="icon cfg_btn" onclick="update_ip();update_cfg(EL('client_ip'))"></button>
+                  <button class="icon cfg_btn" onclick="update_ip_h();update_cfg(EL('client_ip'))"></button>
                 </div>
               </div>
             </div>
@@ -202,8 +221,9 @@ function render_main(v) {
               <label>HTTP hook</label>
               <label class="switch"><input type="checkbox" id="use_hook" onchange="update_cfg(this)"><span class="slider"></span></label>
             </div>
-          
+            <!--APP-->
             <span class="notice_block">Disable: <u>${browser()}://flags/#block-insecure-private-network-requests</u></span>
+            <!--/APP-->
           </div>
         </div>
       </div>
@@ -302,6 +322,11 @@ function render_main(v) {
           <div class="cfg_inp_row cfg_inp_row_fix">
             <input class="cfg_inp" type="number" id="ui_width" onchange="update_cfg(this);updateTheme()">
           </div>
+        </div>
+
+        <div class="cfg_row">
+          <label>Check updates</label>
+          <label class="switch"><input type="checkbox" id="check_upd" onchange="update_cfg(this)"><span class="slider"></span></label>
         </div>
 
         <div class="cfg_row">

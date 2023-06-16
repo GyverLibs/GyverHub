@@ -4,8 +4,8 @@ let pin_id = null;
 let started = false;
 let show_version = false;
 let cfg_changed = false;
-let projects = null;
 let menu_f = false;
+let updates = [];
 
 let cfg = {
   prefix: 'MyDevices',
@@ -14,7 +14,7 @@ let cfg = {
   use_mqtt: false, mq_host: 'test.mosquitto.org', mq_port: '8081', mq_login: '', mq_pass: '',
   use_pin: false, hub_pin: '',
   hub_id: new Date().getTime().toString().hashCode().toString(16),
-  ui_width: 450, theme: 'DARK', maincolor: 'GREEN', font: 'monospace', version: app_version
+  ui_width: 450, theme: 'DARK', maincolor: 'GREEN', font: 'monospace', version: app_version, check_upd: true
 };
 
 document.addEventListener('keydown', function (e) {
@@ -73,6 +73,7 @@ function startup() {
   render_info();
   show_screen('main');
   apply_cfg();
+  update_ip();
   load_devices();
   render_devices();
   discover();
@@ -97,39 +98,31 @@ function startup() {
   }, 5000);
 
   setTimeout(() => {
-    if (show_version) alert('Версия ' + app_version + '!\n' + version_notes);
+    if (show_version) alert('Версия ' + app_version + '!\n' + '__NOTES__');
   }, 1000);
   /*/NON-ESP*/
 }
-function checkUpdates(id, force = false) {
-  /*NON-ESP*/
-  if (force && isLocal()) showPopupError('Offline!');
-  if (!projects || !devices[id].version || !devices[id].skip_version) return;
-  let namever = devices[id].version.split('@');
-  if (namever.length != 2) return;
-  if (!(namever[0] in projects)) return;
-  let proj = projects[namever[0]];
-  let newver = namever[0] + '@' + proj.version;
-
-  if (force) {
-    if (devices[id].version == newver) {
-      alert('No updates!');
-      return;
-    }
-  } else {
-    if (devices[id].version == newver || devices[id].skip_version == newver) return;
-  }
-
-  let res = confirm('Available new version v' + proj.version + ' for device [' + namever[0] + ']. Notes:\n' + proj.notes + '\n\nUpdate firmware?');
-  if (res) otaUrl(proj.url, 'flash');
-  else devices[id].skip_version = newver;
-  save_devices();
-  return res;
-  /*/NON-ESP*/
-  return false;
-}
-
 /*NON-ESP*/
+async function checkUpdates(id) {
+  if (!cfg.check_upd) return;
+  if (updates.includes(id)) return;
+  let ver = devices[id].version;
+  if (!ver.includes('@')) return;
+  let namever = ver.split('@');
+  const resp = await fetch(`https://raw.githubusercontent.com/${namever[0]}/master/project.json`, { cache: "no-store" });
+  let proj = await resp.text();
+  try {
+    proj = JSON.parse(proj);
+  } catch (e) {
+    return;
+  }
+  if (proj.version == namever[1]) return;
+  if (id != focused) return;
+  updates.push(id);
+  if (confirm('Available new version v' + proj.version + ' for device [' + namever[0] + ']. Notes:\n' + proj.notes + '\n\nUpdate firmware?')) {
+    otaUrl(`https://raw.githubusercontent.com/${namever[0]}/master/bin/firmware.bin${devices[id].gzip ? '.gz' : ''}`, 'flash');
+  }
+}
 async function pwa_install(ssl) {
   if (ssl && !isSSL()) {
     if (confirm("Redirect to HTTPS?")) window.location.href = window.location.href.replace('http:', 'https:');
@@ -149,15 +142,38 @@ async function pwa_install(ssl) {
     if (outcome === 'accepted') deferredPrompt = null;
   }
 }
-async function fetchProjects() {
+async function loadProjects() {
+  const resp = await fetch("https://raw.githubusercontent.com/GyverLibs/GyverHub-projects/main/projects.txt", { cache: "no-store" });
+  let projects = await resp.text();
+  projects = projects.split('\n');
+  for (let proj of projects) {
+    if (!proj) continue;
+    let rep = proj.split('https://github.com/')[1];
+    if (!rep) continue;
+    loadProj(rep);
+  }
+}
+async function loadProj(rep) {
+  const resp = await fetch(`https://raw.githubusercontent.com/${rep}/master/project.json`, { cache: "no-store" });
+  let proj = await resp.text();
   try {
-    const response = await fetch((isSSL() ? 'https://' : 'http://') + ota_url, { cache: "no-store" });
-    projects = await response.json();
+    proj = JSON.parse(proj);
   } catch (e) {
     return;
   }
+  if (!('version' in proj) || !('notes' in proj) || !('about' in proj)) return;
+  let name = rep.split('/')[1];
+  if (name.length > 30) name = name.slice(0, 30) + '..';
+  EL('projects').innerHTML += `
+  <div class="proj">
+    <div class="proj_inn">
+      <div class="proj_name">
+        <a href="${'https://github.com/' + rep}" target="_blank" title="${rep} v${proj.version}">${name}</a>
+      <div class="proj_about">${proj.about}</div>
+    </div>
+  </div>
+  `;
 }
-if (!isLocal()) fetchProjects();
 /*/NON-ESP*/
 
 // =============== PIN ================
@@ -268,6 +284,11 @@ function render_selects() {
 function test_h() {
   show_screen('test');
 }
+function projects_h() {
+  EL('projects').innerHTML = '';
+  show_screen('projects');
+  loadProjects();
+}
 function refresh_h() {
   if (screen == 'device') post('focus');
   else if (screen == 'info') post('info');
@@ -276,7 +297,8 @@ function refresh_h() {
 }
 function back_h() {
   if (menu_f) {
-    menu_show(false);
+    menu_deact();
+    menu_show(0);
     return;
   }
   switch (screen) {
@@ -285,17 +307,18 @@ function back_h() {
       close_device();
       break;
     case 'info':
+      menu_deact();
       show_screen('device');
       break;
     case 'fsbr':
+      menu_deact();
       show_screen('device');
       break;
     case 'config':
       config_h();
       break;
     case 'pin':
-      show_screen('main');
-      break;
+    case 'projects':
     case 'test':
       show_screen('main');
       break;
@@ -350,7 +373,9 @@ function device_h(id) {
   } else open_device(id);
 }
 function open_device(id) {
-  if (checkUpdates(id)) return;
+  /*NON-ESP*/
+  checkUpdates(id);
+  /*/NON-ESP*/
   focused = id;
 
   switch (devices_t[id].conn) {
@@ -414,6 +439,7 @@ function show_screen(nscreen) {
   screen = nscreen;
   stopFS();
   show_keypad(false);
+  let proj_s = EL('projects_cont').style;
   let test_s = EL('test_cont').style;
   let main_s = EL('main_cont').style;
   let config_s = EL('config').style;
@@ -430,6 +456,7 @@ function show_screen(nscreen) {
 
   main_s.display = 'block';
   test_s.display = 'none';
+  proj_s.display = 'none';
   config_s.display = 'none';
   devices_s.display = 'none';
   controls_s.display = 'none';
@@ -457,6 +484,12 @@ function show_screen(nscreen) {
     test_s.display = 'block';
     back_s.display = 'inline-block';
     EL('title').innerHTML = 'UI Test';
+
+  } else if (screen == 'projects') {
+    main_s.display = 'none';
+    proj_s.display = 'block';
+    back_s.display = 'inline-block';
+    EL('title').innerHTML = 'Projects';
 
   } else if (screen == 'device') {
     controls_s.display = 'block';

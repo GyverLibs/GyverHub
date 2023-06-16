@@ -198,4 +198,5 @@ function otaNextChunk() {
 }
 function otaUrl(url, type) {
   post('ota_url', type, url);
+  showPopup('OTA start');
 }

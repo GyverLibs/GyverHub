@@ -1,6 +1,7 @@
 # GyverHub Web Builder
 
-version = '0.34b'
+version = '0.36b'
+notes = 'Add OTA from GitHub'
 
 js_files = [
     'src/include/main.js',
@@ -131,6 +132,7 @@ for file in js_files:
         js_min += read + '\n'
 
 js_min = js_min.replace('__VER__', version)
+js_min = js_min.replace('__NOTES__', notes)
 js_min = re.sub(r'(^\s+)', '' , js_min, flags=re.MULTILINE)
 
 with open('host/script.js', 'w') as f:
@@ -198,6 +200,7 @@ with open('app/index.html', "r+") as f:
     data = data.replace('__INC__', inc_app)
     data = re.sub(r'<!--ICON-->([\s\S]*?)<!--\/ICON-->', '', data)
     data = re.sub(r'<!--PWA-->([\s\S]*?)<!--\/PWA-->', '', data)
+    data = re.sub(r'<!--APP-->([\s\S]*?)<!--\/APP-->', '', data)
     data = re.sub(r'<!--METRIKA-->', '', data)
     data = re.sub(r'__VER__', version, data)
     data = re.sub(r'<!--([\s\S]*?)-->', '', data)
@@ -224,6 +227,7 @@ for file in js_files:
         js_min += read + '\n'
 
 js_min = js_min.replace('__VER__', version)
+js_min = js_min.replace('__NOTES__', notes)
 js_min = js_min.replace('__ESP__', '')
 js_min = re.sub(r'(^\s+)', '' , js_min, flags=re.MULTILINE)
 

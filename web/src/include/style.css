@@ -506,6 +506,7 @@ body::-webkit-scrollbar-thumb {
   user-select: text;
   cursor: text;
   overflow-wrap: break-word;
+  font-size: 16px;
 }
 
 .info_small {
@@ -1577,6 +1578,7 @@ input:checked+.chbutton_s {
   border: 5px solid transparent;
   border-width: 0 0 0 5px;
 }
+
 .menu_item:hover {
   background: var(--back);
 }
@@ -1585,10 +1587,70 @@ input:checked+.chbutton_s {
   border-color: var(--prim);
 }
 
+/*NON-ESP*/
+/* =================================== */
+/* =============== PROJ ============== */
+/* =================================== */
+#projects_cont {
+  width: 100%;
+  height: 100%;
+  display: none;
+}
+
+.projects_inn {
+  max-width: 700px;
+  margin: auto;
+  padding: 0px 5px;
+  padding-top: 65px;
+}
+
+.projects {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.proj {
+  align-items: center;
+  width: 50%;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  padding: 5px;
+  width: 100%;
+}
+
+.proj_inn {
+  background: var(--tab);
+  border-radius: 5px;
+  box-shadow: 0 0 10px 0px #00000020;
+  width: 100%;
+  height: 100%;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  padding: 7px;
+}
+
+.proj_name a {
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--prim);
+  text-decoration: none;
+}
+
+.proj_name a:hover {
+  text-decoration: underline;
+}
+
+.proj_about {
+  color: var(--font2);
+  font-size: 15px;
+}
+
 /* =================================== */
 /* =============== TEST ============== */
 /* =================================== */
-/*NON-ESP*/
+
 #test_cont {
   width: 100%;
   height: 100%;

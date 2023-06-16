@@ -1,6 +1,4 @@
 const app_title = 'GyverHub';
-const version_notes = 'Added Menu + some improvements';
-const ota_url = 'hub.gyver.ru/ota/projects.json';
 const non_esp = '__ESP__';
 const non_app = '__APP__';
 const app_version = '__VER__';
@@ -92,7 +90,7 @@ function EL(id) {
 }
 function log(text) {
   let texts = text.toString();
-  if (!log_network && (texts.indexOf('discover') > 0 || texts.startsWith('Post') || texts.startsWith('Got'))) return;
+  if (!log_network && (texts.includes('discover') || texts.startsWith('Post') || texts.startsWith('Got'))) return;
   console.log(text);
 }
 function window_ip() {
@@ -152,12 +150,12 @@ function notSupported() {
   alert('Browser not supported');
 }
 function browser() {
-  if (navigator.userAgent.indexOf("Opera") != -1 || navigator.userAgent.indexOf('OPR') != -1) return 'opera';
-  else if (navigator.userAgent.indexOf("Edg") != -1) return 'edge';
-  else if (navigator.userAgent.indexOf("Chrome") != -1) return 'chrome';
-  else if (navigator.userAgent.indexOf("Safari") != -1) return 'safari';
-  else if (navigator.userAgent.indexOf("Firefox") != -1) return 'firefox';
-  else if ((navigator.userAgent.indexOf("MSIE") != -1) || (!!document.documentMode == true)) return 'IE';
+  if (navigator.userAgent.includes("Opera") || navigator.userAgent.includes('OPR')) return 'opera';
+  else if (navigator.userAgent.includes("Edg")) return 'edge';
+  else if (navigator.userAgent.includes("Chrome")) return 'chrome';
+  else if (navigator.userAgent.includes("Safari")) return 'safari';
+  else if (navigator.userAgent.includes("Firefox")) return 'firefox';
+  else if ((navigator.userAgent.includes("MSIE")) || (!!document.documentMode == true)) return 'IE';
   else return 'unknown';
 }
 function disableScroll() {
@@ -252,11 +250,20 @@ function getLocalIP() {
   /*/NON-ESP*/
   return window_ip();
 }
-function update_ip() {
+function update_ip_h() {
   if (!Boolean(window.webkitRTCPeerConnection || window.mozRTCPeerConnection)) notSupported();
   else getLocalIP().then((ip) => {
     if (ip.indexOf("local") > 0) alert(`Disable WEB RTC anonymizer: ${browser()}://flags/#enable-webrtc-hide-local-ips-with-mdns`);
     else EL('client_ip').value = ip;
+  });
+}
+function update_ip() {
+  if (!Boolean(window.webkitRTCPeerConnection || window.mozRTCPeerConnection)) return;
+  getLocalIP().then((ip) => {
+    if (ip.indexOf("local") < 0) {
+      EL('client_ip').value = ip;
+      cfg.client_ip = ip;
+    }
   });
 }
 function checkIP(ip) {

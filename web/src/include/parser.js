@@ -130,7 +130,7 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
         }
       } else {
         log('Add new device #' + id);
-        devices[id] = { prefix: cfg.prefix, break_widgets: false, show_names: false, skip_version: device.version, ip: ip };
+        devices[id] = { prefix: cfg.prefix, break_widgets: false, show_names: false, ip: ip };
         updateDevice(devices[id], device);
 
         /*NON-ESP*/
@@ -389,12 +389,16 @@ function showInfo(device) {
     EL(id).innerHTML = device.info[count];
     count++;
   }
-  let ver = EL('info_firm_v').innerHTML;
-  if (projects && ver.split('@')[0] in projects) {
-    EL('info_firm_v').onclick = function () { checkUpdates(focused, true); };
-    EL('info_firm_v').classList.add('info_link');
+  let ver = devices[focused].version;
+  let info_v = EL('info_firm_v');
+  if (ver.includes('@')) {
+    let link = 'https://github.com/' + ver.split('@')[0];
+    info_v.onclick = function () { openURL(link); };
+    info_v.classList.add('info_link');
+    info_v.title = link;
   } else {
-    EL('info_firm_v').onclick = function () { };
-    EL('info_firm_v').classList.remove('info_link');
+    info_v.onclick = function () { };
+    info_v.classList.remove('info_link');
+    info_v.title = '';
   }
 }

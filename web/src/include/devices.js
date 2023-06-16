@@ -1019,7 +1019,7 @@ function checkDup(ctrl) {
 }
 function formatToStep(val, step) {
   step = step.toString();
-  if (step.indexOf('.') > 0) return Number(val).toFixed((step.split('.')[1]).toString().length);
+  if (step.includes('.')) return Number(val).toFixed((step.split('.')[1]).toString().length);
   else return val;
 }
 function togglePass(id) {
