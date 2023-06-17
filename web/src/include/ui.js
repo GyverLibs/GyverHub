@@ -307,11 +307,9 @@ function back_h() {
       close_device();
       break;
     case 'info':
-      menu_deact();
-      show_screen('device');
-      break;
     case 'fsbr':
       menu_deact();
+      showControls(devices_t[focused].controls);
       show_screen('device');
       break;
     case 'config':

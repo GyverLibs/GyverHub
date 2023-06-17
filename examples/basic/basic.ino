@@ -88,7 +88,7 @@ void build() {
     // для char[] нужно обязательно указать размер массива, чтобы не превысить его, что приведёт к сбою программы!!
     hub.Input(F("inp_s"), &inp_str, GH_STR, F("String input"));
     hub.Input(F("inp_c"), &inp_cstr, GH_CSTR, F("cstring input"), 10);      // <- 10 - макс. длина строки
-    hub.Input(F("inp_i"), &inp_int, GH_INT16, F("int input"), 0, GH_BLUE);  // 0 - лимит отключен. И добавим цвет
+    hub.Input(F("inp_i"), &inp_int, GH_INT16, F("int input"), 0, F("^\\d{4}$"));  // + regex на 4 цифры
 
     // что будет, если не создавать строку виджетов через BeginWidgets()?
     // закончим отрисовку виджетов

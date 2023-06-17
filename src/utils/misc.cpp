@@ -61,11 +61,15 @@ void GH_escapeChar(String* s, char c) {
     } else if (c == '\"' || c == '\'') {
         *s += '\\';
         *s += '\"';
+    } else if (c == '\\') {
+        *s += '\\';
+        *s += '\\';
     } else {
         *s += c;
     }
 }
 void GH_escapeStr(String* s, VSPTR v, bool fstr) {
+    if (!v) return;
     if (fstr) {
         uint16_t len = strlen_P((PGM_P)v);
         char str[len + 1];

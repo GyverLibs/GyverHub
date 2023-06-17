@@ -1,7 +1,7 @@
 # GyverHub Web Builder
 
-version = '0.36b'
-notes = 'Add OTA from GitHub'
+version = '0.37b'
+notes = 'Add regex for input'
 
 js_files = [
     'src/include/main.js',

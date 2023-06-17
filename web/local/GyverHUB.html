@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>GyverHub v0.36b</title>
+  <title>GyverHub v0.37b</title>
   <link rel='icon' href='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48IS0tISBGb250IEF3ZXNvbWUgUHJvIDYuMy4wIGJ5IEBmb250YXdlc29tZSAtIGh0dHBzOi8vZm9udGF3ZXNvbWUuY29tIExpY2Vuc2UgLSBodHRwczovL2ZvbnRhd2Vzb21lLmNvbS9saWNlbnNlIChDb21tZXJjaWFsIExpY2Vuc2UpIENvcHlyaWdodCAyMDIzIEZvbnRpY29ucywgSW5jLiAtLT48cGF0aCBkPSJNMCA0MTZjMC0xNy43IDE0LjMtMzIgMzItMzJsNTQuNyAwYzEyLjMtMjguMyA0MC41LTQ4IDczLjMtNDhzNjEgMTkuNyA3My4zIDQ4TDQ4MCAzODRjMTcuNyAwIDMyIDE0LjMgMzIgMzJzLTE0LjMgMzItMzIgMzJsLTI0Ni43IDBjLTEyLjMgMjguMy00MC41IDQ4LTczLjMgNDhzLTYxLTE5LjctNzMuMy00OEwzMiA0NDhjLTE3LjcgMC0zMi0xNC4zLTMyLTMyem0xOTIgMGEzMiAzMiAwIDEgMCAtNjQgMCAzMiAzMiAwIDEgMCA2NCAwek0zODQgMjU2YTMyIDMyIDAgMSAwIC02NCAwIDMyIDMyIDAgMSAwIDY0IDB6bS0zMi04MGMzMi44IDAgNjEgMTkuNyA3My4zIDQ4bDU0LjcgMGMxNy43IDAgMzIgMTQuMyAzMiAzMnMtMTQuMyAzMi0zMiAzMmwtNTQuNyAwYy0xMi4zIDI4LjMtNDAuNSA0OC03My4zIDQ4cy02MS0xOS43LTczLjMtNDhMMzIgMjg4Yy0xNy43IDAtMzItMTQuMy0zMi0zMnMxNC4zLTMyIDMyLTMybDI0Ni43IDBjMTIuMy0yOC4zIDQwLjUtNDggNzMuMy00OHpNMTkyIDY0YTMyIDMyIDAgMSAwIDAgNjQgMzIgMzIgMCAxIDAgMC02NHptNzMuMyAwTDQ4MCA2NGMxNy43IDAgMzIgMTQuMyAzMiAzMnMtMTQuMyAzMi0zMiAzMmwtMjE0LjcgMGMtMTIuMyAyOC4zLTQwLjUgNDgtNzMuMyA0OHMtNjEtMTkuNy03My4zLTQ4TDMyIDEyOEMxNC4zIDEyOCAwIDExMy43IDAgOTZTMTQuMyA2NCAzMiA2NGw4Ni43IDBDMTMxIDM1LjcgMTU5LjIgMTYgMTkyIDE2czYxIDE5LjcgNzMuMyA0OHoiLz48L3N2Zz4='>
   <meta name="description" content="Arduino/ESP8266/ESP32 Web Control Panel">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -353,7 +353,7 @@ Contribution:
 </div>
 <div id="bottom_space"></div>
 `;}
-const app_title='GyverHub';const non_esp='__ESP__';const non_app='__APP__';const app_version='0.36b';const log_enable=true;const log_network=false;const info_labels_version={info_lib_v:'Library',info_firm_v:'Firmware',};const info_labels_esp={info_mode:'WiFi Mode',info_ssid:'SSID',info_l_ip:'Local IP',info_ap_ip:'AP IP',info_mac:'MAC',info_rssi:'RSSI',info_uptime:'Uptime',info_heap:'Free Heap',info_sketch:'Sketch (Free)',info_flash:'Flash Size',info_cpu:'Cpu Freq.',};const info_labels_topics={info_id:'ID',info_set:'Set',info_read:'Read',info_get:'Get',info_status:'Status',};const colors={ORANGE:0xd55f30,YELLOW:0xd69d27,GREEN:0x37A93C,MINT:0x25b18f,AQUA:0x2ba1cd,BLUE:0x297bcd,VIOLET:0x825ae7,PINK:0xc8589a,};const fonts=['monospace','system-ui','cursive','Arial','Verdana','Tahoma','Trebuchet MS','Georgia','Garamond',];const themes={DARK:0,LIGHT:1};const theme_cols=[['#1b1c20','#26272c','#eee','#ccc','#141516','#444','#0e0e0e','dark','#222','#000'],['#eee','#fff','#111','#333','#ddd','#999','#bdbdbd','light','#fff','#000000a3']];function getMime(name){const mime_table={'avi':'video/x-msvideo','bin':'application/octet-stream','bmp':'image/bmp','css':'text/css','csv':'text/csv','gz':'application/gzip','gif':'image/gif','html':'text/html','jpeg':'image/jpeg','jpg':'image/jpeg','js':'text/javascript','json':'application/json','png':'image/png','svg':'image/svg+xml','txt':'text/plain','wav':'audio/wav','xml':'application/xml',};let ext=name.split('.').pop();if(ext in mime_table)return mime_table[ext];else return'text/plain';}
+const app_title='GyverHub';const non_esp='__ESP__';const non_app='__APP__';const app_version='0.37b';const log_enable=true;const log_network=false;const info_labels_version={info_lib_v:'Library',info_firm_v:'Firmware',};const info_labels_esp={info_mode:'WiFi Mode',info_ssid:'SSID',info_l_ip:'Local IP',info_ap_ip:'AP IP',info_mac:'MAC',info_rssi:'RSSI',info_uptime:'Uptime',info_heap:'Free Heap',info_sketch:'Sketch (Free)',info_flash:'Flash Size',info_cpu:'Cpu Freq.',};const info_labels_topics={info_id:'ID',info_set:'Set',info_read:'Read',info_get:'Get',info_status:'Status',};const colors={ORANGE:0xd55f30,YELLOW:0xd69d27,GREEN:0x37A93C,MINT:0x25b18f,AQUA:0x2ba1cd,BLUE:0x297bcd,VIOLET:0x825ae7,PINK:0xc8589a,};const fonts=['monospace','system-ui','cursive','Arial','Verdana','Tahoma','Trebuchet MS','Georgia','Garamond',];const themes={DARK:0,LIGHT:1};const theme_cols=[['#1b1c20','#26272c','#eee','#ccc','#141516','#444','#0e0e0e','dark','#222','#000'],['#eee','#fff','#111','#333','#ddd','#999','#bdbdbd','light','#fff','#000000a3']];function getMime(name){const mime_table={'avi':'video/x-msvideo','bin':'application/octet-stream','bmp':'image/bmp','css':'text/css','csv':'text/csv','gz':'application/gzip','gif':'image/gif','html':'text/html','jpeg':'image/jpeg','jpg':'image/jpeg','js':'text/javascript','json':'application/json','png':'image/png','svg':'image/svg+xml','txt':'text/plain','wav':'audio/wav','xml':'application/xml',};let ext=name.split('.').pop();if(ext in mime_table)return mime_table[ext];else return'text/plain';}
 function EL(id){return document.getElementById(id);}
 function log(text){let texts=text.toString();if(!log_network&&(texts.includes('discover')||texts.startsWith('Post')||texts.startsWith('Got')))return;console.log(text);}
 function window_ip(){return window.location.href.split('/')[2].split(':')[0];}
@@ -465,22 +465,23 @@ function addLabel(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();
 `;}}
 function addInput(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();let col=(ctrl.color!=null)?('box-shadow: 0px 2px 0px 0px '+intToCol(ctrl.color)):'';if(wid_row_id){let inner=`
 <div class="cfg_inp_row cfg_inp_row_tab">
-<input class="cfg_inp c_inp input_t" style="${col}" type="text" value="${ctrl.value}" id="#${ctrl.name}" name="${ctrl.name}" onkeydown="checkEnter(this)" oninput="checkLen(this,${ctrl.max})">
+<input class="cfg_inp c_inp input_t" style="${col}" type="text" value="${ctrl.value}" id="#${ctrl.name}" name="${ctrl.name}" onkeydown="checkEnter(this)" oninput="checkLen(this,${ctrl.max})" pattern="${ctrl.regex}">
 <div class="cfg_btn_block">
-<button class="icon cfg_btn" onclick="set_h('${ctrl.name}',EL('#${ctrl.name}').value)"></button>
+<button class="icon cfg_btn" onclick="sendInput('${ctrl.name}')"></button>
 </div>
 </div>
 `;addWidget(ctrl.tab_w,ctrl.name,ctrl.wlabel,inner);}else{EL('controls').innerHTML+=`
 <div class="control">
 <label title='${ctrl.name}'>${ctrl.clabel}</label>
 <div class="cfg_inp_row">
-<input class="cfg_inp c_inp input_t" style="${col}" type="text" value="${ctrl.value}" id="#${ctrl.name}" name="${ctrl.name}" onkeydown="checkEnter(this)" oninput="checkLen(this,${ctrl.max})">
+<input class="cfg_inp c_inp input_t" style="${col}" type="text" value="${ctrl.value}" id="#${ctrl.name}" name="${ctrl.name}" onkeydown="checkEnter(this)" oninput="checkLen(this,${ctrl.max})" pattern="${ctrl.regex}">
 <div class="cfg_btn_block">
-<button class="icon cfg_btn" onclick="set_h('${ctrl.name}',EL('#${ctrl.name}').value)"></button>
+<button class="icon cfg_btn" onclick="sendInput('${ctrl.name}')"></button>
 </div>
 </div>
 </div>
 `;}}
+function sendInput(name){let inp=EL('#'+name);const r=new RegExp(inp.pattern);if(r.test(inp.value))set_h(name,inp.value);else showPopupError("Wrong text!");}
 function addPass(ctrl){if(checkDup(ctrl))return;checkWidget(ctrl);endButtons();let col=(ctrl.color!=null)?('box-shadow: 0px 2px 0px 0px '+intToCol(ctrl.color)):'';if(wid_row_id){let inner=`
 <div class="cfg_inp_row cfg_inp_row_tab">
 <input class="cfg_inp c_inp input_t" style="${col}" type="password" value="${ctrl.value}" id="#${ctrl.name}" name="${ctrl.name}" onkeydown="checkEnter(this)" oninput="checkLen(this,${ctrl.max})">
@@ -836,7 +837,7 @@ window.history.pushState({page:1},"","");window.onpopstate=function(e){window.hi
 render_main(app_version);EL('title').innerHTML=app_title;load_cfg();if(typeof cfg.hub_id!='string')cfg.hub_id=cfg.hub_id.toString(16);let title='GyverHub v'+app_version+' ['+cfg.hub_id+'] '+(isPWA()?'PWA ':'')+(isSSL()?'SSL ':'')+(isLocal()?'Local ':'')+(isESP()?'ESP ':'')+(isApp()?'App ':'');EL('title').title=title;log(title);if(cfg.use_pin)show_keypad(true);else startup();started=true;}
 function startup(){if(isESP())cfg.use_ws=true;render_selects();render_info();show_screen('main');apply_cfg();update_ip();load_devices();render_devices();discover();if(isSSL()){EL('http_only_http').style.display='block';EL('http_settings').style.display='none';EL('pwa_unsafe').style.display='none';}
 if(isPWA()||isLocal()||isApp()){EL('app_block').style.display='none';}
-if(cfg.use_mqtt)mq_start();setInterval(()=>{if(cfg.use_mqtt&&!mq_state()){log('MQTT reconnect');mq_start();}},5000);setTimeout(()=>{if(show_version)alert('Версия '+app_version+'!\n'+'Add OTA from GitHub');},1000);}
+if(cfg.use_mqtt)mq_start();setInterval(()=>{if(cfg.use_mqtt&&!mq_state()){log('MQTT reconnect');mq_start();}},5000);setTimeout(()=>{if(show_version)alert('Версия '+app_version+'!\n'+'Add regex for input');},1000);}
 async function checkUpdates(id){if(!cfg.check_upd)return;if(updates.includes(id))return;let ver=devices[id].version;if(!ver.includes('@'))return;let namever=ver.split('@');const resp=await fetch(`https://raw.githubusercontent.com/${namever[0]}/master/project.json`,{cache:"no-store"});let proj=await resp.text();try{proj=JSON.parse(proj);}catch(e){return;}
 if(proj.version==namever[1])return;if(id!=focused)return;updates.push(id);if(confirm('Available new version v'+proj.version+' for device ['+namever[0]+']. Notes:\n'+proj.notes+'\n\nUpdate firmware?')){otaUrl(`https://raw.githubusercontent.com/${namever[0]}/master/bin/firmware.bin${devices[id].gzip ? '.gz' : ''}`,'flash');}}
 async function pwa_install(ssl){if(ssl&&!isSSL()){if(confirm("Redirect to HTTPS?"))window.location.href=window.location.href.replace('http:','https:');else return;}
@@ -887,7 +888,7 @@ function test_h(){show_screen('test');}
 function projects_h(){EL('projects').innerHTML='';show_screen('projects');loadProjects();}
 function refresh_h(){if(screen=='device')post('focus');else if(screen=='info')post('info');else if(screen=='fsbr')post('fsbr');else discover();}
 function back_h(){if(menu_f){menu_deact();menu_show(0);return;}
-switch(screen){case'device':release_all();close_device();break;case'info':menu_deact();show_screen('device');break;case'fsbr':menu_deact();show_screen('device');break;case'config':config_h();break;case'pin':case'projects':case'test':show_screen('main');break;}}
+switch(screen){case'device':release_all();close_device();break;case'info':case'fsbr':menu_deact();showControls(devices_t[focused].controls);show_screen('device');break;case'config':config_h();break;case'pin':case'projects':case'test':show_screen('main');break;}}
 function config_h(){if(screen=='config'){if(cfg_changed)save_cfg();cfg_changed=false;show_screen('main');discover();}else{show_screen('config');}}
 function menu_show(state){menu_f=state;let cl=EL('menu').classList;if(menu_f)cl.add('menu_show');else cl.remove('menu_show');EL('icon_menu').innerHTML=menu_f?'':'';EL('menu_overlay').style.display=menu_f?'block':'none';}
 function menu_h(){menu_show(!menu_f);}

@@ -228,9 +228,9 @@ function addInput(ctrl) {
   if (wid_row_id) {
     let inner = `
       <div class="cfg_inp_row cfg_inp_row_tab">
-        <input class="cfg_inp c_inp input_t" style="${col}" type="text" value="${ctrl.value}" id="#${ctrl.name}" name="${ctrl.name}" onkeydown="checkEnter(this)" oninput="checkLen(this,${ctrl.max})">
+        <input class="cfg_inp c_inp input_t" style="${col}" type="text" value="${ctrl.value}" id="#${ctrl.name}" name="${ctrl.name}" onkeydown="checkEnter(this)" oninput="checkLen(this,${ctrl.max})" pattern="${ctrl.regex}">
         <div class="cfg_btn_block">
-          <button class="icon cfg_btn" onclick="set_h('${ctrl.name}',EL('#${ctrl.name}').value)"></button>
+          <button class="icon cfg_btn" onclick="sendInput('${ctrl.name}')"></button>
         </div>
       </div>
     `;
@@ -240,14 +240,20 @@ function addInput(ctrl) {
     <div class="control">
       <label title='${ctrl.name}'>${ctrl.clabel}</label>
       <div class="cfg_inp_row">
-        <input class="cfg_inp c_inp input_t" style="${col}" type="text" value="${ctrl.value}" id="#${ctrl.name}" name="${ctrl.name}" onkeydown="checkEnter(this)" oninput="checkLen(this,${ctrl.max})">
+        <input class="cfg_inp c_inp input_t" style="${col}" type="text" value="${ctrl.value}" id="#${ctrl.name}" name="${ctrl.name}" onkeydown="checkEnter(this)" oninput="checkLen(this,${ctrl.max})" pattern="${ctrl.regex}">
         <div class="cfg_btn_block">
-          <button class="icon cfg_btn" onclick="set_h('${ctrl.name}',EL('#${ctrl.name}').value)"></button>
+          <button class="icon cfg_btn" onclick="sendInput('${ctrl.name}')"></button>
         </div>
       </div>
     </div>
   `;
   }
+}
+function sendInput(name) {
+  let inp = EL('#' + name);
+  const r = new RegExp(inp.pattern);
+  if (r.test(inp.value)) set_h(name, inp.value);
+  else showPopupError("Wrong text!");
 }
 function addPass(ctrl) {
   if (checkDup(ctrl)) return;

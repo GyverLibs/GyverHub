@@ -212,22 +212,22 @@ class HubBuilder {
     }
 
     // ========================== INPUT ==========================
-    bool Input(FSTR name, void* value = nullptr, GHdata_t type = GH_NULL, FSTR label = nullptr, int maxv = 0, uint32_t color = GH_DEFAULT) {
-        return _input(true, F("input"), name, value, type, label, maxv, color);
+    bool Input(FSTR name, void* value = nullptr, GHdata_t type = GH_NULL, FSTR label = nullptr, int maxv = 0, FSTR regex = nullptr, uint32_t color = GH_DEFAULT) {
+        return _input(true, F("input"), name, value, type, label, maxv, regex, color);
     }
-    bool Input(CSREF name, void* value = nullptr, GHdata_t type = GH_NULL, CSREF label = "", int maxv = 0, uint32_t color = GH_DEFAULT) {
-        return _input(false, F("input"), name.c_str(), value, type, label.c_str(), maxv, color);
+    bool Input(CSREF name, void* value = nullptr, GHdata_t type = GH_NULL, CSREF label = "", int maxv = 0, CSREF regex = "", uint32_t color = GH_DEFAULT) {
+        return _input(false, F("input"), name.c_str(), value, type, label.c_str(), maxv, regex.c_str(), color);
     }
 
     // ========================== PASS ==========================
     bool Pass(FSTR name, void* value = nullptr, GHdata_t type = GH_NULL, FSTR label = nullptr, int maxv = 0, uint32_t color = GH_DEFAULT) {
-        return _input(true, F("pass"), name, value, type, label, maxv, color);
+        return _input(true, F("pass"), name, value, type, label, maxv, nullptr, color);
     }
     bool Pass(CSREF name, void* value = nullptr, GHdata_t type = GH_NULL, CSREF label = "", int maxv = 0, uint32_t color = GH_DEFAULT) {
-        return _input(false, F("pass"), name.c_str(), value, type, label.c_str(), maxv, color);
+        return _input(false, F("pass"), name.c_str(), value, type, label.c_str(), maxv, "", color);
     }
 
-    bool _input(bool fstr, FSTR tag, VSPTR name, void* value, GHdata_t type, VSPTR label, int maxv, uint32_t color) {
+    bool _input(bool fstr, FSTR tag, VSPTR name, void* value, GHdata_t type, VSPTR label, int maxv, VSPTR regex, uint32_t color) {
         if (_isUI()) {
             _begin(tag);
             _name(name, fstr);
@@ -237,6 +237,9 @@ class HubBuilder {
             _quot();
             _label(label, fstr);
             if (maxv) _maxv((long)maxv);
+            _add(F(",'regex':'"));
+            GH_escapeStr(sptr, regex, fstr);
+            _quot();
             _color(color);
             _tabw();
             _end();
@@ -714,8 +717,11 @@ class HubBuilder {
     }
 
     // ================
-    void _add(FSTR arg) {
-        *sptr += arg;
+    void _add(VSPTR str, bool fstr = true) {
+        if (str) {
+            if (fstr) *sptr += (FSTR)str;
+            else *sptr += (PGM_P)str;
+        }
     }
     void _begin(FSTR type) {
         _add(F("{'type':'"));
@@ -744,42 +750,26 @@ class HubBuilder {
     void _value(VSPTR value, bool fstr = true) {
         _value();
         _quot();
-        if (value) {
-            if (fstr) *sptr += (FSTR)value;
-            else *sptr += (PGM_P)value;
-        }
+        _add(value, fstr);
         _quot();
     }
-
-    // ================
     void _name(VSPTR name, bool fstr = true) {
         _add(F(",'name':'"));
-        if (name) {
-            if (fstr) *sptr += (FSTR)name;
-            else *sptr += (PGM_P)name;
-        }
+        _add(name, fstr);
         _quot();
     }
     void _label(VSPTR label, bool fstr = true) {
         _add(F(",'label':'"));
-        if (label) {
-            if (fstr) *sptr += (FSTR)label;
-            else *sptr += (PGM_P)label;
-        }
+        _add(label, fstr);
         _quot();
     }
-
-    // ================
     void _text() {
         _add(F(",'text':"));
     }
     void _text(VSPTR text, bool fstr = true) {
         _text();
         _quot();
-        if (text) {
-            if (fstr) *sptr += (FSTR)text;
-            else *sptr += (PGM_P)text;
-        }
+        _add(text, fstr);
         _quot();
     }
 

@@ -104,7 +104,7 @@ void build() {
   hub.Title(F("Inputs"));
   // hub.BeginWidgets();
   hub.WidgetSize(50);
-  hub.Input(F("inp_s"), &inp_str, GH_STR, F("String input"), 0, GH_BLUE);
+  hub.Input(F("inp_s"), &inp_str, GH_STR, F("String input"), 0, F("^[A-Za-z]+$"));   // только буквы a-Z
   hub.Input(F("inp_c"), &inp_cstr, GH_CSTR, F("cstring input"), 10);
   hub.Input(F("inp_i"), &inp_int, GH_INT16, F("int input"));
   hub.Input(F("inp_f"), &inp_float, GH_FLOAT, F("float input"));
