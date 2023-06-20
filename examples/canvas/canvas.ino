@@ -14,14 +14,16 @@ void build() {
   hub.BeginWidgets();
 
   // пустой холст, 400x300px
-  hub.Canvas(F("cv"));
+  // зададим имя, чтобы обновлять его ниже в loop()
+  hub.Canvas_(F("cv"));
 
   hub.WidgetSize(50);
 
   // холст с рисунком. Обязательный порядок вызова: создать, начать, рисовать, закончить
   GHcanvas cv1;         // создать холст
   // начать рисование, холст 200x200, обработка кликов
-  hub.BeginCanvas(F("cv1"), 200, 200, &cv1, &pos1);
+  // зададим имя, чтобы обновлять его ниже в loop()
+  hub.BeginCanvas_(F("cv1"), 200, 200, &cv1, &pos1);
   cv1.stroke(0xff0000);
   cv1.strokeWeight(5);
   cv1.line(0, 0, -1, -1);
@@ -30,7 +32,8 @@ void build() {
 
   // и ещё один
   GHcanvas cv2;
-  hub.BeginCanvas(F("cv2"), 300, 300, &cv2);
+  // зададим имя, чтобы обновлять его ниже в loop()
+  hub.BeginCanvas_(F("cv2"), 300, 300, &cv2);
   cv2.fill(0x00ff00);
   cv2.noStroke();
   cv2.circle(150, 150, 50);

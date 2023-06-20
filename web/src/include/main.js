@@ -174,7 +174,7 @@ function render_main(v) {
     <div id="config" class="cfg_in">
       <div class="cfg_col">
         <div class="cfg_row cfg_head">
-          <label><span class="icon cfg_icon"></span>Search</label>
+          <label class="cfg_label"><span class="icon cfg_icon"></span>Search</label>
           <div>
             <button class="icon cfg_btn_tab" onclick="discover_all()" title="Find new devices"></button>
           </div>
@@ -183,7 +183,7 @@ function render_main(v) {
 
       <div class="cfg_col">
         <div class="cfg_row cfg_head">
-          <label id="ws_label"><span class="icon cfg_icon"></span>WS</label>
+          <label class="cfg_label" id="ws_label"><span class="icon cfg_icon"></span>WS</label>
           <label class="switch"><input type="checkbox" id="use_ws" onchange="update_cfg(this)"><span class="slider"></span></label>
         </div>
         <div id="ws_block" style="display:none">
@@ -231,7 +231,7 @@ function render_main(v) {
       <!--NON-ESP-->
       <div class="cfg_col" id="mq_col">
         <div class="cfg_row cfg_head">
-          <label id="mqtt_label"><span class="icon cfg_icon"></span>MQTT</label>
+          <label class="cfg_label" id="mqtt_label"><span class="icon cfg_icon"></span>MQTT</label>
           <label class="switch"><input type="checkbox" id="use_mqtt" onchange="update_cfg(this);mq_change(this.checked)"><span class="slider"></span></label>
         </div>
 
@@ -263,7 +263,7 @@ function render_main(v) {
       
       <div class="cfg_col" id="serial_col" style="display:none">
         <div class="cfg_row cfg_head">
-          <label id="serial_label"><span class="icon cfg_icon"></span>Serial</label>
+          <label class="cfg_label" id="serial_label"><span class="icon cfg_icon"></span>Serial</label>
           <label class="switch"><input type="checkbox" id="use_serial" onchange="update_cfg(this)"><span class="slider"></span></label>
         </div>
 
@@ -274,7 +274,7 @@ function render_main(v) {
 
       <div class="cfg_col" id="bt_col" style="display:none">
         <div class="cfg_row cfg_head">
-          <label id="bt_label"><span class="icon cfg_icon"></span>Bluetooth</label>
+          <label class="cfg_label" id="bt_label"><span class="icon cfg_icon"></span>Bluetooth</label>
           <label class="switch"><input type="checkbox" id="use_bt" onchange="update_cfg(this)"><span class="slider"></span></label>
         </div>
 
@@ -286,7 +286,7 @@ function render_main(v) {
 
       <div class="cfg_col">
         <div class="cfg_row cfg_head">
-          <label><span class="icon cfg_icon"></span>Settings</label>
+          <label class="cfg_label"><span class="icon cfg_icon"></span>Settings</label>
         </div>
 
         <div class="cfg_row">
@@ -331,7 +331,7 @@ function render_main(v) {
 
         <div class="cfg_row">
           <label class="cfg_label">Settings</label>
-          <div>
+          <div class="cfg_btn_row">
             <button class="c_btn btn_mini" onclick="cfg_export()">Export</button>
             <button class="c_btn btn_mini" onclick="cfg_import()">Import</button>
           </div>
@@ -340,7 +340,7 @@ function render_main(v) {
 
       <div class="cfg_col">
         <div class="cfg_row cfg_head">
-          <label id="pin_label"><span class="icon cfg_icon"></span>PIN</label>
+          <label id="pin_label" class="cfg_label"><span class="icon cfg_icon"></span>PIN</label>
           <label class="switch"><input type="checkbox" id="use_pin" onchange="update_cfg(this)"><span class="slider"></span></label>
         </div>
 
@@ -355,10 +355,10 @@ function render_main(v) {
       </div>
 
       <!--NON-ESP-->
-      <div class="cfg_col" id="app_block">
+      <div class="cfg_col" id="pwa_block">
         <div class="cfg_row cfg_head">
-        <label><span class="icon cfg_icon"></span>App</label>
-          <div>
+        <label class="cfg_label"><span class="icon cfg_icon"></span>Web App</label>
+          <div class="cfg_btn_row">
             <button class="c_btn btn_mini ${isSSL() ? 'info_btn_dis' : ''}" onclick="pwa_install(false)">HTTP</button>
             <button class="c_btn btn_mini ${!isSSL() ? 'info_btn_dis' : ''}" onclick="pwa_install(true)">HTTPS</button>
           </div>
@@ -367,6 +367,16 @@ function render_main(v) {
         <span class="notice_block" id="pwa_unsafe">Enable <u>${browser()}://flags/#unsafely-treat-insecure-origin-as-secure</u> and add <u>${window.location.href}</u> to list</span>
       </div>
       <!--/NON-ESP-->
+
+      <div class="cfg_col" id="app_block">
+        <div class="cfg_row cfg_head">
+        <label class="cfg_label"><span class="icon cfg_icon"></span>App</label>
+          <div class="cfg_btn_row">
+            <button class="c_btn btn_mini" onclick="openURL('https://play.google.com/store/apps/details?id=ru.alexgyver.GyverHub')">Android</button>
+            <button class="c_btn btn_mini" onclick="openURL('https://github.com/GyverLibs/GyverHub/raw/main/app/GyverHub.apk')">.apk</button>
+          </div>
+        </div>
+      </div>
 
       <div class="cfg_col">
         <div class="cfg_info">

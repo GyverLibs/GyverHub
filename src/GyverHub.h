@@ -320,6 +320,7 @@ class GyverHub : public HubBuilder {
         while ((p = GH_splitter(str)) != NULL) {
             build.type = GH_BUILD_READ;
             build.action.name = p;
+            build.count = 0;
             answ += '\'';
             answ += p;
             answ += F("':'");
@@ -383,7 +384,7 @@ class GyverHub : public HubBuilder {
     }
 
     // отправить имя-значение на get-топик (MQTT)
-    void sendGet(const String& name, const String& value) {
+    void sendGet(GH_UNUSED const String& name, GH_UNUSED const String& value) {
         if (!running_f) return;
 #ifdef GH_ESP_BUILD
 #ifndef GH_NO_MQTT
@@ -398,7 +399,7 @@ class GyverHub : public HubBuilder {
     }
 
     // отправить значение по имени компонента на get-топик (MQTT) (значение будет прочитано в build). Имена можно передать списком через запятую
-    void sendGet(const String& name) {
+    void sendGet(GH_UNUSED const String& name) {
 #ifdef GH_ESP_BUILD
 #ifndef GH_NO_MQTT
         if (!running_f || !build_cb || bptr) return;
@@ -414,6 +415,7 @@ class GyverHub : public HubBuilder {
         while ((p = GH_splitter(str)) != NULL) {
             build.type = GH_BUILD_READ;
             build.action.name = p;
+            build.count = 0;
             build_cb();
             if (build.type == GH_BUILD_NONE) sendGet(p, value);
         }
@@ -449,6 +451,11 @@ class GyverHub : public HubBuilder {
 
     // парсить строку вида PREFIX/ID/HUB_ID/CMD/NAME с отдельным value
     void parse(char* url, char* value, GHconn_t conn, bool manual = true) {
+        if (!modules.read(GH_MOD_SERIAL) && conn == GH_SERIAL) return;
+        if (!modules.read(GH_MOD_BT) && conn == GH_BT) return;
+        if (!modules.read(GH_MOD_WS) && conn == GH_WS) return;
+        if (!modules.read(GH_MOD_MQTT) && conn == GH_MQTT) return;
+        
 #if defined(GH_ESP_BUILD) && !defined(GH_NO_FS) && !defined(GH_NO_OTA) && !defined(GH_NO_OTA_URL)
         if (ota_url_f) return;
 #endif
@@ -997,6 +1004,7 @@ class GyverHub : public HubBuilder {
 
         if (!chunked) {
             build.type = GH_BUILD_COUNT;
+            build.count = 0;
             buf_mode = GH_COUNT;
             buf_count = 0;
             String count;
@@ -1010,6 +1018,7 @@ class GyverHub : public HubBuilder {
         answ = F("\n{'controls':[");
         buf_mode = chunked ? GH_CHUNKED : GH_NORMAL;
         build.type = GH_BUILD_UI;
+        build.count = 0;
         sptr = &answ;
         tab_width = 0;
         build_cb();

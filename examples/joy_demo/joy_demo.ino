@@ -16,13 +16,13 @@ void build() {
 
     // первый обработаем в билдере
     GHpos pos1;
-    if (hub.Joystick("joy1", &pos1)) {
+    if (hub.Joystick(&pos1)) {
         Serial.println(pos1.x);
         Serial.println(pos1.y);
     }
 
     // второй в loop
-    hub.Joystick("joy2", &pos2, 0, 1, F("my joy"), GH_RED);
+    hub.Joystick(&pos2, 0, 1, F("my joy"), GH_RED);
 }
 
 void setup() {
@@ -38,7 +38,7 @@ void setup() {
     Serial.println();
     Serial.println(WiFi.localIP());
 
-    // hub.setupMQTT("test.mosquitto.org", 1883);
+    hub.setupMQTT("test.mosquitto.org", 1883);
 #endif
 
     hub.onBuild(build);

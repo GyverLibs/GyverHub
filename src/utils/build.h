@@ -29,27 +29,28 @@ class GHbuild {
     }
 
     // нажата кнопка с именем name. fstr - имя передано как F() или PSTR()
-    bool press(VSPTR name, bool fstr = true) {
+    bool press(VSPTR name, bool fstr) {
         return check(GH_ACTION_PRESS, name, fstr);
     }
 
     // отпущена кнопка с именем name. fstr - имя передано как F() или PSTR()
-    bool release(VSPTR name, bool fstr = true) {
+    bool release(VSPTR name, bool fstr) {
         return check(GH_ACTION_RELEASE, name, fstr);
     }
 
     // установка значения на компонент с именем name. fstr - имя передано как F() или PSTR()
-    bool set(VSPTR name, bool fstr = true) {
+    bool set(VSPTR name, bool fstr) {
         return check(GH_ACTION_SET, name, fstr);
     }
 
     // имя действия совпадает с именем name. fstr - имя передано как F() или PSTR()
-    bool nameEq(VSPTR name, bool fstr = true) {
-        return fstr ? !strcmp_P(action.name, (PGM_P)name) : !strcmp(action.name, (PGM_P)name);
+    bool nameEq(VSPTR name, bool fstr) {
+        if (name) return fstr ? !strcmp_P(action.name, (PGM_P)name) : !strcmp(action.name, (PGM_P)name);
+        else return autoNameEq();
     }
 
     // парсить значение компонента с именем name. fstr - имя передано как F() или PSTR()
-    bool parseSet(VSPTR name, void* value, GHdata_t type, bool fstr = true) {
+    bool parseSet(VSPTR name, void* value, GHdata_t type, bool fstr) {
         if (set(name, fstr)) {
             GHtypeFromStr(action.value, value, type);
             return 1;
@@ -57,7 +58,7 @@ class GHbuild {
     }
 
     // парсить действие по кнопке с именем name. fstr - имя передано как F() или PSTR()
-    bool parseClick(VSPTR name, bool* value, bool fstr = true) {
+    bool parseClick(VSPTR name, bool* value, bool fstr) {
         if (press(name, fstr)) {
             if (value) *value = 1;
             return 1;
@@ -68,6 +69,10 @@ class GHbuild {
         return 0;
     }
 
+    bool autoNameEq() {
+        return action.name[0] == '_' && action.name[1] == 'n' && atoi(action.name + 2) == count;
+    }
+
     // тип билда
     GHbuild_t type = GH_BUILD_NONE;
 
@@ -76,6 +81,10 @@ class GHbuild {
 
     // действие
     GHaction action;
+
+    
+    // private
+    uint16_t count = 0;
 
    private:
     bool check(GHaction_t atype, VSPTR name, bool fstr) {

@@ -5,7 +5,7 @@
 #define AP_PASS ""
 
 // ====== НАСТРОЙКИ КОМПИЛЯЦИИ ======
-#define ATOMIC_FS_UPDATE  // OTA обновление GZIP файлом
+//#define ATOMIC_FS_UPDATE  // OTA обновление GZIP файлом
 //#define GH_ASYNC          // использовать ASYNC библиотеки
 
 // включить сайт в память программы (не нужно загружать файлы в память)
@@ -80,48 +80,49 @@ void build() {
 
   // BeginWidgets достаточно вызвать один раз, интерфейс будет собираться сам
   hub.BeginWidgets();
-  hub.Tabs(F("tabs"), &tab, F("Tab 1,MY TAB,tab 2,tab 3,TAB 4"));
+  hub.Tabs(&tab, F("Tab 1,MY TAB,tab 2,tab 3,TAB 4"));
   // hub.EndWidgets();
 
   // hub.BeginWidgets();
   hub.WidgetSize(25);
-  hub.Button(F("b1"), &b1, F("Button 1"));
-  hub.Button(F("b2"), &b2, F("Button 2"), GH_RED);
-  hub.ButtonIcon(F("play"), 0, F(""));
-  hub.ButtonIcon(F("stop"), 0, F(""), GH_AQUA);
+  hub.Button(&b1, F("Button 1"));
+  hub.Button(&b2, F("Button 2"), GH_RED);
+  hub.ButtonIcon(0, F(""));
+  hub.ButtonIcon(0, F(""), GH_AQUA);
   // hub.EndWidgets();
 
   // hub.BeginWidgets();
   hub.WidgetSize(50);
-  hub.Label(F("lbl"), label_s, F("Some label"));
+  // с именем для обновлений
+  hub.Label_(F("lbl"), label_s, F("Some label"));
 
   hub.WidgetSize(25);
-  hub.LED(F("myled"), 0, F("Status"));
-  hub.LED(F("myicn"), 0, F("Icon"), F(""));
+  hub.LED(0, F("Status"));
+  hub.LED(0, F("Icon"), F(""));
   // hub.EndWidgets();
 
   // INPUTS
   hub.Title(F("Inputs"));
   // hub.BeginWidgets();
   hub.WidgetSize(50);
-  hub.Input(F("inp_s"), &inp_str, GH_STR, F("String input"), 0, F("^[A-Za-z]+$"));   // только буквы a-Z
-  hub.Input(F("inp_c"), &inp_cstr, GH_CSTR, F("cstring input"), 10);
-  hub.Input(F("inp_i"), &inp_int, GH_INT16, F("int input"));
-  hub.Input(F("inp_f"), &inp_float, GH_FLOAT, F("float input"));
+  hub.Input(&inp_str, GH_STR, F("String input"), 0, F("^[A-Za-z]+$"));   // только буквы a-Z
+  hub.Input(&inp_cstr, GH_CSTR, F("cstring input"), 10);
+  hub.Input(&inp_int, GH_INT16, F("int input"));
+  hub.Input(&inp_float, GH_FLOAT, F("float input"));
 
-  hub.Pass(F("pass"), &pass, GH_STR, F("Pass input"), 0, GH_RED);
+  hub.Pass(&pass, GH_STR, F("Pass input"), 0, GH_RED);
   // hub.EndWidgets();
 
   // hub.BeginWidgets();
   hub.WidgetSize(100);
-  hub.Slider(F("sld1"), &sld, GH_INT16, F("Slider"));
-  hub.Slider(F("sld2"), &sld_f, GH_FLOAT, F("Slider F"), 10, 90, 0.5, GH_PINK);
+  hub.Slider(&sld, GH_INT16, F("Slider"));
+  hub.Slider(&sld_f, GH_FLOAT, F("Slider F"), 10, 90, 0.5, GH_PINK);
   // hub.EndWidgets();
 
   // hub.BeginWidgets();
   hub.WidgetSize(50);
-  hub.Gauge(F("ga1"), random(-5, 30), F("°C"), F("Temp"), -5, 30, 0.1, GH_RED);
-  if (hub.Joystick("joy", &pos)) {
+  hub.Gauge(random(-5, 30), F("°C"), F("Temp"), -5, 30, 0.1, GH_RED);
+  if (hub.Joystick(&pos)) {
     Serial.println("joy:");
     Serial.println(pos.x);
     Serial.println(pos.y);
@@ -130,43 +131,43 @@ void build() {
 
   // hub.BeginWidgets();
   hub.WidgetSize(50);
-  hub.Spinner(F("spin"), &spin, GH_INT16, F("Spinner"));
-  hub.Spinner(F("spinf"), &spin_f, GH_FLOAT, F("Spinner F"), 0, 10, 0.5);
+  hub.Spinner(&spin, GH_INT16, F("Spinner"));
+  hub.Spinner(&spin_f, GH_FLOAT, F("Spinner F"), 0, 10, 0.5);
   // hub.EndWidgets();
 
   // hub.BeginWidgets();
   hub.WidgetSize(25);
-  hub.Switch(F("sw"), &sw, F("My switch"));
-  hub.SwitchIcon(F("sw_i"), &sw, F("My switch i"), F(""), GH_BLUE);
-  hub.SwitchText(F("sw_t"), &sw, F("My switch t"), F("ON"), GH_VIOLET);
-  hub.Color(F("color"), &col, F("Color"));
+  hub.Switch(&sw, F("My switch"));
+  hub.SwitchIcon(&sw, F("My switch i"), F(""), GH_BLUE);
+  hub.SwitchText(&sw, F("My switch t"), F("ON"), GH_VIOLET);
+  hub.Color(&col, F("Color"));
   // hub.EndWidgets();
 
   // hub.BeginWidgets();
   hub.WidgetSize(50);
-  hub.Date(F("date"), &gdate, F("Date select"), GH_RED);
-  hub.Time(F("time"), &gtime, F("Time select"), GH_YELLOW);
+  hub.Date(&gdate, F("Date select"), GH_RED);
+  hub.Time(&gtime, F("Time select"), GH_YELLOW);
   // hub.EndWidgets();
 
   // hub.BeginWidgets();
   hub.WidgetSize(100);
-  hub.DateTime(F("datetime"), &gdatetime, F("Date time"));
+  hub.DateTime(&gdatetime, F("Date time"));
   // hub.EndWidgets();
 
   // hub.BeginWidgets();
   hub.WidgetSize(50);
-  hub.Select(F("sel"), &sel, F("kek,puk,lol"), F("List picker"));
-  hub.Flags(F("flags"), &flags, F("mode 1,flag,test"), F("My flags"), GH_AQUA);
+  hub.Select(&sel, F("kek,puk,lol"), F("List picker"));
+  hub.Flags(&flags, F("mode 1,flag,test"), F("My flags"), GH_AQUA);
   // hub.EndWidgets();
 
   // hub.BeginWidgets();
-  hub.Display(F("disp"), disp_s, F(""), GH_BLUE);
-  hub.HTML(F("text"), html_s);
+  hub.Display(disp_s, F(""), GH_BLUE);
+  hub.HTML(html_s);
   // hub.EndWidgets();
 
   // hub.BeginWidgets();
   hub.WidgetSize(100);
-  hub.Log(F("log"), &dlog);
+  hub.Log(&dlog);
 }
 
 void setup() {

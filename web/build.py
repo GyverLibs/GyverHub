@@ -1,7 +1,7 @@
 # GyverHub Web Builder
 
-version = '0.37b'
-notes = 'Add regex for input'
+version = '0.38b'
+notes = 'Minor fixes'
 
 js_files = [
     'src/include/main.js',

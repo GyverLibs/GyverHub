@@ -95,6 +95,7 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
 
   switch (device.type) {
     case 'alert':
+      release_all();
       alert(device.text);
       break;
 
@@ -124,7 +125,7 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
           log('Update device #' + id);
           updateDevice(devices[id], device);
           /*NON-ESP*/
-          EL(`icon#${id}`).innerHTML = device.icon ? device.icon : '';
+          if (device.icon.length) EL(`icon#${id}`).innerHTML = device.icon;
           /*/NON-ESP*/
           EL(`name#${id}`).innerHTML = device.name ? device.name : 'Unknown';
         }
@@ -364,7 +365,7 @@ function showControls(controls) {
     for (let lbl of labels) lbl.classList.add('widget_label_name');
   }
 
-  resizeChbuttons();
+  resizeFlags();
   moveSliders();
   scrollDown();
   resizeSpinners();

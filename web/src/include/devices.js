@@ -32,9 +32,10 @@ function load_devices() {
 
 // ============== DEVICE ===============
 function addDevice(id) {
+  let icon = (!isESP() && devices[id].icon.length) ? `<span class="icon icon_min" id="icon#${id}">${devices[id].icon}</span>` : '';
   EL('devices').innerHTML += `<div class="device offline" id="device#${id}" onclick="device_h('${id}')" title="${id} [${devices[id].prefix}]">
   <div class="device_inner">
-    <div class="d_icon"><!--NON-ESP--><span class="icon icon_min" id="icon#${id}">${devices[id].icon}</span><!--/NON-ESP--></div>
+    <div class="d_icon ${icon ? '' : 'd_icon_empty'}">${icon}</div>
       <div class="d_head">
         <span><span class="d_name" id="name#${id}">${devices[id].name}</span><sup class="conn_dev" id="Serial#${id}">S</sup><sup class="conn_dev" id="BT#${id}">B</sup><sup class="conn_dev" id="WS#${id}">W</sup><sup class="conn_dev" id="MQTT#${id}">M</sup></span>
       </div>
@@ -44,6 +45,7 @@ function addDevice(id) {
 }
 
 // ============ COMPONENTS =============
+// button
 function addButton(ctrl) {
   if (checkDup(ctrl)) return;
   checkWidget(ctrl);
@@ -68,7 +70,25 @@ function addButtonIcon(ctrl) {
     EL(btn_row_id).innerHTML += `${renderButton(ctrl.name, 'icon btn_icon', ctrl.name, ctrl.label, ctrl.size, ctrl.color, true)}`;
   }
 }
+function beginButtons() {
+  btn_row_id = 'buttons_row#' + btn_row_count;
+  btn_row_count++;
+  EL('controls').innerHTML += `
+  <div id="${btn_row_id}" class="control control_nob control_scroll"></div>
+  `;
+}
+function endButtons() {
+  if (btn_row_id && EL(btn_row_id).getElementsByTagName('*').length == 1) {
+    EL(btn_row_id).innerHTML = "<div></div>" + EL(btn_row_id).innerHTML + "<div></div>";  // center button
+  }
+  btn_row_id = null;
+}
+function renderButton(title, className, name, label, size, color = null, is_icon = false) {
+  let col = (color != null) ? ((is_icon ? ';color:' : ';background:') + intToCol(color)) : '';
+  return `<button id="#${name}" title='${title}' style="font-size:${size}px${col}" class="${className}" onmousedown="if(!touch)click_h('${name}',1)" onmouseup="if(!touch&&pressId)click_h('${name}',0)" onmouseleave="if(pressId&&!touch)click_h('${name}',0);" ontouchstart="touch=1;click_h('${name}',1)" ontouchend="click_h('${name}',0)">${label}</button>`;
+}
 
+// tabs
 function addTabs(ctrl) {
   if (checkDup(ctrl)) return;
   checkWidget(ctrl);
@@ -99,23 +119,25 @@ function addTabs(ctrl) {
   `;
   }
 }
+
+// menu
 function addMenu(ctrl) {
   let inner = '';
   let labels = ctrl.text.toString().split(',');
   for (let i in labels) {
     let sel = (i == ctrl.value) ? 'menu_act' : '';
-    inner += `<div onclick="menu_click(${i})" class="menu_item ${sel}">${labels[i]}</div>`;
+    inner += `<div onclick="menuClick(${i})" class="menu_item ${sel}">${labels[i]}</div>`;
   }
   document.querySelector(':root').style.setProperty('--menu_h', ((labels.length + 2) * 35 + 10) + 'px');
   EL('menu_user').innerHTML = inner;
 }
-function menu_click(num) {
+function menuClick(num) {
   menu_show(0);
-  menu_deact();
+  menuDeact();
   if (screen != 'device') show_screen('device');
   set_h('_menu', num);
 }
-function menu_deact() {
+function menuDeact() {
   let els = document.getElementById('menu_user').children;
   for (let el in els) {
     if (els[el].tagName == 'DIV') els[el].classList.remove('menu_act');
@@ -124,102 +146,7 @@ function menu_deact() {
   EL('menu_fsbr').classList.remove('menu_act');
 }
 
-function addSpace(ctrl) {
-  /*if (wid_row_id) {
-    EL(wid_row_id).innerHTML += `
-    <div class="widget" style="width:${ctrl.tab_w}%"><div class="widget_inner widget_space"></div></div>
-  `;
-  } else {*/
-  endButtons();
-  EL('controls').innerHTML += `
-    <div style="height:${ctrl.height}px"></div>
-  `;
-  //}
-}
-function addTitle(ctrl) {
-  endWidgets();
-  endButtons();
-  EL('controls').innerHTML += `
-  <div class="control control_title">
-    <span class="c_title">${ctrl.label}</span>
-  </div>
-  `;
-}
-// =========================
-function addLED(ctrl) {
-  if (checkDup(ctrl)) return;
-  checkWidget(ctrl);
-  endButtons();
-  let ch = ctrl.value ? 'checked' : '';
-  if (ctrl.text) {
-    if (wid_row_id) {
-      let inner = `
-      <label id="swlabel_${ctrl.name}" class="led_i_cont led_i_cont_tab"><input type="checkbox" class="switch_t" id='#${ctrl.name}' ${ch} disabled><span class="switch_i led_i led_i_tab">${ctrl.text}</span></label>
-      `;
-      addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
-    } else {
-      EL('controls').innerHTML += `
-      <div class="control">
-        <label title='${ctrl.name}'>${ctrl.clabel}</label>
-        <label id="swlabel_${ctrl.name}" class="led_i_cont"><input type="checkbox" class="switch_t" id='#${ctrl.name}' ${ch} disabled><span class="switch_i led_i">${ctrl.text}</span></label>
-      </div>
-    `;
-    }
-  } else {
-    if (wid_row_id) {
-      let inner = `
-    <label class="led_cont"><input type="checkbox" class="switch_t" id='#${ctrl.name}' ${ch} disabled><span class="led"></span></label>
-    `;
-      addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
-    } else {
-      EL('controls').innerHTML += `
-      <div class="control">
-        <label title='${ctrl.name}'>${ctrl.clabel}</label>
-        <label class="led_cont"><input type="checkbox" class="switch_t" id='#${ctrl.name}' ${ch} disabled><span class="led"></span></label>
-      </div>
-    `;
-    }
-  }
-}
-function addIcon(ctrl) {
-  if (checkDup(ctrl)) return;
-  checkWidget(ctrl);
-  endButtons();
-  let col = (ctrl.color != null) ? `color:${intToCol(ctrl.color)}` : '';
-  if (wid_row_id) {
-    let inner = `
-    <span class="icon icon_t" id='#${ctrl.name}' style="${col}">${ctrl.text}</span>
-    `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
-  } else {
-    EL('controls').innerHTML += `
-      <div class="control">
-        <label title='${ctrl.name}'>${ctrl.clabel}</label>
-        <span class="icon icon_t" id='#${ctrl.name}' style="${col}">${ctrl.text}</span>
-      </div>
-    `;
-  }
-}
-function addLabel(ctrl) {
-  if (checkDup(ctrl)) return;
-  checkWidget(ctrl);
-  endButtons();
-  let col = (ctrl.color) ? (`color:${intToCol(ctrl.color)}`) : '';
-  if (wid_row_id) {
-    let inner = `
-    <label class="c_label text_t c_label_tab" id='#${ctrl.name}' style="${col};font-size:${ctrl.size}px">${ctrl.value}</label>
-    `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
-  } else {
-    EL('controls').innerHTML += `
-    <div class="control">
-      <label title='${ctrl.name}'>${ctrl.clabel}</label>
-      <label class="c_label text_t" id='#${ctrl.name}' style="${col};font-size:${ctrl.size}px">${ctrl.value}</label>
-    </div>
-  `;
-  }
-}
-
+// input
 function addInput(ctrl) {
   if (checkDup(ctrl)) return;
   checkWidget(ctrl);
@@ -255,6 +182,14 @@ function sendInput(name) {
   if (r.test(inp.value)) set_h(name, inp.value);
   else showPopupError("Wrong text!");
 }
+function checkLen(arg, len) {
+  if (len && arg.value.length > len) arg.value = arg.value.substring(0, len);
+}
+function checkEnter(arg) {
+  if (event.key == 'Enter') set_h(arg.name, arg.value);
+}
+
+// pass
 function addPass(ctrl) {
   if (checkDup(ctrl)) return;
   checkWidget(ctrl);
@@ -286,22 +221,12 @@ function addPass(ctrl) {
     `;
   }
 }
+function togglePass(id) {
+  if (EL(id).type == 'text') EL(id).type = 'password';
+  else EL(id).type = 'text';
+}
 
-/*function addSliderW(ctrl) {
-  if (checkDup(ctrl)) return;
-  checkWidget(ctrl);
-  endButtons();
-  EL('controls').innerHTML += `
-  <div class="control">
-    <div class="sld_name">
-      <label title='${ctrl.name}'>${ctrl.label}</label>
-    </div>
-    <div class="cfg_inp_row">
-      <input name="${ctrl.name}" id="#${ctrl.name}" onchange="set_h('${ctrl.name}',this.value)" oninput="moveSlider(this)" type="range" class="c_rangeW slider_t" value="${ctrl.value}" min="${ctrl.min}" max="${ctrl.max}" step="${ctrl.step}"><div class="sldW_out"><output id="out#${ctrl.name}">${ctrl.value}</output></div>
-    </div>
-  </div>
-  `;
-}*/
+// slider
 function addSlider(ctrl) {
   if (checkDup(ctrl)) return;
   checkWidget(ctrl);
@@ -328,7 +253,20 @@ function addSlider(ctrl) {
   `;
   }
 }
+function moveSliders() {
+  document.querySelectorAll('.c_range, .c_rangeW').forEach(x => { moveSlider(x, false) });
+}
+function moveSlider(arg, sendf = true) {
+  if (dis_scroll_f) {
+    dis_scroll_f--;
+    if (!dis_scroll_f) disableScroll();
+  }
+  arg.style.backgroundSize = (arg.value - arg.min) * 100 / (arg.max - arg.min) + '% 100%';
+  EL('out' + arg.id).value = formatToStep(arg.value, arg.step);
+  if (sendf) input_h(arg.name, arg.value);
+}
 
+// switch
 function addSwitch(ctrl) {
   if (checkDup(ctrl)) return;
   checkWidget(ctrl);
@@ -394,6 +332,7 @@ function addSwitchText(ctrl) {
   }
 }
 
+// date time
 function addDate(ctrl) {
   if (checkDup(ctrl)) return;
   checkWidget(ctrl);
@@ -454,37 +393,11 @@ function addDateTime(ctrl) {
   `;
   }
 }
-
-function addSelect(ctrl) {
-  if (checkDup(ctrl)) return;
-  checkWidget(ctrl);
-  endButtons();
-  let elms = ctrl.text.toString().split(',');
-  let options = '';
-  for (let i in elms) {
-    let sel = (i == ctrl.value) ? 'selected' : '';
-    options += `<option value="${i}" ${sel}>${elms[i]}</option>`;
-  }
-  let col = (ctrl.color != null) ? `color:${intToCol(ctrl.color)}` : '';
-  if (wid_row_id) {
-    let inner = `
-    <select class="cfg_inp c_inp_block select_t" style="${col}" id='#${ctrl.name}' onchange="set_h('${ctrl.name}',this.value)">
-      ${options}
-    </select>
-    `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
-  } else {
-    EL('controls').innerHTML += `
-    <div class="control">
-    <label title='${ctrl.name}'>${ctrl.clabel}</label>
-      <select class="cfg_inp c_inp_block select_t" style="${col}" id='#${ctrl.name}' onchange="set_h('${ctrl.name}',this.value)">
-        ${options}
-      </select>
-    </div>
-  `;
-  }
+function getUnix(arg) {
+  return Math.floor(arg.valueAsNumber / 1000);
 }
 
+// color
 function addColor(ctrl) {
   if (checkDup(ctrl)) return;
   checkWidget(ctrl);
@@ -522,6 +435,35 @@ function addColor(ctrl) {
     `;
   }*/
 }
+function openPicker(id) {
+  EL('color_cont#' + id).getElementsByTagName('button')[0].click()
+}
+function showPickers() {
+  for (let picker in pickers) {
+    let id = '#' + picker;
+    Pickr.create({
+      el: EL(id),
+      theme: 'nano',
+      default: pickers[picker],
+      defaultRepresentation: 'HEXA',
+      components: {
+        preview: true,
+        hue: true,
+        interaction: {
+          hex: false,
+          input: true,
+          save: true
+        }
+      }
+    }).on('save', (color) => {
+      let col = color.toHEXA().toString();
+      set_h(picker, colToInt(col));
+      EL('color_btn' + id).style.color = col;
+    });
+  }
+}
+
+// spinner
 function addSpinner(ctrl) {
   if (checkDup(ctrl)) return;
   checkWidget(ctrl);
@@ -551,6 +493,23 @@ function addSpinner(ctrl) {
   `;
   }
 }
+function spinSpinner(el, dir) {
+  let num = (dir == 1) ? el.previousElementSibling : el.nextElementSibling;
+  let val = Number(num.value) + Number(num.step) * Number(dir);
+  val = Math.max(Number(num.min), val);
+  val = Math.min(Number(num.max), val);
+  num.value = formatToStep(val, num.step);
+  resizeSpinner(num);
+}
+function resizeSpinner(el) {
+  el.style.width = el.value.length + 'ch';
+}
+function resizeSpinners() {
+  let spinners = document.querySelectorAll(".spinner");
+  spinners.forEach((sp) => resizeSpinner(sp));
+}
+
+// flags
 function addFlags(ctrl) {
   if (checkDup(ctrl)) return;
   checkWidget(ctrl);
@@ -562,7 +521,7 @@ function addFlags(ctrl) {
     let ch = (!(val & 1)) ? '' : 'checked';
     val >>= 1;
     flags += `<label id="swlabel_${ctrl.name}" class="chbutton chtext">
-    <input name="${ctrl.name}" type="checkbox" onclick="set_h('${ctrl.name}',chbuttonEncode('${ctrl.name}'))" ${ch}>
+    <input name="${ctrl.name}" type="checkbox" onclick="set_h('${ctrl.name}',encodeFlags('${ctrl.name}'))" ${ch}>
     <span class="chbutton_s chtext_s">${labels[i]}</span></label>`;
   }
   let col = (ctrl.color != null) ? `<style>#swlabel_${ctrl.name} input:checked+.chbutton_s{background:${intToCol(ctrl.color)}}</style>` : '';
@@ -585,60 +544,26 @@ function addFlags(ctrl) {
   `;
   }
 }
+function resizeFlags() {
+  let chtext = document.querySelectorAll(".chtext");
+  let chtext_s = document.querySelectorAll(".chtext_s");
+  chtext.forEach((ch, i) => {
+    let len = chtext_s[i].innerHTML.length + 2;
+    chtext[i].style.width = (len + 0.5) + 'ch';
+    chtext_s[i].style.width = len + 'ch';
+  });
+}
+function encodeFlags(name) {
+  let weeks = document.getElementsByName(name);
+  let encoded = 0;
+  weeks.forEach((w, i) => {
+    if (w.checked) encoded |= (1 << weeks.length);
+    encoded >>= 1;
+  });
+  return encoded;
+}
 
-function addLog(ctrl) {
-  if (checkDup(ctrl)) return;
-  checkWidget(ctrl);
-  endButtons();
-  if (ctrl.text.endsWith('\n')) ctrl.text = ctrl.text.slice(0, -1);
-  if (wid_row_id) {
-    let inner = `
-    <textarea id="#${ctrl.name}" title='${ctrl.name}' class="cfg_inp c_log text_t" readonly>${ctrl.text}</textarea>
-    `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
-  } else {
-    EL('controls').innerHTML += `
-    <div class="control">
-      <textarea id="#${ctrl.name}" title='${ctrl.name}' class="cfg_inp c_log text_t" readonly>${ctrl.text}</textarea>
-    </div>
-  `;
-  }
-}
-function addDisplay(ctrl) {
-  if (checkDup(ctrl)) return;
-  checkWidget(ctrl);
-  endButtons();
-  let col = (ctrl.color != null) ? ('background:' + intToCol(ctrl.color)) : '';
-  if (wid_row_id) {
-    let inner = `
-    <textarea id="#${ctrl.name}" title='${ctrl.name}' class="cfg_inp c_area c_disp text_t" style="font-size:${ctrl.size}px;${col}" rows="${ctrl.rows}" readonly>${ctrl.value}</textarea>
-    `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
-  } else {
-    EL('controls').innerHTML += `
-    <div class="control">
-      <textarea id="#${ctrl.name}" title='${ctrl.name}' class="cfg_inp c_area c_disp text_t" style="font-size:${ctrl.size}px;${col}" rows="${ctrl.rows}" readonly>${ctrl.value}</textarea>
-    </div>
-  `;
-  }
-}
-function addHTML(ctrl) {
-  if (checkDup(ctrl)) return;
-  checkWidget(ctrl);
-  endButtons();
-  if (wid_row_id) {
-    let inner = `
-    <div name="text" id="#${ctrl.name}" title='${ctrl.name}' class="c_text text_t">${ctrl.value}</div>
-    `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
-  } else {
-    EL('controls').innerHTML += `
-    <div class="control control_nob">
-      <div name="text" id="#${ctrl.name}" title='${ctrl.name}' class="c_text text_t">${ctrl.value}</div>
-    </div>
-    `;
-  }
-}
+// canvas
 function addCanvas(ctrl) {
   if (checkDup(ctrl)) return;
   checkWidget(ctrl);
@@ -656,184 +581,6 @@ function addCanvas(ctrl) {
     `;
   }
   canvases[ctrl.name] = { name: ctrl.name, width: ctrl.width, height: ctrl.height, value: ctrl.value };
-}
-function addGauge(ctrl) {
-  if (checkDup(ctrl)) return;
-  checkWidget(ctrl);
-  endButtons();
-  if (wid_row_id) {
-    let inner = `
-    <canvas class="gauge_t" id="#${ctrl.name}"></canvas>
-    `;
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
-  } else {
-    EL('controls').innerHTML += `
-    <div class="cv_block cv_block_back">
-      <canvas class="gauge_t" id="#${ctrl.name}"></canvas>
-    </div>
-    `;
-  }
-  gauges[ctrl.name] = { perc: null, name: ctrl.name, value: Number(ctrl.value), min: Number(ctrl.min), max: Number(ctrl.max), step: Number(ctrl.step), text: ctrl.text, color: ctrl.color };
-}
-function addImage(ctrl) {
-  checkWidget(ctrl);
-  endButtons();
-  if (wid_row_id) {
-    let inner = `
-    <img src="${ctrl.value}" style="width: 100%">
-    `;
-    addWidget(ctrl.tab_w, '', ctrl.wlabel, inner);
-  } else {
-    EL('controls').innerHTML += `
-    <div class="cv_block cv_block_back">
-      <img src="${ctrl.value}" style="width: 100%">
-    </div>
-    `;
-  }
-}
-function addStream(ctrl) {
-  checkWidget(ctrl);
-  endButtons();
-  if (wid_row_id) {
-    let inner = `
-    
-    `;
-    addWidget(ctrl.tab_w, '', ctrl.wlabel, inner);
-  } else {
-    EL('controls').innerHTML += `
-    <div class="cv_block cv_block_back">
-      
-    </div>
-    `;
-  }
-}
-function addJoy(ctrl) {
-  if (checkDup(ctrl)) return;
-  checkWidget(ctrl);
-  endButtons();
-  let inner = `
-    <div id="joy#${ctrl.name}" class="joyCont"><canvas id="#${ctrl.name}"></canvas></div>
-  `;
-
-  if (wid_row_id) {
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
-  } else {
-    EL('controls').innerHTML += `
-    <div id="joy#${ctrl.name}" class="joyCont"><canvas id="#${ctrl.name}"></canvas></div>
-    `;
-  }
-  joys[ctrl.name] = ctrl;
-}
-
-// ================ UTILS =================
-function checkWidget(ctrl) {
-  if (ctrl.tab_w && !wid_row_id) beginWidgets(null, true);
-}
-function beginWidgets(ctrl = null, check = false) {
-  if (!check) endButtons();
-  wid_row_size = 0;
-  if (devices[focused].break_widgets) return;
-  let st = (ctrl && ctrl.height) ? `style="height:${ctrl.height}px"` : '';
-  wid_row_id = 'widgets_row#' + wid_row_count;
-  wid_row_count++;
-  EL('controls').innerHTML += `
-  <div class="widget_row" id="${wid_row_id}" ${st}></div>
-  `;
-}
-function endWidgets() {
-  endButtons();
-  wid_row_id = null;
-}
-function addWidget(width, name, label, inner, height = 0, noback = false) {
-  wid_row_size += width;
-  if (wid_row_size > 100) {
-    beginWidgets();
-    wid_row_size = width;
-  }
-
-  let h = height ? ('height:' + height + 'px') : '';
-  let lbl = (label && label != '_no') ? `<div class="widget_label" title="${name}">${label}</div>` : '';
-  EL(wid_row_id).innerHTML += `
-  <div class="widget" style="width:${width}%;${h}">
-    <div class="widget_inner ${noback ? 'widget_space' : ''}">
-      ${lbl}
-      <div class="widget_block">
-        ${inner}
-      </div>
-    </div>
-  </div>
-  `;
-}
-function openPicker(id) {
-  EL('color_cont#' + id).getElementsByTagName('button')[0].click()
-}
-function showPickers() {
-  for (let picker in pickers) {
-    let id = '#' + picker;
-    Pickr.create({
-      el: EL(id),
-      theme: 'nano',
-      default: pickers[picker],
-      defaultRepresentation: 'HEXA',
-      components: {
-        preview: true,
-        hue: true,
-        interaction: {
-          hex: false,
-          input: true,
-          save: true
-        }
-      }
-    }).on('save', (color) => {
-      let col = color.toHEXA().toString();
-      set_h(picker, colToInt(col));
-      EL('color_btn' + id).style.color = col;
-    });
-  }
-}
-function renderButton(title, className, name, label, size, color = null, is_icon = false) {
-  let col = (color != null) ? ((is_icon ? ';color:' : ';background:') + intToCol(color)) : '';
-  return `<button id="#${name}" title='${title}' style="font-size:${size}px${col}" class="${className}" onmousedown="if(!touch)click_h('${name}',1)" onmouseup="if(!touch&&pressId)click_h('${name}',0)" onmouseleave="if(pressId&&!touch)click_h('${name}',0);" ontouchstart="touch=1;click_h('${name}',1)" ontouchend="click_h('${name}',0)">${label}</button>`;
-}
-function beginButtons() {
-  btn_row_id = 'buttons_row#' + btn_row_count;
-  btn_row_count++;
-  EL('controls').innerHTML += `
-  <div id="${btn_row_id}" class="control control_nob control_scroll"></div>
-  `;
-}
-function endButtons() {
-  if (btn_row_id && EL(btn_row_id).getElementsByTagName('*').length == 1) {
-    EL(btn_row_id).innerHTML = "<div></div>" + EL(btn_row_id).innerHTML + "<div></div>";  // center button
-  }
-  btn_row_id = null;
-}
-function spinSpinner(el, dir) {
-  let num = (dir == 1) ? el.previousElementSibling : el.nextElementSibling;
-  let val = Number(num.value) + Number(num.step) * Number(dir);
-  val = Math.max(Number(num.min), val);
-  val = Math.min(Number(num.max), val);
-  num.value = formatToStep(val, num.step);
-  resizeSpinner(num);
-}
-function resizeSpinner(el) {
-  el.style.width = el.value.length + 'ch';
-}
-function resizeSpinners() {
-  let spinners = document.querySelectorAll(".spinner");
-  spinners.forEach((sp) => resizeSpinner(sp));
-}
-function moveSliders() {
-  document.querySelectorAll('.c_range, .c_rangeW').forEach(x => { moveSlider(x, false) });
-}
-function moveSlider(arg, sendf = true) {
-  if (dis_scroll_f) {
-    dis_scroll_f--;
-    if (!dis_scroll_f) disableScroll();
-  }
-  arg.style.backgroundSize = (arg.value - arg.min) * 100 / (arg.max - arg.min) + '% 100%';
-  EL('out' + arg.id).value = formatToStep(arg.value, arg.step);
-  if (sendf) input_h(arg.name, arg.value);
 }
 function showCanvases() {
   Object.values(canvases).forEach(canvas => {
@@ -919,6 +666,26 @@ function clickCanvas(id, e) {
   if (y < 0) y = 0;
   set_h(id, (x << 16) | y);
 }
+
+// gauge
+function addGauge(ctrl) {
+  if (checkDup(ctrl)) return;
+  checkWidget(ctrl);
+  endButtons();
+  if (wid_row_id) {
+    let inner = `
+    <canvas class="gauge_t" id="#${ctrl.name}"></canvas>
+    `;
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
+  } else {
+    EL('controls').innerHTML += `
+    <div class="cv_block cv_block_back">
+      <canvas class="gauge_t" id="#${ctrl.name}"></canvas>
+    </div>
+    `;
+  }
+  gauges[ctrl.name] = { perc: null, name: ctrl.name, value: Number(ctrl.value), min: Number(ctrl.min), max: Number(ctrl.max), step: Number(ctrl.step), text: ctrl.text, color: ctrl.color };
+}
 function drawGauge(g) {
   let cv = EL('#' + g.name);
   if (!cv || !cv.parentNode.clientWidth) return;
@@ -998,15 +765,288 @@ function showGauges() {
     drawGauge(gauge);
   });
 }
-function checkLen(arg, len) {
-  if (len && arg.value.length > len) arg.value = arg.value.substring(0, len);
+
+// joystick
+function addJoy(ctrl) {
+  if (checkDup(ctrl)) return;
+  checkWidget(ctrl);
+  endButtons();
+  let inner = `
+    <div id="joy#${ctrl.name}" class="joyCont"><canvas id="#${ctrl.name}"></canvas></div>
+  `;
+
+  if (wid_row_id) {
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
+  } else {
+    EL('controls').innerHTML += `
+    <div id="joy#${ctrl.name}" class="joyCont"><canvas id="#${ctrl.name}"></canvas></div>
+    `;
+  }
+  joys[ctrl.name] = ctrl;
 }
-function checkEnter(arg) {
-  if (event.key == 'Enter') set_h(arg.name, arg.value);
+function showJoys() {
+  for (let joy in joys) {
+    joys[joy].joy = new Joystick(joy,
+      intToCol(joys[joy].color == null ? colors[cfg.maincolor] : joys[joy].color),
+      joys[joy].auto,
+      joys[joy].exp,
+      function (data) {
+        input_h(joy, ((data.x + 255) << 16) | (data.y + 255));
+      });
+  }
 }
-function getUnix(arg) {
-  return Math.floor(arg.valueAsNumber / 1000);
+
+// other
+function addSpace(ctrl) {
+  /*if (wid_row_id) {
+    EL(wid_row_id).innerHTML += `
+    <div class="widget" style="width:${ctrl.tab_w}%"><div class="widget_inner widget_space"></div></div>
+  `;
+  } else {*/
+  endButtons();
+  EL('controls').innerHTML += `
+    <div style="height:${ctrl.height}px"></div>
+  `;
+  //}
 }
+function addTitle(ctrl) {
+  endWidgets();
+  endButtons();
+  EL('controls').innerHTML += `
+  <div class="control control_title">
+    <span class="c_title">${ctrl.label}</span>
+  </div>
+  `;
+}
+function addLED(ctrl) {
+  if (checkDup(ctrl)) return;
+  checkWidget(ctrl);
+  endButtons();
+  let ch = ctrl.value ? 'checked' : '';
+  if (ctrl.text) {
+    if (wid_row_id) {
+      let inner = `
+      <label id="swlabel_${ctrl.name}" class="led_i_cont led_i_cont_tab"><input type="checkbox" class="switch_t" id='#${ctrl.name}' ${ch} disabled><span class="switch_i led_i led_i_tab">${ctrl.text}</span></label>
+      `;
+      addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
+    } else {
+      EL('controls').innerHTML += `
+      <div class="control">
+        <label title='${ctrl.name}'>${ctrl.clabel}</label>
+        <label id="swlabel_${ctrl.name}" class="led_i_cont"><input type="checkbox" class="switch_t" id='#${ctrl.name}' ${ch} disabled><span class="switch_i led_i">${ctrl.text}</span></label>
+      </div>
+    `;
+    }
+  } else {
+    if (wid_row_id) {
+      let inner = `
+    <label class="led_cont"><input type="checkbox" class="switch_t" id='#${ctrl.name}' ${ch} disabled><span class="led"></span></label>
+    `;
+      addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
+    } else {
+      EL('controls').innerHTML += `
+      <div class="control">
+        <label title='${ctrl.name}'>${ctrl.clabel}</label>
+        <label class="led_cont"><input type="checkbox" class="switch_t" id='#${ctrl.name}' ${ch} disabled><span class="led"></span></label>
+      </div>
+    `;
+    }
+  }
+}
+function addIcon(ctrl) {
+  if (checkDup(ctrl)) return;
+  checkWidget(ctrl);
+  endButtons();
+  let col = (ctrl.color != null) ? `color:${intToCol(ctrl.color)}` : '';
+  if (wid_row_id) {
+    let inner = `
+    <span class="icon icon_t" id='#${ctrl.name}' style="${col}">${ctrl.text}</span>
+    `;
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
+  } else {
+    EL('controls').innerHTML += `
+      <div class="control">
+        <label title='${ctrl.name}'>${ctrl.clabel}</label>
+        <span class="icon icon_t" id='#${ctrl.name}' style="${col}">${ctrl.text}</span>
+      </div>
+    `;
+  }
+}
+function addLabel(ctrl) {
+  if (checkDup(ctrl)) return;
+  checkWidget(ctrl);
+  endButtons();
+  let col = (ctrl.color) ? (`color:${intToCol(ctrl.color)}`) : '';
+  if (wid_row_id) {
+    let inner = `
+    <label class="c_label text_t c_label_tab" id='#${ctrl.name}' style="${col};font-size:${ctrl.size}px">${ctrl.value}</label>
+    `;
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
+  } else {
+    EL('controls').innerHTML += `
+    <div class="control">
+      <label title='${ctrl.name}'>${ctrl.clabel}</label>
+      <label class="c_label text_t" id='#${ctrl.name}' style="${col};font-size:${ctrl.size}px">${ctrl.value}</label>
+    </div>
+  `;
+  }
+}
+function addSelect(ctrl) {
+  if (checkDup(ctrl)) return;
+  checkWidget(ctrl);
+  endButtons();
+  let elms = ctrl.text.toString().split(',');
+  let options = '';
+  for (let i in elms) {
+    let sel = (i == ctrl.value) ? 'selected' : '';
+    options += `<option value="${i}" ${sel}>${elms[i]}</option>`;
+  }
+  let col = (ctrl.color != null) ? `color:${intToCol(ctrl.color)}` : '';
+  if (wid_row_id) {
+    let inner = `
+    <select class="cfg_inp c_inp_block select_t" style="${col}" id='#${ctrl.name}' onchange="set_h('${ctrl.name}',this.value)">
+      ${options}
+    </select>
+    `;
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
+  } else {
+    EL('controls').innerHTML += `
+    <div class="control">
+    <label title='${ctrl.name}'>${ctrl.clabel}</label>
+      <select class="cfg_inp c_inp_block select_t" style="${col}" id='#${ctrl.name}' onchange="set_h('${ctrl.name}',this.value)">
+        ${options}
+      </select>
+    </div>
+  `;
+  }
+}
+function addLog(ctrl) {
+  if (checkDup(ctrl)) return;
+  checkWidget(ctrl);
+  endButtons();
+  if (ctrl.text.endsWith('\n')) ctrl.text = ctrl.text.slice(0, -1);
+  if (wid_row_id) {
+    let inner = `
+    <textarea id="#${ctrl.name}" title='${ctrl.name}' class="cfg_inp c_log text_t" readonly>${ctrl.text}</textarea>
+    `;
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
+  } else {
+    EL('controls').innerHTML += `
+    <div class="control">
+      <textarea id="#${ctrl.name}" title='${ctrl.name}' class="cfg_inp c_log text_t" readonly>${ctrl.text}</textarea>
+    </div>
+  `;
+  }
+}
+function addDisplay(ctrl) {
+  if (checkDup(ctrl)) return;
+  checkWidget(ctrl);
+  endButtons();
+  let col = (ctrl.color != null) ? ('background:' + intToCol(ctrl.color)) : '';
+  if (wid_row_id) {
+    let inner = `
+    <textarea id="#${ctrl.name}" title='${ctrl.name}' class="cfg_inp c_area c_disp text_t" style="font-size:${ctrl.size}px;${col}" rows="${ctrl.rows}" readonly>${ctrl.value}</textarea>
+    `;
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
+  } else {
+    EL('controls').innerHTML += `
+    <div class="control">
+      <textarea id="#${ctrl.name}" title='${ctrl.name}' class="cfg_inp c_area c_disp text_t" style="font-size:${ctrl.size}px;${col}" rows="${ctrl.rows}" readonly>${ctrl.value}</textarea>
+    </div>
+  `;
+  }
+}
+function addHTML(ctrl) {
+  if (checkDup(ctrl)) return;
+  checkWidget(ctrl);
+  endButtons();
+  if (wid_row_id) {
+    let inner = `
+    <div name="text" id="#${ctrl.name}" title='${ctrl.name}' class="c_text text_t">${ctrl.value}</div>
+    `;
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
+  } else {
+    EL('controls').innerHTML += `
+    <div class="control control_nob">
+      <div name="text" id="#${ctrl.name}" title='${ctrl.name}' class="c_text text_t">${ctrl.value}</div>
+    </div>
+    `;
+  }
+}
+function addImage(ctrl) {
+  checkWidget(ctrl);
+  endButtons();
+  if (wid_row_id) {
+    let inner = `
+    <img src="${ctrl.value}" style="width: 100%">
+    `;
+    addWidget(ctrl.tab_w, '', ctrl.wlabel, inner);
+  } else {
+    EL('controls').innerHTML += `
+    <div class="cv_block cv_block_back">
+      <img src="${ctrl.value}" style="width: 100%">
+    </div>
+    `;
+  }
+}
+function addStream(ctrl) {
+  checkWidget(ctrl);
+  endButtons();
+  if (wid_row_id) {
+    let inner = `
+    
+    `;
+    addWidget(ctrl.tab_w, '', ctrl.wlabel, inner);
+  } else {
+    EL('controls').innerHTML += `
+    <div class="cv_block cv_block_back">
+      
+    </div>
+    `;
+  }
+}
+
+// ================ WIDGET =================
+function checkWidget(ctrl) {
+  if (ctrl.tab_w && !wid_row_id) beginWidgets(null, true);
+}
+function beginWidgets(ctrl = null, check = false) {
+  if (!check) endButtons();
+  wid_row_size = 0;
+  if (devices[focused].break_widgets) return;
+  let st = (ctrl && ctrl.height) ? `style="height:${ctrl.height}px"` : '';
+  wid_row_id = 'widgets_row#' + wid_row_count;
+  wid_row_count++;
+  EL('controls').innerHTML += `
+  <div class="widget_row" id="${wid_row_id}" ${st}></div>
+  `;
+}
+function endWidgets() {
+  endButtons();
+  wid_row_id = null;
+}
+function addWidget(width, name, label, inner, height = 0, noback = false) {
+  wid_row_size += width;
+  if (wid_row_size > 100) {
+    beginWidgets();
+    wid_row_size = width;
+  }
+
+  let h = height ? ('height:' + height + 'px') : '';
+  let lbl = (label && label != '_no') ? `<div class="widget_label" title="${name}">${label}</div>` : '';
+  EL(wid_row_id).innerHTML += `
+  <div class="widget" style="width:${width}%;${h}">
+    <div class="widget_inner ${noback ? 'widget_space' : ''}">
+      ${lbl}
+      <div class="widget_block">
+        ${inner}
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+// ================ UTILS =================
 function showNotif(text, name) {
   if (!("Notification" in window) || Notification.permission != 'granted') return;
   let descr = name + ' (' + new Date(Date.now()).toLocaleString() + ')';
@@ -1028,40 +1068,7 @@ function formatToStep(val, step) {
   if (step.includes('.')) return Number(val).toFixed((step.split('.')[1]).toString().length);
   else return val;
 }
-function togglePass(id) {
-  if (EL(id).type == 'text') EL(id).type = 'password';
-  else EL(id).type = 'text';
-}
-function resizeChbuttons() {
-  let chtext = document.querySelectorAll(".chtext");
-  let chtext_s = document.querySelectorAll(".chtext_s");
-  chtext.forEach((ch, i) => {
-    let len = chtext_s[i].innerHTML.length + 2;
-    chtext[i].style.width = (len + 0.5) + 'ch';
-    chtext_s[i].style.width = len + 'ch';
-  });
-}
-function chbuttonEncode(name) {
-  let weeks = document.getElementsByName(name);
-  let encoded = 0;
-  weeks.forEach((w, i) => {
-    if (w.checked) encoded |= (1 << weeks.length);
-    encoded >>= 1;
-  });
-  return encoded;
-}
 function scrollDown() {
   let logs = document.querySelectorAll(".c_log");
   logs.forEach((log) => log.scrollTop = log.scrollHeight);
-}
-function showJoys() {
-  for (let joy in joys) {
-    joys[joy].joy = new Joystick(joy,
-      intToCol(joys[joy].color == null ? colors[cfg.maincolor] : joys[joy].color),
-      joys[joy].auto,
-      joys[joy].exp,
-      function (data) {
-        input_h(joy, ((data.x + 255) << 16) | (data.y + 255));
-      });
-  }
 }

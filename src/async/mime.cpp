@@ -1,4 +1,3 @@
-#pragma once
 #include "mime.h"
 
 #define GH_MIME_AMOUNT 17

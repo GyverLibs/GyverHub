@@ -57,7 +57,6 @@ window.onload = function () {
   render_main(app_version);
   EL('title').innerHTML = app_title;
   load_cfg();
-  if (typeof cfg.hub_id != 'string') cfg.hub_id = cfg.hub_id.toString(16);
   let title = 'GyverHub v' + app_version + ' [' + cfg.hub_id + '] ' + (isPWA() ? 'PWA ' : '') + (isSSL() ? 'SSL ' : '') + (isLocal() ? 'Local ' : '') + (isESP() ? 'ESP ' : '') + (isApp() ? 'App ' : '');
   EL('title').title = title;
   log(title);
@@ -85,8 +84,9 @@ function startup() {
     EL('pwa_unsafe').style.display = 'none';
   }
   if (isPWA() || isLocal() || isApp()) {
-    EL('app_block').style.display = 'none';
+    EL('pwa_block').style.display = 'none';
   }
+  if (isApp()) EL('app_block').style.display = 'none';
 
   if (cfg.use_mqtt) mq_start();
   setInterval(() => {
@@ -297,7 +297,7 @@ function refresh_h() {
 }
 function back_h() {
   if (menu_f) {
-    menu_deact();
+    menuDeact();
     menu_show(0);
     return;
   }
@@ -308,7 +308,7 @@ function back_h() {
       break;
     case 'info':
     case 'fsbr':
-      menu_deact();
+      menuDeact();
       showControls(devices_t[focused].controls);
       show_screen('device');
       break;
@@ -344,14 +344,14 @@ function menu_h() {
   menu_show(!menu_f);
 }
 function info_h() {
-  menu_deact();
+  menuDeact();
   menu_show(0);
   post('info');
   show_screen('info');
   EL('menu_info').classList.add('menu_act');
 }
 function fsbr_h() {
-  menu_deact();
+  menuDeact();
   menu_show(0);
   post('fsbr');
   EL('fsbr_inner').innerHTML = '<div class="fsbr_wait"><span style="font-size:50px;color:var(--prim)" class="icon spinning"></span></div>';

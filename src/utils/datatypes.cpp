@@ -52,8 +52,8 @@ void GHtypeFromStr(const char* str, void* val, GHdata_t type) {
         case GH_POS: {
             uint32_t xy = atol(str);
             ((GHpos*)val)->_changed = true;
-            ((GHpos*)val)->x = ((uint16_t*)&xy)[1];
-            ((GHpos*)val)->y = ((uint16_t*)&xy)[0];
+            ((GHpos*)val)->x = xy >> 16;
+            ((GHpos*)val)->y = xy & 0xffff;
         } break;
 
         case GH_NULL:

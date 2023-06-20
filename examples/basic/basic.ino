@@ -6,7 +6,7 @@
 #define AP_SSID ""
 #define AP_PASS ""
 
-// подключаем библиотеку и настраиваем девайс
+// подключаем библиотеку и настраиваем устройство
 #include <GyverHub.h>
 GyverHub hub("MyDevices", "ESP8266", "");
 // иконки
@@ -29,28 +29,28 @@ void build() {
     // BeginWidgets() начинает новую горизонтальную строку виджетов
     hub.BeginWidgets();
 
-    // ширина следующего виджета задаётся в %
+    // ширина следующих виджетов задаётся в %
     hub.WidgetSize(25);
 
-    // это кнопка, которая имеет только имя
+    // это кнопка без настроек
     // Кнопка - активный компонент: вернёт 1 если нажата
-    if (hub.Button(F("b1"))) Serial.println("b1 press");
+    if (hub.Button()) Serial.println("Button 1 press");
 
     // ко второй кнопке подключим переменную b2
     // она будет true, пока кнопка удерживается. Опросим её ниже в loop
     // добавим название и цвет
-    hub.Button(F("b2"), &b2, F("Button 2"), GH_RED);
+    hub.Button(&b2, F("Button 2"), GH_RED);
 
-    // добьём оставшееся место лейблом, ширины осталось 50%
+    // сменим ширину на 50%
     hub.WidgetSize(50);
 
     // Label - пассивный компонент, он не возвращает результата действия
     // пусть он выводит актуальный millis() при загрузке страницы
-    hub.Label(F("lbl"), String(millis()), F("Some label"));
+    hub.Label(String(millis()), F("millis label"));
 
-    // EndWidgets() завершает строку виджетов. В то же время система
-    // сама завершит строку и начнёт новую, если следующий виджет не поместится в неё!
-    // hub.EndWidgets();    // не будем вызывать
+    // сделаем ещё один label с личным именем, к функции добавится _
+    // ниже в loop будем отправлять обновления на его имя
+    hub.Label_(F("lbl"), String(millis()), F("millis update"));
 
     // добавим слайдер шириной 100, во всю строку
     hub.WidgetSize(100);
@@ -58,7 +58,7 @@ void build() {
     // к этому слайдеру не подключена переменная, но мы можем
     // вывести значение, которое отправено на его имя
     // Слайдер -активный компонент, вернёт true при изменении значения
-    if (hub.Slider(F("sld1"))) {
+    if (hub.Slider()) {
         Serial.print("Slider1 value: ");
         Serial.println(hub.action().valueInt());  // получим как целое число
     }
@@ -67,11 +67,12 @@ void build() {
     // добавим ещё два слайдера и подключим переменные. Система будет сама обновлять в них значения!
     // нужно передать адрес переменной и её точный тип
     // у слайдера также есть минимум, максимум, шаг и цвет
-    if (hub.Slider(F("sld2"), &sld_i, GH_UINT8, F("Slider I"), 0, 10, 2)) {
+    if (hub.Slider(&sld_i, GH_UINT8, F("Slider I"), 0, 10, 2)) {
         Serial.print("Slider2 value: ");
-        Serial.println(sld_i);  // переменная уже обновилась и новое значение доступно во всей области определения
+        Serial.println(sld_i);
+        // переменная уже обновилась и новое значение доступно во всей области определения
     }
-    if (hub.Slider(F("sld3"), &sld_f, GH_FLOAT, F("Slider F"), 0.0, 1.0, 0.01, GH_PINK)) {
+    if (hub.Slider(&sld_f, GH_FLOAT, F("Slider F"), 0.0, 1.0, 0.01, GH_PINK)) {
         Serial.print("Slider3 value: ");
         Serial.println(sld_f);
     }
@@ -86,18 +87,18 @@ void build() {
     // Компонент Input может работать переменнми любых типов и автоматически переписывать в них значение!
     // попробуем с String, char[] и int
     // для char[] нужно обязательно указать размер массива, чтобы не превысить его, что приведёт к сбою программы!!
-    hub.Input(F("inp_s"), &inp_str, GH_STR, F("String input"));
-    hub.Input(F("inp_c"), &inp_cstr, GH_CSTR, F("cstring input"), 10);      // <- 10 - макс. длина строки
-    hub.Input(F("inp_i"), &inp_int, GH_INT16, F("int input"), 0, F("^\\d{4}$"));  // + regex на 4 цифры
+    hub.Input(&inp_str, GH_STR, F("String input"));
+    hub.Input(&inp_cstr, GH_CSTR, F("cstring input"), 10);      // <- 10 - макс. длина строки
+    hub.Input(&inp_int, GH_INT16, F("int input"), 0, F("^\\d{4}$"));  // + regex на 4 цифры
 
     // что будет, если не создавать строку виджетов через BeginWidgets()?
     // закончим отрисовку виджетов
     hub.EndWidgets();
     
     // и выведем пару компонентов
-    hub.Slider(F("sld_n"));
-    hub.Input(F("inp_n"));
-    hub.Switch(F("sw_n"));
+    hub.Slider();
+    hub.Input();
+    hub.Switch();
     
     // они выведутся вертикальным списком!
 }
@@ -142,4 +143,9 @@ void loop() {
     hub.tick();  // обязательно тикаем тут
 
     if (b2) asyncPrint("b2 hold");
+
+    // обновим лейбл с именем lbl по таймеру на 1 секунду
+    static GHtimer tmr(1000);
+    if (tmr) hub.sendUpdate("lbl");
+    // значение будет прочитано внутри билдера, а там у нас millis()
 }

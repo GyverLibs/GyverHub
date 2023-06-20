@@ -28,13 +28,13 @@ void build() {
     // ================= СПОСОБ 1 =================
     GHbuild b = hub.getBuild();
 
-    hub.Switch(F("sw"), &data.sw, 0);
-    hub.Input(F("inp_c"), &data.inp, GH_CSTR, 0, 10);
-    hub.Slider(F("sld1"), &data.sld, GH_INT16);
-    hub.Spinner(F("spin"), &data.spin, GH_FLOAT);
-    hub.Date(F("date"), &data.date);
-    hub.Color(F("color"), &data.col);
-    hub.Flags(F("flags"), &data.flags);
+    hub.Switch(&data.sw, 0);
+    hub.Input(&data.inp, GH_CSTR, 0, 10);
+    hub.Slider(&data.sld, GH_INT16);
+    hub.Spinner(&data.spin, GH_FLOAT);
+    hub.Date(&data.date);
+    hub.Color(&data.col);
+    hub.Flags(&data.flags);
 
     // было действие установки (ЛЮБОЕ НА СТРАНИЦЕ)
     if (b.action.type == GH_ACTION_SET) {
@@ -43,13 +43,13 @@ void build() {
 
     // ================= СПОСОБ 2 =================
     bool flag = 0;
-    flag |= hub.Switch(F("sw"), &data.sw, 0);
-    flag |= hub.Input(F("inp_c"), &data.inp, GH_CSTR, 0, 10);
-    flag |= hub.Slider(F("sld1"), &data.sld, GH_INT16);
-    flag |= hub.Spinner(F("spin"), &data.spin, GH_FLOAT);
-    flag |= hub.Date(F("date"), &data.date);
-    flag |= hub.Color(F("color"), &data.col);
-    flag |= hub.Flags(F("flags"), &data.flags);
+    flag |= hub.Switch(&data.sw, 0);
+    flag |= hub.Input(&data.inp, GH_CSTR, 0, 10);
+    flag |= hub.Slider(&data.sld, GH_INT16);
+    flag |= hub.Spinner(&data.spin, GH_FLOAT);
+    flag |= hub.Date(&data.date);
+    flag |= hub.Color(&data.col);
+    flag |= hub.Flags(&data.flags);
 
     // если хоть один из компонентов кликнут, flag будет 1
     // в отличие от первого способа, можно гибко разбивать компоненты
@@ -72,7 +72,7 @@ void setup() {
     Serial.println();
     Serial.println(WiFi.localIP());
 
-    // hub.setupMQTT("test.mosquitto.org", 1883);
+    hub.setupMQTT("test.mosquitto.org", 1883);
 #endif
 
     hub.onBuild(build);

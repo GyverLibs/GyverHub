@@ -303,7 +303,7 @@ function getIPs() {
       end_ip = broadcast - 1;
     }
   }
-  let ips = [];
+  let ips = ['192.168.4.1'];
   for (let ip = start_ip; ip <= end_ip; ip++) {
     ips.push(intToOctets(ip));
   }

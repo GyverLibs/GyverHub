@@ -14,6 +14,7 @@
   font-display: block;
   src: url(PTSans-Narrow.woff2) format("woff2");
 }
+
 /*/NON-ESP*/
 
 :root {
@@ -312,7 +313,7 @@ body::-webkit-scrollbar-thumb {
   justify-content: space-between;
   align-items: center;
   padding: 5px 10px;
-  height: 30px;
+  min-height: 30px;
 }
 
 .mini_btn {
@@ -370,6 +371,12 @@ body::-webkit-scrollbar-thumb {
   cursor: pointer;
   color: var(--prim);
   padding: 0px 5px;
+}
+
+.cfg_btn_row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .cfg_btn_tab:hover {
@@ -436,7 +443,7 @@ body::-webkit-scrollbar-thumb {
 }
 
 .info {
-  height: 14px;
+  min-height: 20px;
 }
 
 .device {
@@ -447,7 +454,7 @@ body::-webkit-scrollbar-thumb {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
-  height: 70px;
+  height: 65px;
   padding: 4px;
   width: 100%;
 }
@@ -492,13 +499,14 @@ body::-webkit-scrollbar-thumb {
 }
 
 .d_icon {
-  width: 10px;
-  /*NON-ESP*/
   width: 40px;
-  /*/NON-ESP*/
   display: flex;
   justify-content: center;
   margin: 0px 3px 0 7px;
+}
+
+.d_icon_empty {
+  width: 5px;
 }
 
 .lbl_info {
@@ -885,7 +893,7 @@ img.colorpick-eyedropper-input-trigger {
 .btn_mini {
   font-size: 19px !important;
   padding: 7px;
-  margin: 0px 3px;
+  margin: 3px;
   padding: 4px 8px;
 }
 
@@ -1597,7 +1605,7 @@ input:checked+.chbutton_s {
 }
 
 .projects_inn {
-  max-width: 700px;
+  max-width: 750px;
   margin: auto;
   padding: 0px 5px;
   padding-top: 65px;

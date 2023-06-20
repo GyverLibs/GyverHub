@@ -20,10 +20,11 @@ void build() {
     hub.BeginWidgets();
 
     hub.WidgetSize(80);
-    hub.Tabs(F("tabs"), &tab, F("Sliders,Switches,Inputs,Buttons"));
+    hub.Tabs(&tab, F("Sliders,Switches,Inputs,Buttons"));
 
+    // спиннер с настройкой количества. По клику обновляем страницу
     hub.WidgetSize(20);
-    if (hub.Spinner(F("am"), &spin_am, GH_UINT8, F("Amount"), 0, DYN_MAX, 1)) {
+    if (hub.Spinner(&spin_am, GH_UINT8, F("Amount"), 0, DYN_MAX, 1)) {
         hub.refresh();
     }
 
@@ -31,28 +32,29 @@ void build() {
         case 0:
             hub.WidgetSize(100);
             for (int i = 0; i < spin_am; i++) {
-                bool a = hub.Slider(String("sld/") + i, &slds[i], GH_INT16, String("Slider #") + i);
-                if (a) Serial.println(String("Set slider: sld/") + i + ", value: " + slds[i]);
+                bool a = hub.Slider(&slds[i], GH_INT16, String("Slider #") + i);
+                if (a) Serial.println(String("Set slider: #") + i + ", value: " + slds[i]);
             }
             break;
         case 1:
             hub.WidgetSize(25);
             for (int i = 0; i < spin_am; i++) {
-                bool a = hub.Switch(String("sw/") + i, &sws[i], String("Switch #") + i);
-                if (a) Serial.println(String("Set switch: sw/") + i + ", value: " + sws[i]);
+                bool a = hub.Switch(&sws[i], String("Switch #") + i);
+                if (a) Serial.println(String("Set switch: #") + i + ", value: " + sws[i]);
             }
             break;
         case 2:
             hub.WidgetSize(50);
             for (int i = 0; i < spin_am; i++) {
-                bool a = hub.Input(String("inp/") + i, &inputs[i], GH_CSTR, String("Input #") + i);
-                if (a) Serial.println(String("Set input: inp/") + i + ", value: " + inputs[i]);
+                bool a = hub.Input(&inputs[i], GH_CSTR, String("Input #") + i);
+                if (a) Serial.println(String("Set input: #") + i + ", value: " + inputs[i]);
             }
             break;
         case 3:
             hub.WidgetSize(25);
             for (int i = 0; i < spin_am; i++) {
-                bool a = (hub.Button(String("btn/") + i, 0, String("Button #") + i) == 1);
+                // имена компонентов тоже можно генерировать, если это нужно
+                bool a = (hub.Button_(String("btn/") + i, 0, String("Button #") + i) == 1);
                 if (a) Serial.println(String("Pressed button: btn/") + i);
             }
             break;

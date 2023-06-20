@@ -11,22 +11,25 @@ GyverHub hub("MyDevices", "ESP8266", "");
 void build() {
     hub.BeginWidgets();
     hub.WidgetSize(50);
-    hub.Label(F("lbl"));
+
+    // обновляемым компонентам нужно присвоить уникальные имена
+    // чтобы было на кого отправлять обновления
+    hub.Label_(F("lbl"));
 
     hub.WidgetSize(25);
-    hub.LED(F("led"));
+    hub.LED_(F("led"));
 
     // по клику по кнопке
-    if (hub.ButtonIcon(F("upd"), 0, F(""))) {
+    if (hub.ButtonIcon(0, F(""))) {
         static bool led;
         led = !led;
         hub.sendUpdate("ga", String(random(100)));  // обновляем шкалу
-        hub.sendUpdate("led", String(led));  // обновляем светодиод
+        hub.sendUpdate("led", String(led));         // обновляем светодиод
     }
 
     hub.WidgetSize(50);
-    hub.Canvas(F("cv"));
-    hub.Gauge(F("ga"));
+    hub.Canvas_(F("cv"));
+    hub.Gauge_(F("ga"));
 }
 
 void setup() {

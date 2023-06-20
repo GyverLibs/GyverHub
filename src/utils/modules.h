@@ -17,15 +17,20 @@ enum GHmodule_t {
     GH_MOD_READ = (1ul << 10),
     GH_MOD_DELETE = (1ul << 11),
     GH_MOD_RENAME = (1ul << 12),
+
+    GH_MOD_SERIAL = (1ul << 13),
+    GH_MOD_BT = (1ul << 14),
+    GH_MOD_WS = (1ul << 15),
+    GH_MOD_MQTT = (1ul << 16),
 };
 
 struct GHmodule {
-    uint16_t mods = 0xffff;
+    uint32_t mods = 0xffffffff;
 
-    void set(uint16_t nmods) {
+    void set(uint32_t nmods) {
         mods |= nmods;
     }
-    void unset(uint16_t nmods) {
+    void unset(uint32_t nmods) {
         mods &= ~nmods;
     }
 
