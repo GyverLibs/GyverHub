@@ -444,6 +444,7 @@ body::-webkit-scrollbar-thumb {
 
 .info {
   min-height: 20px;
+  padding: 3px 10px;
 }
 
 .device {

@@ -38,7 +38,6 @@ enum GHevent_t {
     GH_UNFOCUS,
 
     GH_SET,
-    GH_CLICK,
     GH_CLI,
     GH_PING,
 

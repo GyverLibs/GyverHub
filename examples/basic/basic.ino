@@ -14,7 +14,7 @@ GyverHub hub("MyDevices", "ESP8266", "");
 // https://fontawesome.com/v5/search?o=r&m=free&s=solid
 
 // переменные для интерфейса
-bool b2;
+GHbutton b2;
 uint8_t sld_i;
 float sld_f;
 
@@ -132,17 +132,16 @@ void setup() {
     hub.begin();            // запускаем систему
 }
 
-// функция поможет печатать в порт с задержкой,
-// не блокируя выполнение программы
-void asyncPrint(const char* str) {
-    static GHtimer tmr(500);
-    if (tmr.ready()) Serial.println(str);
-}
 
 void loop() {
     hub.tick();  // обязательно тикаем тут
 
-    if (b2) asyncPrint("b2 hold");
+    if (b2) {
+        static GHtimer tmr(500);
+        if (tmr.ready()) Serial.println("hold b2");
+    }
+
+    if (b2.changed()) Serial.println(b2 ? "b2 press" : "b2 release");
 
     // обновим лейбл с именем lbl по таймеру на 1 секунду
     static GHtimer tmr(1000);

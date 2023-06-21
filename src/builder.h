@@ -10,6 +10,7 @@
 #include "utils/log.h"
 #include "utils/misc.h"
 #include "utils/pos.h"
+#include "utils/button.h"
 
 class HubBuilder {
    public:
@@ -51,45 +52,45 @@ class HubBuilder {
         if (_isRead()) {
             if (_checkName(name, fstr)) GHtypeToStr(sptr, var, type);
         } else if (bptr->type == GH_BUILD_ACTION) {
-            return bptr->parseSet(name, var, type, fstr);
+            return bptr->parse(name, var, type, fstr);
         }
         return 0;
     }
 
     // ========================== BUTTON ==========================
-    bool Button_(FSTR name, bool* var = nullptr, FSTR label = nullptr, uint32_t color = GH_DEFAULT, int size = 22) {
+    bool Button_(FSTR name, GHbutton* var = nullptr, FSTR label = nullptr, uint32_t color = GH_DEFAULT, int size = 22) {
         return _button(true, F("button"), name, var, label, color, size);
     }
-    bool Button_(CSREF name, bool* var = nullptr, CSREF label = "", uint32_t color = GH_DEFAULT, int size = 22) {
+    bool Button_(CSREF name, GHbutton* var = nullptr, CSREF label = "", uint32_t color = GH_DEFAULT, int size = 22) {
         return _button(false, F("button"), name.c_str(), var, label.c_str(), color, size);
     }
-    bool Button(bool* var = nullptr) {
+    bool Button(GHbutton* var = nullptr) {
         return Button_(0, var);
     }
-    bool Button(bool* var, FSTR label, uint32_t color = GH_DEFAULT, int size = 22) {
+    bool Button(GHbutton* var, FSTR label, uint32_t color = GH_DEFAULT, int size = 22) {
         return Button_(0, var, label, color, size);
     }
-    bool Button(bool* var, CSREF label, uint32_t color = GH_DEFAULT, int size = 22) {
+    bool Button(GHbutton* var, CSREF label, uint32_t color = GH_DEFAULT, int size = 22) {
         return Button_("", var, label.c_str(), color, size);
     }
 
-    bool ButtonIcon_(FSTR name, bool* var = nullptr, FSTR label = nullptr, uint32_t color = GH_DEFAULT, int size = 50) {
+    bool ButtonIcon_(FSTR name, GHbutton* var = nullptr, FSTR label = nullptr, uint32_t color = GH_DEFAULT, int size = 50) {
         return _button(true, F("button_i"), name, var, label, color, size);
     }
-    bool ButtonIcon_(CSREF name, bool* var = nullptr, CSREF label = "", uint32_t color = GH_DEFAULT, int size = 50) {
+    bool ButtonIcon_(CSREF name, GHbutton* var = nullptr, CSREF label = "", uint32_t color = GH_DEFAULT, int size = 50) {
         return _button(false, F("button_i"), name.c_str(), var, label.c_str(), color, size);
     }
-    bool ButtonIcon(bool* var = nullptr) {
+    bool ButtonIcon(GHbutton* var = nullptr) {
         return ButtonIcon_(0, var);
     }
-    bool ButtonIcon(bool* var, FSTR label, uint32_t color = GH_DEFAULT, int size = 50) {
+    bool ButtonIcon(GHbutton* var, FSTR label, uint32_t color = GH_DEFAULT, int size = 50) {
         return ButtonIcon_(0, var, label, color, size);
     }
-    bool ButtonIcon(bool* var, CSREF label, uint32_t color = GH_DEFAULT, int size = 50) {
+    bool ButtonIcon(GHbutton* var, CSREF label, uint32_t color = GH_DEFAULT, int size = 50) {
         return ButtonIcon_("", var, label.c_str(), color, size);
     }
 
-    bool _button(bool fstr, FSTR tag, VSPTR name, bool* var, VSPTR label, uint32_t color, int size) {
+    bool _button(bool fstr, FSTR tag, VSPTR name, GHbutton* var, VSPTR label, uint32_t color, int size) {
         if (_nameAuto(name, fstr)) name = nullptr;
         if (_isUI()) {
             _begin(tag);
@@ -100,7 +101,9 @@ class HubBuilder {
             _tabw();
             _end();
         } else if (bptr->type == GH_BUILD_ACTION) {
-            return bptr->parseClick(name, var, fstr);
+            bool act = bptr->parse(name, &(var->state), GH_BOOL, fstr);
+            if (var && act) var->_changed = 1;
+            return act && (bptr->action.value[0] == '1');
         }
         return 0;
     }
@@ -343,7 +346,7 @@ class HubBuilder {
         } else if (_isRead()) {
             if (_checkName(name, fstr)) GHtypeToStr(sptr, var, type);
         } else if (bptr->type == GH_BUILD_ACTION) {
-            return bptr->parseSet(name, var, type, fstr);
+            return bptr->parse(name, var, type, fstr);
         }
         return 0;
     }
@@ -401,7 +404,7 @@ class HubBuilder {
         } else if (_isRead()) {
             if (_checkName(name, fstr)) GHtypeToStr(sptr, var, type);
         } else if (bptr->type == GH_BUILD_ACTION) {
-            return bptr->parseSet(name, var, type, fstr);
+            return bptr->parse(name, var, type, fstr);
         }
         return 0;
     }
@@ -511,7 +514,7 @@ class HubBuilder {
         } else if (_isRead()) {
             if (_checkName(name, fstr)) GHtypeToStr(sptr, var, GH_BOOL);
         } else if (bptr->type == GH_BUILD_ACTION) {
-            return bptr->parseSet(name, var, GH_BOOL, fstr);
+            return bptr->parse(name, var, GH_BOOL, fstr);
         }
         return 0;
     }
@@ -582,7 +585,7 @@ class HubBuilder {
         } else if (_isRead()) {
             if (_checkName(name, fstr)) GHtypeToStr(sptr, var, GH_UINT32);
         } else if (bptr->type == GH_BUILD_ACTION) {
-            return bptr->parseSet(name, var, GH_UINT32, fstr);
+            return bptr->parse(name, var, GH_UINT32, fstr);
         }
         return 0;
     }
@@ -617,7 +620,7 @@ class HubBuilder {
         } else if (_isRead()) {
             if (_checkName(name, fstr)) GHtypeToStr(sptr, var, GH_UINT8);
         } else if (bptr->type == GH_BUILD_ACTION) {
-            return bptr->parseSet(name, var, GH_UINT8, fstr);
+            return bptr->parse(name, var, GH_UINT8, fstr);
         }
         return 0;
     }
@@ -655,7 +658,7 @@ class HubBuilder {
         } else if (_isRead()) {
             if (_checkName(name, fstr)) GHtypeToStr(sptr, var, GH_FLAGS);
         } else if (bptr->type == GH_BUILD_ACTION) {
-            return bptr->parseSet(name, var, GH_FLAGS, fstr);
+            return bptr->parse(name, var, GH_FLAGS, fstr);
         }
         return 0;
     }
@@ -691,7 +694,7 @@ class HubBuilder {
         } else if (_isRead()) {
             if (_checkName(name, fstr)) GHtypeToStr(sptr, var, GH_COLOR);
         } else if (bptr->type == GH_BUILD_ACTION) {
-            return bptr->parseSet(name, var, GH_COLOR, fstr);
+            return bptr->parse(name, var, GH_COLOR, fstr);
         }
         return 0;
     }
@@ -776,7 +779,7 @@ class HubBuilder {
             _tabw();
             _end();
         } else if (bptr->type == GH_BUILD_ACTION) {
-            bool act = bptr->parseSet(name, var, GH_UINT8, fstr);
+            bool act = bptr->parse(name, var, GH_UINT8, fstr);
             if (act) refresh();
             return act;
         }
@@ -836,7 +839,7 @@ class HubBuilder {
             if (begin && cv) cv->extBuffer(sptr);
             else EndCanvas();
         } else if (bptr->type == GH_BUILD_ACTION) {
-            return bptr->parseSet(name, pos, GH_POS, fstr);
+            return bptr->parse(name, pos, GH_POS, fstr);
         }
         return 0;
     }
@@ -909,7 +912,7 @@ class HubBuilder {
             _tabw();
             _end();
         } else if (bptr->type == GH_BUILD_ACTION) {
-            bool act = bptr->parseSet(name, pos, GH_POS, fstr);
+            bool act = bptr->parse(name, pos, GH_POS, fstr);
             if (act && pos) {
                 pos->x -= 255;
                 pos->y -= 255;
@@ -945,7 +948,7 @@ class HubBuilder {
             _label(label, fstr);
             _end();
         } else if (bptr->type == GH_BUILD_ACTION) {
-            return bptr->parseSet(name, var, GH_BOOL, fstr);
+            return bptr->parse(name, var, GH_BOOL, fstr);
         }
         return 0;
     }
@@ -980,7 +983,7 @@ class HubBuilder {
             _label(label, fstr);
             _end();
         } else if (bptr->type == GH_BUILD_ACTION) {
-            return bptr->parseSet(name, value, type, fstr);
+            return bptr->parse(name, value, type, fstr);
         }
         return 0;
     }

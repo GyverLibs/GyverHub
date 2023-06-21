@@ -65,7 +65,7 @@ function release_all() {
 }
 function click_h(name, dir) {
   pressId = (dir == 1) ? name : null;
-  post('click', name, dir);
+  post('set', name, dir);
   reset_ping();
 }
 function set_h(name, value = '') {

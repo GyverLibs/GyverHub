@@ -1,7 +1,7 @@
 # GyverHub Web Builder
 
-version = '0.38b'
-notes = 'Minor fixes'
+version = '0.39b'
+notes = 'Changed buttons logic'
 
 js_files = [
     'src/include/main.js',

@@ -455,12 +455,11 @@ class GyverHub : public HubBuilder {
         if (!modules.read(GH_MOD_BT) && conn == GH_BT) return;
         if (!modules.read(GH_MOD_WS) && conn == GH_WS) return;
         if (!modules.read(GH_MOD_MQTT) && conn == GH_MQTT) return;
-        
+
 #if defined(GH_ESP_BUILD) && !defined(GH_NO_FS) && !defined(GH_NO_OTA) && !defined(GH_NO_OTA_URL)
         if (ota_url_f) return;
 #endif
         if (!running_f) return;
-        if (strncmp(url, prefix, strlen(prefix))) return sendEvent(GH_UNKNOWN, conn);
 
         if (!strcmp(url, prefix)) {  // == prefix
             GHhub hub(conn, value, manual);
@@ -470,8 +469,8 @@ class GyverHub : public HubBuilder {
         }
 
         GHparser<5> p(url);
-
-        if (strcmp(p.str[1], id)) return;  // wrong id
+        if (strcmp(p.str[0], prefix)) return;  // wrong prefix
+        if (strcmp(p.str[1], id)) return;      // wrong id
 
         if (p.size == 2) {
             GHhub hub(conn, value, manual);
@@ -496,7 +495,7 @@ class GyverHub : public HubBuilder {
                     return sendEvent(GH_READ_HOOK, conn);
                 } else if (!strcmp_P(p.str[2], PSTR("set"))) {
                     if (modules.read(GH_MOD_SET)) {
-                        GHbuild build(GH_BUILD_ACTION, GH_ACTION_SET, p.str[3], value, hub);
+                        GHbuild build(GH_BUILD_ACTION, 1, p.str[3], value, hub);
                         bptr = &build;
                         build_cb();
                         bptr = nullptr;
@@ -525,7 +524,7 @@ class GyverHub : public HubBuilder {
 
                 case 3:  // info
                     if (modules.read(GH_MOD_INFO)) answerInfo();
-                    else answerType(F("ERR"));
+                    else answerDsbl();
                     return sendEvent(GH_INFO, conn);
 
 #ifdef GH_ESP_BUILD
@@ -534,9 +533,9 @@ class GyverHub : public HubBuilder {
                     if (modules.read(GH_MOD_FSBR)) {
                         if (fs_mounted) answerFsbr();
                         else answerType(F("fs_error"));
-                    } else answerType(F("ERR"));
+                    } else answerDsbl();
 #else
-                    answerType(F("ERR"));
+                    answerDsbl();
 #endif
                     return sendEvent(GH_FSBR, conn);
 
@@ -547,9 +546,9 @@ class GyverHub : public HubBuilder {
                         GH_FS.end();
                         fs_mounted = GH_FS.begin();
                         answerFsbr();
-                    } else answerType(F("ERR"));
+                    } else answerDsbl();
 #else
-                    answerType(F("ERR"));
+                    answerDsbl();
 #endif
                     return sendEvent(GH_FORMAT, conn);
 
@@ -557,7 +556,7 @@ class GyverHub : public HubBuilder {
                     if (modules.read(GH_MOD_REBOOT)) {
                         reboot_f = GH_REB_BUTTON;
                         answerType();
-                    } else answerType(F("ERR"));
+                    } else answerDsbl();
                     return sendEvent(GH_REBOOT, conn);
 
                 case 7:  // fetch_chunk
@@ -594,7 +593,7 @@ class GyverHub : public HubBuilder {
                 if (!build_cb || !modules.read(GH_MOD_SET)) {
                     answerType();
                 } else {
-                    GHbuild build(GH_BUILD_ACTION, GH_ACTION_SET, name, value, hub);
+                    GHbuild build(GH_BUILD_ACTION, 1, name, value, hub);
                     bptr = &build;
                     upd_f = refresh_f = 0;
                     build_cb();
@@ -607,23 +606,8 @@ class GyverHub : public HubBuilder {
                 }
                 return sendEvent(GH_SET, conn);
 
-            // click
-            case 1:
-                if (!build_cb || !modules.read(GH_MOD_CLICK)) {
-                    answerType();
-                } else {
-                    GHbuild build(GH_BUILD_ACTION, (value[0] == '1') ? GH_ACTION_PRESS : GH_ACTION_RELEASE, name, 0, hub);
-                    upd_f = refresh_f = 0;
-                    bptr = &build;
-                    build_cb();
-                    bptr = nullptr;
-                    if (refresh_f) answerUI();
-                    else if (!upd_f) answerType();
-                }
-                return sendEvent(GH_CLICK, conn);
-
             // cli
-            case 2:
+            case 1:
                 answerType();
                 if (cli_cb) {
                     String str(value);
@@ -633,27 +617,27 @@ class GyverHub : public HubBuilder {
 
 #ifdef GH_ESP_BUILD
             // delete
-            case 3:
+            case 2:
 #ifndef GH_NO_FS
                 if (modules.read(GH_MOD_DELETE) && GH_FS.remove(name)) answerFsbr();
-                else answerType(F("ERR"));
+                else answerDsbl();
 #else
-                answerType(F("ERR"));
+                answerDsbl();
 #endif
                 return sendEvent(GH_DELETE, conn);
 
             // rename
-            case 4:
+            case 3:
 #ifndef GH_NO_FS
                 if (modules.read(GH_MOD_RENAME) && GH_FS.rename(name, value)) answerFsbr();
-                else answerType(F("ERR"));
+                else answerDsbl();
 #else
-                answerType(F("ERR"));
+                answerDsbl();
 #endif
                 return sendEvent(GH_RENAME, conn);
 
             // fetch
-            case 5:
+            case 4:
 #ifndef GH_NO_FS
                 if (!file_d && !file_u && !ota_f && modules.read(GH_MOD_DOWNLOAD)) {
                     file_d = GH_FS.open(name, "r");
@@ -671,7 +655,7 @@ class GyverHub : public HubBuilder {
                 return sendEvent(GH_DOWNLOAD_ERROR, conn);
 
             // upload
-            case 6:
+            case 5:
 #ifndef GH_NO_FS
                 if (!file_d && !file_u && !ota_f && !fs_buffer && modules.read(GH_MOD_UPLOAD)) {
                     file_u = GH_FS.open(name, "w");
@@ -691,7 +675,7 @@ class GyverHub : public HubBuilder {
                 return sendEvent(GH_UPLOAD_ERROR, conn);
 
             // upload_chunk
-            case 7:
+            case 6:
 #ifndef GH_NO_FS
                 if (file_u && fs_hub == hub && fs_buffer) {
                     if (!strcmp_P(name, PSTR("next"))) {
@@ -709,7 +693,7 @@ class GyverHub : public HubBuilder {
                 return sendEvent(GH_UPLOAD_ERROR, conn);
 
             // ota
-            case 8:
+            case 7:
 #if !defined(GH_NO_FS) && !defined(GH_NO_OTA)
                 if (!file_d && !file_u && !ota_f && !fs_buffer && modules.read(GH_MOD_OTA)) {
                     int ota_type = 0;
@@ -748,7 +732,7 @@ class GyverHub : public HubBuilder {
                 return sendEvent(GH_OTA_ERROR, conn);
 
             // ota_chunk
-            case 9:
+            case 8:
 #if !defined(GH_NO_FS) && !defined(GH_NO_OTA)
                 if (ota_f && fs_hub == hub && fs_buffer) {
                     if (!strcmp_P(name, PSTR("next"))) {
@@ -766,7 +750,7 @@ class GyverHub : public HubBuilder {
                 return sendEvent(GH_OTA_ERROR, conn);
 
             // ota_url
-            case 10:
+            case 9:
 #if !defined(GH_NO_FS) && !defined(GH_NO_OTA) && !defined(GH_NO_OTA_URL)
                 if (!file_d && !file_u && !ota_f && !fs_buffer && modules.read(GH_MOD_OTA_URL)) {
                     if (!strcmp_P(name, PSTR("flash"))) ota_url_fs = 0;
@@ -777,7 +761,7 @@ class GyverHub : public HubBuilder {
                     return sendEvent(GH_OTA_URL, conn);
                 }
 #endif
-                answerType(F("ERR"));
+                answerErr(F("File busy"));
                 return sendEvent(GH_OTA_URL, conn);
 
 #endif
@@ -1045,6 +1029,19 @@ class GyverHub : public HubBuilder {
         _jsEnd(answ);
         answer(answ);
     }
+    void answerErr(FSTR err) {
+        String answ;
+        answ.reserve(50);
+        _jsBegin(answ);
+        _jsID(answ);
+        _jsStr(answ, F("type"), F("ERR"));
+        _jsStr(answ, F("text"), err, true);
+        _jsEnd(answ);
+        answer(answ);
+    }
+    void answerDsbl() {
+        answerErr(F("Module disabled"));
+    }
 
     // ======================= FSBR ========================
     void answerFsbr() {
@@ -1082,7 +1079,7 @@ class GyverHub : public HubBuilder {
         answer(answ);
 #endif
 #else
-        answerType(F("ERR"));
+        answerDsbl();
 #endif
     }
 
@@ -1107,12 +1104,7 @@ class GyverHub : public HubBuilder {
         _jsStr(answ, F("icon"), icon);
         _jsVal(answ, F("PIN"), hash);
         _jsStr(answ, F("version"), version);
-        _jsVal(answ, F("max_upl"), GH_UPL_CHUNK_SIZE);
-#ifdef GH_ESP_BUILD
-        _jsStr(answ, F("esp"), 1, true);
-#else
-        _jsStr(answ, F("esp"), 0, true);
-#endif
+        _jsVal(answ, F("max_upl"), GH_UPL_CHUNK_SIZE, true);
         _jsEnd(answ);
         answer(answ, true);
     }

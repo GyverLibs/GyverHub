@@ -59,7 +59,6 @@ function updateDevice(mem, dev) {
   mem.PIN = dev.PIN;
   mem.version = dev.version;
   mem.max_upl = dev.max_upl;
-  mem.esp = dev.esp;
   save_devices();
 }
 function compareDevice(mem, dev) {
@@ -68,8 +67,7 @@ function compareDevice(mem, dev) {
     mem.icon != dev.icon ||
     mem.PIN != dev.PIN ||
     mem.version != dev.version ||
-    mem.max_upl != dev.max_upl ||
-    mem.esp != dev.esp;
+    mem.max_upl != dev.max_upl;
 }
 function parseDevice(fromID, text, conn, ip = 'unset') {
   let device;
@@ -107,7 +105,7 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
       break;
 
     case 'ERR':
-      showPopupError('Error');
+      showPopupError(device.text);
       break;
 
     case 'discover':
