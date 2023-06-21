@@ -1,0 +1,678 @@
+#pragma once
+
+// HTML Canvas API
+// https://www.w3schools.com/tags/ref_canvas.asp
+// https://processing.org/reference/
+
+#include <Arduino.h>
+
+#include "macro.hpp"
+#include "utils/misc.h"
+
+enum GHmode_t {
+    CV_BUTT,
+    CV_ROUND,
+    CV_SQUARE,
+    CV_PROJECT,
+    CV_BEVEL,
+    CV_MITER,
+    CV_START,
+    CV_END,
+    CV_CENTER,
+    CV_LEFT,
+    CV_RIGHT,
+    CV_ALPHABETIC,
+    CV_TOP,
+    CV_HANGING,
+    CV_MIDDLE,
+    CV_IDEOGRAPHIC,
+    CV_BOTTOM,
+    CV_SRC_OVER,
+    CV_SRC_ATOP,
+    CV_SRC_IN,
+    CV_SRC_OUT,
+    CV_DST_OVER,
+    CV_DST_ATOP,
+    CV_DST_IN,
+    CV_DST_OUT,
+    CV_LIGHTER,
+    CV_COPY,
+    CV_XOR,
+    TXT_TOP,
+    TXT_BOTTOM,
+    TXT_CENTER,
+    TXT_BASELINE,
+    CV_CORNER,
+    CV_CORNERS,
+    CV_RADIUS,
+};
+
+class GHcanvas {
+   public:
+    GHcanvas() {
+        ps = &buf;
+    }
+
+    // буфер
+    String buf;
+
+    // подключить внешний буфер
+    void extBuffer(String* sptr) {
+        ps = sptr;
+    }
+
+    // очистить буфер (внутренний)
+    void clearBuffer() {
+        first = 1;
+        buf = "";
+    }
+
+    // добавить строку кода на js
+    void custom(const String& s) {
+        if (!ps) return;
+        _checkFirst();
+        _quot();
+        GH_escapeStr(ps, s.c_str(), false);
+        _quot();
+    }
+    void custom(FSTR s) {
+        if (!ps) return;
+        _checkFirst();
+        _quot();
+        GH_escapeStr(ps, s, true);
+        _quot();
+    }
+
+    // =====================================================
+    // =============== PROCESSING-LIKE API =================
+    // =====================================================
+
+    // =================== BACKGROUND ======================
+    // очистить полотно
+    void clear() {
+        clearRect(0, 0, -1, -1);
+        beginPath();
+    }
+
+    // залить полотно установленным в fill() цветом
+    void background() {
+        fillRect(0, 0, -1, -1);
+    }
+
+    // залить полотно указанным цветом (цвет, прозрачность)
+    void background(uint32_t hex, uint8_t a = 255) {
+        fillStyle(hex, a);
+        background();
+    }
+
+    // ======================== FILL =======================
+    // выбрать цвет заливки (цвет, прозрачность)
+    void fill(uint32_t hex, uint8_t a = 255) {
+        fillStyle(hex, a);
+        fillF = 1;
+    }
+
+    // отключить заливку
+    void noFill() {
+        fillF = 0;
+    }
+
+    // ===================== STROKE ====================
+    // выбрать цвет обводки (цвет, прозрачность)
+    void stroke(uint32_t hex, uint8_t a = 255) {
+        strokeStyle(hex, a);
+        strokeF = 1;
+    }
+
+    // отключить обводку
+    void noStroke() {
+        strokeF = 0;
+    }
+
+    // толщина обводки, px
+    void strokeWeight(int v) {
+        lineWidth(v);
+    }
+
+    // соединение линий: CV_MITER (умолч), CV_BEVEL, CV_ROUND
+    void strokeJoin(GHmode_t v) {
+        lineJoin(v);
+    }
+
+    // края линий: CV_PROJECT (умолч), CV_ROUND, CV_SQUARE
+    void strokeCap(GHmode_t v) {
+        lineCap(v);
+    }
+
+    // ===================== PRIMITIVES ====================
+    // окружность (x, y, радиус), px
+    void circle(int x, int y, int r) {
+        beginPath();
+        switch (eMode) {
+            case CV_CORNER:
+                arc(x + r, y + r, r);
+                break;
+            default:
+                arc(x, y, r);
+                break;
+        }
+        if (strokeF) stroke();
+        if (fillF) fill();
+    }
+
+    // линия (координаты начала и конца)
+    void line(int x1, int y1, int x2, int y2) {
+        beginPath();
+        moveTo(x1, y1);
+        lineTo(x2, y2);
+        stroke();
+    }
+
+    // точка
+    void point(int x, int y) {
+        beginPath();
+        fillRect(x, y, 1, 1);
+    }
+
+    // четырёхугольник (координаты углов)
+    void quadrangle(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4) {
+        beginPath();
+        moveTo(x1, y1);
+        lineTo(x2, y2);
+        lineTo(x3, y3);
+        lineTo(x4, y4);
+        closePath();
+        if (strokeF) stroke();
+        if (fillF) fill();
+    }
+
+    // треугольник (координаты углов)
+    void triangle(int x1, int y1, int x2, int y2, int x3, int y3) {
+        beginPath();
+        moveTo(x1, y1);
+        lineTo(x2, y2);
+        lineTo(x3, y3);
+        closePath();
+        if (strokeF) stroke();
+        if (fillF) fill();
+    }
+
+    // прямоугольник
+    void rect(int x, int y, int w, int h) {
+        beginPath();
+        switch (rMode) {
+            case CV_CORNER:
+                drawRect(x, y, w, h);
+                break;
+            case CV_CORNERS:
+                drawRect(x, y, w - x, h - y);
+                break;
+            case CV_CENTER:
+                drawRect(x - w / 2, y - h / 2, w, h);
+                break;
+            case CV_RADIUS:
+                drawRect(x - w, y - h, w * 2, h * 2);
+                break;
+            default:
+                break;
+        }
+        if (strokeF) stroke();
+        if (fillF) fill();
+    }
+
+    // квадрат
+    void square(int x, int y, int w) {
+        rect(x, y, w, w);
+    }
+
+    // режим окружности: CV_CENTER (умолч), CV_CORNER
+    void ellipseMode(GHmode_t mode) {
+        eMode = mode;
+    }
+
+    // режим прямоугольника: CV_CORNER (умолч), CV_CORNERS, CV_CENTER, CV_RADIUS
+    void rectMode(GHmode_t mode) {
+        rMode = mode;
+    }
+
+    // ======================= TEXT ========================
+    // шрифт
+    void textFont(const char* name) {
+        fname = name;
+        _font();
+    }
+
+    // размер шрифта, px
+    void textSize(int size) {
+        fsize = size;
+        _font();
+    }
+
+    // вывести текст, опционально макс длина
+    void text(const String& text, int x, int y, int w = 0) {
+        if (strokeF) strokeText(text, x, y, w);
+        if (fillF) fillText(text, x, y, w);
+    }
+
+    // выравнивание текста
+    // CV_LEFT, CV_CENTER, CV_RIGHT
+    // TXT_TOP, TXT_BOTTOM, TXT_CENTER, TXT_BASELINE
+    void textAlign(GHmode_t h, GHmode_t v) {
+        textAlign(h);
+        textBaseline(v);
+    }
+
+    // сохранить конфигурацию полотна
+    void push() {
+        save();
+    }
+
+    // восстановить конфигурацию полотна
+    void pop() {
+        restore();
+    }
+
+    // ======================================================
+    // ================== HTML CANVAS API ===================
+    // ======================================================
+
+    // цвет заполнения
+    void fillStyle(uint32_t hex, uint8_t a = 255) {
+        addCmd(0);
+        _div();
+        _color(hex, a);
+        _quot();
+    }
+
+    // цвет обводки
+    void strokeStyle(uint32_t hex, uint8_t a = 255) {
+        addCmd(1);
+        _div();
+        _color(hex, a);
+        _quot();
+    }
+
+    // цвет тени
+    void shadowColor(uint32_t hex, uint8_t a = 255) {
+        addCmd(2);
+        _div();
+        _color(hex, a);
+        _quot();
+    }
+
+    // размытость тени, px
+    void shadowBlur(int v) {
+        addCmd(3);
+        _div();
+        _add(v);
+        _quot();
+    }
+
+    // отступ тени, px
+    void shadowOffsetX(int v) {
+        addCmd(4);
+        _div();
+        _add(v);
+        _quot();
+    }
+
+    // отступ тени, px
+    void shadowOffsetY(int v) {
+        addCmd(5);
+        _div();
+        _add(v);
+        _quot();
+    }
+
+    // края линий: CV_BUTT (умолч), CV_ROUND, CV_SQUARE
+    // https://www.w3schools.com/tags/canvas_linecap.asp
+    void lineCap(GHmode_t v) {
+        addCmd(11);
+        _div();
+        _add(v);
+        _quot();
+    }
+
+    // соединение линий: CV_MITER (умолч), CV_BEVEL, CV_ROUND
+    // https://www.w3schools.com/tags/canvas_linejoin.asp
+    void lineJoin(GHmode_t v) {
+        addCmd(12);
+        _div();
+        _add(v);
+        _quot();
+    }
+
+    // ширина линий, px
+    void lineWidth(int v) {
+        addCmd(6);
+        _div();
+        _add(v);
+        _quot();
+    }
+
+    // длина соединения CV_MITER, px
+    // https://www.w3schools.com/tags/canvas_miterlimit.asp
+    void miterLimit(int v) {
+        addCmd(7);
+        _div();
+        _add(v);
+        _quot();
+    }
+
+    // шрифт: "30px Arial"
+    // https://www.w3schools.com/tags/canvas_font.asp
+    void font(const String& v) {
+        addCmd(8);
+        _div();
+        _dquot();
+        _add(v);
+        _dquot();
+        _quot();
+    }
+
+    // выравнивание текста: CV_START (умолч), CV_END, CV_CENTER, CV_LEFT, CV_RIGHT
+    // https://www.w3schools.com/tags/canvas_textalign.asp
+    void textAlign(GHmode_t v) {
+        addCmd(9);
+        _div();
+        _add(v);
+        _quot();
+    }
+
+    // позиция текста: CV_ALPHABETIC (умолч), CV_TOP, CV_HANGING, CV_MIDDLE, CV_IDEOGRAPHIC, CV_BOTTOM
+    // https://www.w3schools.com/tags/canvas_textbaseline.asp
+    void textBaseline(GHmode_t v) {
+        addCmd(10);
+        _div();
+        _add(v);
+        _quot();
+    }
+
+    // прозрачность рисовки, 0.0-1.0
+    void globalAlpha(float v) {
+        addCmd(14);
+        _div();
+        _add(v);
+        _quot();
+    }
+
+    // тип наложения графики: CV_SRC_OVER (умолч), CV_SRC_ATOP, CV_SRC_IN, CV_SRC_OUT, CV_DST_OVER, CV_DST_ATOP, CV_DST_IN, CV_DST_OUT, CV_LIGHTER, CV_COPY, CV_XOR
+    // https://www.w3schools.com/tags/canvas_globalcompositeoperation.asp
+    void globalCompositeOperation(GHmode_t v) {
+        addCmd(13);
+        _div();
+        _add(v);
+        _quot();
+    }
+
+    // прямоугольник
+    void drawRect(int x, int y, int w, int h) {
+        addCmd(17);
+        _div();
+        _params(4, x, y, w, h);
+        _quot();
+    }
+
+    // закрашенный прямоугольник
+    void fillRect(int x, int y, int w, int h) {
+        addCmd(18);
+        _div();
+        _params(4, x, y, w, h);
+        _quot();
+    }
+
+    // обведённый прямоугольник
+    void strokeRect(int x, int y, int w, int h) {
+        addCmd(19);
+        _div();
+        _params(4, x, y, w, h);
+        _quot();
+    }
+
+    // очистить область
+    void clearRect(int x, int y, int w, int h) {
+        addCmd(20);
+        _div();
+        _params(4, x, y, w, h);
+        _quot();
+    }
+
+    // залить
+    void fill() {
+        addCmd(31);
+        _quot();
+    }
+
+    // обвести
+    void stroke() {
+        addCmd(32);
+        _quot();
+    }
+
+    // начать путь
+    void beginPath() {
+        addCmd(33);
+        _quot();
+    }
+
+    // переместить курсор
+    void moveTo(int x, int y) {
+        addCmd(21);
+        _div();
+        _params(2, x, y);
+        _quot();
+    }
+
+    // завершить путь (провести линию на начало)
+    void closePath() {
+        addCmd(34);
+        _quot();
+    }
+
+    // нарисовать линию от курсора
+    void lineTo(int x, int y) {
+        addCmd(22);
+        _div();
+        _params(2, x, y);
+        _quot();
+    }
+
+    // ограничить область рисования
+    // https://www.w3schools.com/tags/canvas_clip.asp
+    void clip() {
+        addCmd(35);
+        _quot();
+    }
+
+    // провести кривую
+    // https://www.w3schools.com/tags/canvas_quadraticcurveto.asp
+    void quadraticCurveTo(int cpx, int cpy, int x, int y) {
+        addCmd(23);
+        _div();
+        _params(4, cpx, cpy, x, y);
+        _quot();
+    }
+
+    // провести кривую Безье
+    // https://www.w3schools.com/tags/canvas_beziercurveto.asp
+    void bezierCurveTo(int cp1x, int cp1y, int cp2x, int cp2y, int x, int y) {
+        addCmd(24);
+        _div();
+        _params(6, cp1x, cp1y, cp2x, cp2y, x, y);
+        _quot();
+    }
+
+    // провести дугу
+    // https://www.w3schools.com/tags/canvas_arc.asp
+    void arc(int x, int y, int r, int sa = 0, int ea = 360, bool ccw = 0) {
+        addCmd(27);
+        _div();
+        _params(3, x, y, r);
+        _comma();
+        _add((float)sa * DEG_TO_RAD);
+        _comma();
+        _add((float)ea * DEG_TO_RAD);
+        _add(ccw);
+        _quot();
+    }
+
+    // скруглить
+    // https://www.w3schools.com/tags/canvas_arcto.asp
+    void arcTo(int x1, int y1, int x2, int y2, int r) {
+        addCmd(26);
+        _div();
+        _params(5, x1, y1, x2, y2, r);
+        _quot();
+    }
+
+    // масштабировать область рисования
+    // https://www.w3schools.com/tags/canvas_scale.asp
+    void scale(int sw, int sh) {
+        addCmd(15);
+        _div();
+        _params(2, sw, sh);
+        _quot();
+    }
+
+    // вращать область рисования
+    // https://www.w3schools.com/tags/canvas_rotate.asp
+    void rotate(int v) {
+        addCmd(16);
+        _div();
+        _add((float)v * DEG_TO_RAD);
+        _quot();
+    }
+
+    // перемещать область рисования
+    // https://www.w3schools.com/tags/canvas_translate.asp
+    void translate(int x, int y) {
+        addCmd(25);
+        _div();
+        _params(2, x, y);
+        _quot();
+    }
+
+    // вывести закрашенный текст, опционально макс. длина
+    void fillText(const String& text, int x, int y, int w = 0) {
+        addCmd(28);
+        _div();
+        _dquot();
+        _add(text);
+        _dquot();
+        _comma();
+        _params(3, x, y, w);
+        _quot();
+    }
+
+    // вывести обведённый текст, опционально макс. длина
+    void strokeText(const String& text, int x, int y, int w = 0) {
+        addCmd(29);
+        _div();
+        _dquot();
+        _add(text);
+        _dquot();
+        _comma();
+        _params(3, x, y, w);
+        _quot();
+    }
+
+    // вывести картинку
+    // https://www.w3schools.com/tags/canvas_drawimage.asp
+    void drawImage(const String& img, int x, int y) {
+        addCmd(30);
+        _div();
+        _add(img);
+        _comma();
+        _params(2, x, y);
+        _quot();
+    }
+    void drawImage(const String& img, int x, int y, int w, int h) {
+        addCmd(30);
+        _div();
+        _add(img);
+        _comma();
+        _params(4, x, y, w, h);
+        _quot();
+    }
+    void drawImage(const String& img, int sx, int sy, int sw, int sh, int x, int y, int w, int h) {
+        addCmd(30);
+        _div();
+        _add(img);
+        _comma();
+        _params(8, sx, sy, sw, sh, x, y, w, h);
+        _quot();
+    }
+
+    // сохранить конфигурацию полотна
+    void save() {
+        addCmd(36);
+        _quot();
+    }
+
+    // восстановить конфигурацию полотна
+    void restore() {
+        addCmd(37);
+        _quot();
+    }
+
+   private:
+    template <typename T>
+    void _add(T v) {
+        if (ps) *ps += v;
+    }
+    void _checkFirst() {
+        if (first) first = 0;
+        else _add(',');
+    }
+    void addCmd(int cmd) {
+        _checkFirst();
+        _quot();
+        _add(cmd);
+    }
+    void _div() {
+        _add(':');
+    }
+    void _quot() {
+        _add('\'');
+    }
+    void _dquot() {
+        _add("\\");
+        _add("\"");
+    }
+    void _comma() {
+        _add(',');
+    }
+    void _params(int num, ...) {
+        va_list valist;
+        va_start(valist, num);
+        for (int i = 0; i < num; i++) {
+            _add(va_arg(valist, int));
+            if (i < num - 1) _comma();
+        }
+        va_end(valist);
+    }
+
+    void _color(uint32_t hex, uint8_t a = 255) {
+        hex = ((uint32_t)hex << 8) | a;
+        _add(hex);
+    }
+    void _font() {
+        addCmd(10);
+        _div();
+        _dquot();
+        _add(fsize);
+        _add(F("px "));
+        _add(fname);
+        _dquot();
+        _quot();
+    }
+
+    String* ps = nullptr;
+    bool first = 1;
+    bool strokeF = 1;
+    bool fillF = 1;
+    const char* fname = "Arial";
+    int fsize = 20;
+    GHmode_t eMode = CV_RADIUS;
+    GHmode_t rMode = CV_CORNER;
+};
