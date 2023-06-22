@@ -198,24 +198,32 @@ class GHcanvas {
     }
 
     // прямоугольник
-    void rect(int x, int y, int w, int h) {
+    void rect(int x, int y, int w, int h, int tl = -1, int tr = -1, int br = 0, int bl = 0) {
         beginPath();
+        int X = x, Y = y, W = w, H = h;
         switch (rMode) {
             case CV_CORNER:
-                drawRect(x, y, w, h);
                 break;
             case CV_CORNERS:
-                drawRect(x, y, w - x, h - y);
+                W = w - x;
+                H = h - y;
                 break;
             case CV_CENTER:
-                drawRect(x - w / 2, y - h / 2, w, h);
+                X = x - w / 2;
+                Y = y - h / 2;
                 break;
             case CV_RADIUS:
-                drawRect(x - w, y - h, w * 2, h * 2);
+                X = x - w;
+                Y = y - h;
+                W = w * 2;
+                H = h * 2;
                 break;
             default:
                 break;
         }
+        if (tl < 0) drawRect(X, Y, W, H);
+        else if (tr < 0) roundRect(X, Y, W, H, tl);
+        else roundRect(X, Y, W, H, tl, tr, br, bl);
         if (strokeF) stroke();
         if (fillF) fill();
     }
@@ -413,6 +421,16 @@ class GHcanvas {
         _quot();
     }
 
+    // скруглённый прямоугольник
+    void roundRect(int x, int y, int w, int h, int tl = 0, int tr = -1, int br = -1, int bl = -1) {
+        addCmd(31);
+        _div();
+        if (tr < 0) _params(5, x, y, w, h, tl);
+        else if (br < 0) _params(6, x, y, w, h, tl, tr);
+        else _params(8, x, y, w, h, tl, tr, br, bl);
+        _quot();
+    }
+
     // закрашенный прямоугольник
     void fillRect(int x, int y, int w, int h) {
         addCmd(18);
@@ -439,19 +457,19 @@ class GHcanvas {
 
     // залить
     void fill() {
-        addCmd(31);
+        addCmd(32);
         _quot();
     }
 
     // обвести
     void stroke() {
-        addCmd(32);
+        addCmd(33);
         _quot();
     }
 
     // начать путь
     void beginPath() {
-        addCmd(33);
+        addCmd(34);
         _quot();
     }
 
@@ -465,7 +483,7 @@ class GHcanvas {
 
     // завершить путь (провести линию на начало)
     void closePath() {
-        addCmd(34);
+        addCmd(35);
         _quot();
     }
 
@@ -480,7 +498,7 @@ class GHcanvas {
     // ограничить область рисования
     // https://www.w3schools.com/tags/canvas_clip.asp
     void clip() {
-        addCmd(35);
+        addCmd(36);
         _quot();
     }
 
@@ -502,16 +520,16 @@ class GHcanvas {
         _quot();
     }
 
-    // провести дугу
+    // провести дугу (радианы)
     // https://www.w3schools.com/tags/canvas_arc.asp
-    void arc(int x, int y, int r, int sa = 0, int ea = 360, bool ccw = 0) {
+    void arc(int x, int y, int r, float sa = 0, float ea = TWO_PI, bool ccw = 0) {
         addCmd(27);
         _div();
         _params(3, x, y, r);
         _comma();
-        _add((float)sa * DEG_TO_RAD);
+        _add(sa);
         _comma();
-        _add((float)ea * DEG_TO_RAD);
+        _add(ea);
         _add(ccw);
         _quot();
     }
@@ -534,12 +552,12 @@ class GHcanvas {
         _quot();
     }
 
-    // вращать область рисования
+    // вращать область рисования (в радианах)
     // https://www.w3schools.com/tags/canvas_rotate.asp
-    void rotate(int v) {
+    void rotate(float v) {
         addCmd(16);
         _div();
-        _add((float)v * DEG_TO_RAD);
+        _add(v);
         _quot();
     }
 
@@ -605,13 +623,13 @@ class GHcanvas {
 
     // сохранить конфигурацию полотна
     void save() {
-        addCmd(36);
+        addCmd(37);
         _quot();
     }
 
     // восстановить конфигурацию полотна
     void restore() {
-        addCmd(37);
+        addCmd(38);
         _quot();
     }
 

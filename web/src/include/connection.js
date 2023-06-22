@@ -60,7 +60,7 @@ function post(cmd, name = '', value = '') {
   log('Post to #' + id + ' via ' + ConnNames[devices_t[id].conn] + ', cmd=' + cmd + (name ? (', name=' + name) : '') + (value ? (', value=' + value) : ''))
 }
 function release_all() {
-  if (pressId) post('click', pressId, 0);
+  if (pressId) post('set', pressId, 0);
   pressId = null;
 }
 function click_h(name, dir) {

@@ -53,8 +53,12 @@ parse	KEYWORD2
 setBufferSize	KEYWORD2
 
 setRGB	KEYWORD2
+setGray	KEYWORD2
+setHSV	KEYWORD2
+setHue	KEYWORD2
 setHEX	KEYWORD2
 getHEX	KEYWORD2
+
 toString	KEYWORD2
 start	KEYWORD2
 stop	KEYWORD2
@@ -103,6 +107,7 @@ textBaseline	KEYWORD2
 globalAlpha	KEYWORD2
 globalCompositeOperation	KEYWORD2
 fillRect	KEYWORD2
+roundRect	KEYWORD2
 strokeRect	KEYWORD2
 drawRect	KEYWORD2
 clearRect	KEYWORD2

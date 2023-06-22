@@ -21,11 +21,15 @@ struct GHcolor {
 
     GHcolor() {}
     GHcolor(const GHcolor& col) = default;
-    GHcolor(uint32_t col) {
-        setHEX(col);
+    GHcolor(uint8_t gray) {
+        setGray(gray);
     }
-    GHcolor(uint8_t nr, uint8_t ng, uint8_t nb) {
-        setRGB(nr, ng, nb);
+    GHcolor(uint32_t hex, bool f) {
+        if (f) setHEX(hex);
+    }
+    GHcolor(uint8_t v1, uint8_t v2, uint8_t v3, bool hsv = 0) {
+        if (hsv) setHSV(v1, v2, v3);
+        else setRGB(v1, v2, v3);
     }
 
     void setRGB(uint8_t nr, uint8_t ng, uint8_t nb) {
@@ -33,11 +37,71 @@ struct GHcolor {
         g = ng;
         b = nb;
     }
+    void setGray(uint8_t gray) {
+        setRGB(gray, gray, gray);
+    }
     void setHEX(uint32_t hex) {
         r = ((uint8_t*)&hex)[2];
         g = ((uint8_t*)&hex)[1];
         b = ((uint8_t*)&hex)[0];
     }
+    void setHSV(uint8_t h, uint8_t s, uint8_t v) {
+        float R, G, B;
+
+        float H = h / 255.0;
+        float S = s / 255.0;
+        float V = v / 255.0;
+
+        uint8_t i = H * 6;
+        float f = H * 6 - i;
+        float p = V * (1 - S);
+        float q = V * (1 - f * S);
+        float t = V * (1 - (1 - f) * S);
+
+        switch (i) {
+            case 0:
+                R = V, G = t, B = p;
+                break;
+            case 1:
+                R = q, G = V, B = p;
+                break;
+            case 2:
+                R = p, G = V, B = t;
+                break;
+            case 3:
+                R = p, G = q, B = V;
+                break;
+            case 4:
+                R = t, G = p, B = V;
+                break;
+            case 5:
+                R = V, G = p, B = q;
+                break;
+        }
+        r = R * 255;
+        g = G * 255;
+        b = B * 255;
+    }
+    void setHue(uint8_t color) {
+        uint8_t shift;
+        if (color > 170) {
+            shift = (color - 170) * 3;
+            r = shift;
+            g = 0;
+            b = 255 - shift;
+        } else if (color > 85) {
+            shift = (color - 85) * 3;
+            r = 0;
+            g = 255 - shift;
+            b = shift;
+        } else {
+            shift = color * 3;
+            r = 255 - shift;
+            g = shift;
+            b = 0;
+        }
+    }
+
     uint32_t getHEX() {
         uint32_t hex = 0;
         ((uint8_t*)&hex)[2] = r;

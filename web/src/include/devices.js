@@ -610,9 +610,9 @@ function drawCanvas(canvas) {
   }
 
   let cx = cv.getContext("2d");
-  const cmd_list = ['fillStyle', 'strokeStyle', 'shadowColor', 'shadowBlur', 'shadowOffsetX', 'shadowOffsetY', 'lineWidth', 'miterLimit', 'font', 'textAlign', 'textBaseline', 'lineCap', 'lineJoin', 'globalCompositeOperation', 'globalAlpha', 'scale', 'rotate', 'rect', 'fillRect', 'strokeRect', 'clearRect', 'moveTo', 'lineTo', 'quadraticCurveTo', 'bezierCurveTo', 'translate', 'arcTo', 'arc', 'fillText', 'strokeText', 'drawImage', 'fill', 'stroke', 'beginPath', 'closePath', 'clip', 'save', 'restore'];
+  const cmd_list = ['fillStyle', 'strokeStyle', 'shadowColor', 'shadowBlur', 'shadowOffsetX', 'shadowOffsetY', 'lineWidth', 'miterLimit', 'font', 'textAlign', 'textBaseline', 'lineCap', 'lineJoin', 'globalCompositeOperation', 'globalAlpha', 'scale', 'rotate', 'rect', 'fillRect', 'strokeRect', 'clearRect', 'moveTo', 'lineTo', 'quadraticCurveTo', 'bezierCurveTo', 'translate', 'arcTo', 'arc', 'fillText', 'strokeText', 'drawImage', 'roundRect', 'fill', 'stroke', 'beginPath', 'closePath', 'clip', 'save', 'restore'];
   const const_list = ['butt', 'round', 'square', 'square', 'bevel', 'miter', 'start', 'end', 'center', 'left', 'right', 'alphabetic', 'top', 'hanging', 'middle', 'ideographic', 'bottom', 'source-over', 'source-atop', 'source-in', 'source-out', 'destination-over', 'destination-atop', 'destination-in', 'destination-out', 'lighter', 'copy', 'xor', 'top', 'bottom', 'middle', 'alphabetic'];
-
+  
   for (d of canvas.value) {
     let div = d.indexOf(':');
     let cmd = parseInt(d, 10);
@@ -622,7 +622,7 @@ function drawCanvas(canvas) {
         let val = d.slice(div + 1);
         let vals = val.split(',');
         if (cmd <= 2) ev_str += ('cx.' + cmd_list[cmd] + '=\'' + intToColA(val) + '\';');
-        else if (cmd <= 7) ev_str += ('cx.' + cmd_list[cmd] + '=' + (val * canvas.scale) + ';');
+        else if (cmd <= 7) ev_str += ('cx.' + cmd_list[cmd] + '=' + (val * scale()) + ';');
         else if (cmd <= 13) ev_str += ('cx.' + cmd_list[cmd] + '=\'' + const_list[val] + '\';');
         else if (cmd <= 14) ev_str += ('cx.' + cmd_list[cmd] + '=' + val + ';');
         else if (cmd <= 16) ev_str += ('cx.' + cmd_list[cmd] + '(' + val + ');');
@@ -645,9 +645,25 @@ function drawCanvas(canvas) {
             } else str += vals[i];
           }
           ev_str += (str + ');');
+        } else if (cmd == 31) {
+          let str = 'cx.' + cmd_list[cmd] + '(';
+          for (let i = 0; i < 4; i++) {
+            if (i > 0) str += ',';
+            str += `cv_map(${vals[i]},${(i % 2)})`;
+          }
+          if (vals.length == 5) str += `,${vals[4] * scale()}`;
+          else {
+            str += ',[';
+            for (let i = 4; i < vals.length; i++) {
+              if (i > 4) str += ',';
+              str += `cv_map(${vals[i]},${(i % 2)})`;
+            }
+            str += ']';
+          }
+          ev_str += (str + ');');
         }
       } else {
-        if (cmd >= 31) ev_str += ('cx.' + cmd_list[cmd] + '();');
+        if (cmd >= 32) ev_str += ('cx.' + cmd_list[cmd] + '();');
       }
     } else {
       ev_str += d + ';';

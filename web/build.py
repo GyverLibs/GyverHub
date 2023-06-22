@@ -1,7 +1,7 @@
 # GyverHub Web Builder
 
-version = '0.39b'
-notes = 'Changed buttons logic'
+version = '0.40b'
+notes = 'Add round rect'
 
 js_files = [
     'src/include/main.js',
