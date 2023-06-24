@@ -10,7 +10,7 @@
 
 > <br>**Документация находится в [Wiki репозитория](https://github.com/GyverLibs/GyverHub/wiki). English docs - [translate](https://github-com.translate.goog/GyverLibs/GyverHub/wiki?_x_tr_sl=ru&_x_tr_tl=en)**<br><br>
 
-|⚠️⚠️⚠️<br>**Бета-версия! Проект пока что тестируется, следите за коммитами. Известные проблемы, особенности версии, обсуждение, предложения, баги - всё [вот тут](https://github.com/GyverLibs/GyverHub/issues/3)**<br>⚠️⚠️⚠️|
+|⚠️⚠️⚠️<br>**Бета-версия! Проект пока что тестируется, следите за коммитами. Известные проблемы, особенности версии, обсуждение, предложения, баги - всё [вот тут](https://github.com/GyverLibs/GyverHub/issues/6)**<br>⚠️⚠️⚠️|
 | --- |
 
 |☕☕☕<br>**Библиотека разработана благодаря народной поддержке [на Boosty](https://boosty.to/alexgyvershow). Также есть [другие способы](https://alexgyver.ru/support_alex/) поддержать автора**<br>☕☕☕|
