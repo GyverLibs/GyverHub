@@ -29,7 +29,7 @@ GyverHub hub("MyDevices", "ESP8266", "");
 // https://fontawesome.com/v5/search?o=r&m=free&s=solid
 
 uint8_t tab = 0;
-bool b1, b2;
+GHbutton b1, b2;
 String label_s;
 
 String inp_str;
