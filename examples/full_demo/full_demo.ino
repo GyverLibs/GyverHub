@@ -208,6 +208,24 @@ void setup() {
     Serial.println(GHreadReason(r));
   });
 
+  // добавить поля в Info
+  hub.onInfo([](GHinfo_t info) {
+    switch (info) {
+      case GH_INFO_VERSION:
+        hub.addInfo(F("Custom_ver"), F("v1.5"));
+        break;
+      case GH_INFO_NETWORK:
+        hub.addInfo(F("Custom_net"), "net value");
+        break;
+      case GH_INFO_MEMORY:
+        hub.addInfo(F("Custom_mem"), String(123));
+        break;
+      case GH_INFO_SYSTEM:
+        hub.addInfo(F("Custom_sys"), "text");
+        break;
+    }
+  });
+
   hub.begin();    // запустить
   // hub.setVersion("v1.1");      // установить версию (отображается в info)
   // hub.setPIN(1234);            // установить пин-код

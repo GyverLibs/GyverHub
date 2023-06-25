@@ -37,7 +37,7 @@ void build() {
     hub.Flags(&data.flags);
 
     // было действие установки (ЛЮБОЕ НА СТРАНИЦЕ)
-    if (b.action.type == GH_ACTION_SET) {
+    if (b.type == GH_BUILD_ACTION) {
         // сохраняем структуру data
     }
 
