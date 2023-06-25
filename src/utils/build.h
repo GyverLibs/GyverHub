@@ -43,7 +43,7 @@ class GHbuild {
     }
 
     bool autoNameEq() {
-        return action.name[0] == '_' && action.name[1] == 'n' && atoi(action.name + 2) == count;
+        return action.name[0] == '_' && action.name[1] == 'n' && (uint16_t)atoi(action.name + 2) == count;
     }
 
     // тип билда

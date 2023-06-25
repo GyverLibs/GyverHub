@@ -12,6 +12,7 @@ let pickers = {};
 let joys = {};
 let prompts = {};
 let confirms = {};
+let oninp_buffer = {};
 
 let wid_row_id = null;
 let wid_row_count = 0;
@@ -19,6 +20,21 @@ let wid_row_size = 0;
 let btn_row_id = null;
 let btn_row_count = 0;
 let dis_scroll_f = false;
+
+const Modules = {
+  INFO: (1 << 0),
+  FSBR: (1 << 1),
+  FORMAT: (1 << 2),
+  DOWNLOAD: (1 << 3),
+  UPLOAD: (1 << 4),
+  OTA: (1 << 5),
+  OTA_URL: (1 << 6),
+  REBOOT: (1 << 7),
+  SET: (1 << 8),
+  READ: (1 << 9),
+  DELETE: (1 << 10),
+  RENAME: (1 << 11)
+};
 
 // ============ SAVE/LOAD ==============
 function save_devices() {
@@ -31,6 +47,9 @@ function load_devices() {
 }
 
 // ============== DEVICE ===============
+function readModule(module) {
+  return !(devices[focused].modules & module);
+}
 function addDevice(id) {
   let icon = (!isESP() && devices[id].icon.length) ? `<span class="icon icon_min" id="icon#${id}">${devices[id].icon}</span>` : '';
   EL('devices').innerHTML += `<div class="device offline" id="device#${id}" onclick="device_h('${id}')" title="${id} [${devices[id].prefix}]">
@@ -612,7 +631,7 @@ function drawCanvas(canvas) {
   let cx = cv.getContext("2d");
   const cmd_list = ['fillStyle', 'strokeStyle', 'shadowColor', 'shadowBlur', 'shadowOffsetX', 'shadowOffsetY', 'lineWidth', 'miterLimit', 'font', 'textAlign', 'textBaseline', 'lineCap', 'lineJoin', 'globalCompositeOperation', 'globalAlpha', 'scale', 'rotate', 'rect', 'fillRect', 'strokeRect', 'clearRect', 'moveTo', 'lineTo', 'quadraticCurveTo', 'bezierCurveTo', 'translate', 'arcTo', 'arc', 'fillText', 'strokeText', 'drawImage', 'roundRect', 'fill', 'stroke', 'beginPath', 'closePath', 'clip', 'save', 'restore'];
   const const_list = ['butt', 'round', 'square', 'square', 'bevel', 'miter', 'start', 'end', 'center', 'left', 'right', 'alphabetic', 'top', 'hanging', 'middle', 'ideographic', 'bottom', 'source-over', 'source-atop', 'source-in', 'source-out', 'destination-over', 'destination-atop', 'destination-in', 'destination-out', 'lighter', 'copy', 'xor', 'top', 'bottom', 'middle', 'alphabetic'];
-  
+
   for (d of canvas.value) {
     let div = d.indexOf(':');
     let cmd = parseInt(d, 10);

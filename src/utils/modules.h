@@ -16,7 +16,6 @@ enum GHmodule_t {
     GH_MOD_READ = (1ul << 9),
     GH_MOD_DELETE = (1ul << 10),
     GH_MOD_RENAME = (1ul << 11),
-
     GH_MOD_SERIAL = (1ul << 12),
     GH_MOD_BT = (1ul << 13),
     GH_MOD_WS = (1ul << 14),
@@ -24,22 +23,22 @@ enum GHmodule_t {
 };
 
 struct GHmodule {
-    uint32_t mods = 0xffffffff;
+    uint16_t mods = 0;
 
-    void set(uint32_t nmods) {
-        mods |= nmods;
-    }
-    void unset(uint32_t nmods) {
+    void set(uint16_t nmods) {
         mods &= ~nmods;
+    }
+    void unset(uint16_t nmods) {
+        mods |= nmods;
     }
 
     void setAll() {
-        mods = 0xffff;
-    }
-    void unsetAll() {
         mods = 0;
     }
+    void unsetAll() {
+        mods = (1ul << 16) - 1;
+    }
     bool read(GHmodule_t m) {
-        return mods & m;
+        return !(mods & m);
     }
 };

@@ -1,6 +1,7 @@
 #pragma once
 
-#define GH_VERSION "v0.1b"      // версия библиотеки
+#define GH_LIB_VERSION "v0.1b"  // версия библиотеки
+#define GH_HTTP_PATH "/fs/"     // путь к папке с файлами с HTTP доступом
 #define GH_CONN_TOUT 5          // таймаут соединения, с
 #define GH_HTTP_PORT 80         // http порт
 #define GH_WS_PORT 81           // websocket порт

@@ -120,7 +120,8 @@ async function checkUpdates(id) {
   if (id != focused) return;
   updates.push(id);
   if (confirm('Available new version v' + proj.version + ' for device [' + namever[0] + ']. Notes:\n' + proj.notes + '\n\nUpdate firmware?')) {
-    otaUrl(`https://raw.githubusercontent.com/${namever[0]}/master/bin/firmware.bin${devices[id].gzip ? '.gz' : ''}`, 'flash');
+    if ('ota_url' in proj) otaUrl(proj.ota_url, 'flash');
+    else otaUrl(`https://raw.githubusercontent.com/${namever[0]}/master/bin/firmware.bin${devices[id].ota_t == 'bin' ? '' : ('.' + devices[id].ota_t)}`, 'flash');
   }
 }
 async function pwa_install(ssl) {
@@ -216,6 +217,14 @@ function render_devices() {
   for (let id in devices) addDevice(id);
 }
 function render_info() {
+  const info_labels_topics = {
+    info_id: 'ID',
+    info_set: 'Set',
+    info_read: 'Read',
+    info_get: 'Get',
+    info_status: 'Status',
+  };
+
   for (let id in info_labels_topics) {
     EL('info_topics').innerHTML += `
     <div class="cfg_row info">
@@ -223,25 +232,6 @@ function render_info() {
       <label id="${id}" class="lbl_info info_small">-</label>
     </div>`;
   }
-
-  for (let id in info_labels_version) {
-    EL('info_version').innerHTML += `
-    <div class="cfg_row info">
-      <label>${info_labels_version[id]}</label>
-      <label id="${id}" class="lbl_info">-</label>
-    </div>`;
-  }
-
-  for (let id in info_labels_esp) {
-    EL('info_esp').innerHTML += `
-    <div class="cfg_row info">
-      <label>${info_labels_esp[id]}</label>
-      <label id="${id}" class="lbl_info">-</label>
-    </div>`;
-  }
-  EL('info_esp').innerHTML += '<div style="padding:10px"><button class="c_btn btn_mini" onclick="reboot_h()"><span class="icon info_icon"></span>Reboot</button></div>';
-  EL('info_l_ip').onclick = function () { window.open('http://' + devices[focused].ip, '_blank').focus(); };
-  EL('info_l_ip').classList.add('info_link');
 }
 function update_info() {
   let id = focused;
@@ -254,6 +244,12 @@ function update_info() {
   EL('info_read').innerHTML = devices[id].prefix + '/' + id + '/read/*';
   EL('info_get').innerHTML = devices[id].prefix + '/hub/' + id + '/get/*';
   EL('info_status').innerHTML = devices[id].prefix + '/hub/' + id + '/status';
+  EL('reboot_btn').style.display = readModule(Modules.REBOOT) ? 'block' : 'none';
+
+  EL('info_version').innerHTML = '';
+  EL('info_net').innerHTML = '';
+  EL('info_memory').innerHTML = '';
+  EL('info_system').innerHTML = '';
 }
 function render_selects() {
   for (let color in colors) {
@@ -346,22 +342,29 @@ function menu_h() {
 function info_h() {
   menuDeact();
   menu_show(0);
-  post('info');
+  if (readModule(Modules.INFO)) post('info');
   show_screen('info');
   EL('menu_info').classList.add('menu_act');
 }
 function fsbr_h() {
   menuDeact();
   menu_show(0);
-  post('fsbr');
-  EL('fsbr_inner').innerHTML = '<div class="fsbr_wait"><span style="font-size:50px;color:var(--prim)" class="icon spinning"></span></div>';
+  if (readModule(Modules.FSBR)) {
+    post('fsbr');
+    EL('fsbr_inner').innerHTML = '<div class="fsbr_wait"><span style="font-size:50px;color:var(--prim)" class="icon spinning"></span></div>';
+  }
+  EL('fs_browser').style.display = readModule(Modules.FSBR) ? 'block' : 'none';
+  EL('fs_upload').style.display = readModule(Modules.UPLOAD) ? 'block' : 'none';
+  EL('fs_otaf').style.display = readModule(Modules.OTA) ? 'block' : 'none';
+  EL('fs_otaurl').style.display = readModule(Modules.OTA_URL) ? 'block' : 'none';
+  EL('fs_format').style.display = readModule(Modules.FORMAT) ? 'flex' : 'none';
   show_screen('fsbr');
   EL('menu_fsbr').classList.add('menu_act');
 }
 function device_h(id) {
   if (discovering) return;
   if (!(id in devices_t) || devices_t[id].conn == Conn.NONE) {
-    delete_h(id);
+    //delete_h(id);
     return;
   }
   if (!devices[id]) return;

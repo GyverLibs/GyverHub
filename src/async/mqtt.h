@@ -73,10 +73,10 @@ class HubMQTT {
         });
 
         mqtt.onMessage([this](char* topic, char* data, GH_UNUSED AsyncMqttClientMessageProperties prop, size_t len, GH_UNUSED size_t index, GH_UNUSED size_t total) {
-            char data_c[len + 1];
-            if (len) strncpy(data_c, (char*)data, len);
-            data_c[len] = 0;
-            parse(topic, data_c, GH_MQTT, false);
+            char buf[len + 1] = "";
+            memcpy(buf, data, len);
+            buf[len] = 0;
+            parse(topic, buf, GH_MQTT, false);
         });
     }
 

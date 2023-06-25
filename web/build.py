@@ -1,7 +1,7 @@
 # GyverHub Web Builder
 
-version = '0.40b'
-notes = 'Add round rect'
+version = '0.41b'
+notes = 'Changed Info API, added HTTP hooks for files'
 
 js_files = [
     'src/include/main.js',

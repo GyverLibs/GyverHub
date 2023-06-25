@@ -1,6 +1,14 @@
 #pragma once
 #include "../config.hpp"
 
+// тип info
+enum GHinfo_t {
+    GH_INFO_VERSION,
+    GH_INFO_NETWORK,
+    GH_INFO_MEMORY,
+    GH_INFO_SYSTEM,
+};
+
 // причина перезагрузки
 enum GHreason_t {
     GH_REB_NONE,

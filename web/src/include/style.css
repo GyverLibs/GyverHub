@@ -363,6 +363,10 @@ body::-webkit-scrollbar-thumb {
   min-height: 30px;
 }
 
+.inp_wbtn {
+  border-radius: 4px 0 0 4px;
+}
+
 .cfg_inp:focus {
   outline: none;
 }
@@ -1462,7 +1466,6 @@ input:checked+.chbutton_s {
   font-size: 18px;
   padding: 5px;
   margin: 0;
-  height: 30px;
   width: 90px;
   border-radius: 0px 5px 5px 0px;
 }

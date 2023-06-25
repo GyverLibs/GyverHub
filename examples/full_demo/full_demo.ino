@@ -68,7 +68,6 @@ void build() {
   // Serial.println(GHreadConn(b.hub.conn)); // соединение
   // Serial.println(b.hub.id);               // id клиента
   if (b.type == GH_BUILD_ACTION) {                  // это действие
-    Serial.println(GHreadAction(b.action.type));  // тип действия
     Serial.println(b.action.name);                // имя компонента
     Serial.println(b.action.value);               // значение
     Serial.println();

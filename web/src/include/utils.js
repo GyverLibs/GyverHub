@@ -6,30 +6,6 @@ const app_version = '__VER__';
 const log_enable = true;
 const log_network = false;
 
-const info_labels_version = {
-  info_lib_v: 'Library',
-  info_firm_v: 'Firmware',
-};
-const info_labels_esp = {
-  info_mode: 'WiFi Mode',
-  info_ssid: 'SSID',
-  info_l_ip: 'Local IP',
-  info_ap_ip: 'AP IP',
-  info_mac: 'MAC',
-  info_rssi: 'RSSI',
-  info_uptime: 'Uptime',
-  info_heap: 'Free Heap',
-  info_sketch: 'Sketch (Free)',
-  info_flash: 'Flash Size',
-  info_cpu: 'Cpu Freq.',
-};
-const info_labels_topics = {
-  info_id: 'ID',
-  info_set: 'Set',
-  info_read: 'Read',
-  info_get: 'Get',
-  info_status: 'Status',
-};
 const colors = {
   //RED: 0xcb2839,
   ORANGE: 0xd55f30,
@@ -178,6 +154,12 @@ function ratio() {
 
 function resize_h() {
   showGauges();
+}
+function renameFile(src, name) {
+  return new File([src], name, {
+      type: src.type,
+      lastModified: src.lastModified,
+  });
 }
 
 // ========== POPUP ==============

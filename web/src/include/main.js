@@ -97,6 +97,9 @@ function render_main(v) {
           <label class="switch"><input type="checkbox" id="info_names_sw" onchange="devices[focused].show_names=this.checked;save_devices()">
           <span class="slider"></span></label>
         </div>
+        <div class="cfg_row">
+          <button id="reboot_btn" class="c_btn btn_mini" onclick="reboot_h()"><span class="icon info_icon"></span>Reboot</button>
+        </div>
       </div>
 
       <div class="cfg_col" id="info_topics">
@@ -105,16 +108,32 @@ function render_main(v) {
         </div>
       </div>
 
-      <div class="cfg_col" id="info_version">
+      <div class="cfg_col">
         <div class="cfg_row cfg_head">
           <label><span class="icon cfg_icon"></span>Version</label>
         </div>
+        <div id="info_version"></div>
       </div>
 
-      <div class="cfg_col" id="info_esp">
+      <div class="cfg_col">
         <div class="cfg_row cfg_head">
-          <label><span class="icon cfg_icon"></span>ESP info</label>
+          <label><span class="icon cfg_icon"></span>Network</label>
         </div>
+        <div id="info_net"></div>
+      </div>
+
+      <div class="cfg_col">
+        <div class="cfg_row cfg_head">
+          <label><span class="icon cfg_icon"></span>Memory</label>
+        </div>
+        <div id="info_memory"></div>
+      </div>
+
+      <div class="cfg_col">
+        <div class="cfg_row cfg_head">
+          <label><span class="icon cfg_icon"></span>System</label>
+        </div>
+        <div id="info_system"></div>
       </div>
     </div>
 
@@ -123,9 +142,11 @@ function render_main(v) {
         <div class="cfg_row cfg_head">
           <label><span class="icon cfg_icon"></span>FS Browser</label>
         </div>
-        <div id="fsbr_inner"></div>
-        <div class="cfg_row">
-          <button onclick="format_h()" class="c_btn btn_mini">Format</button>
+        <div id="fs_browser">
+          <div id="fsbr_inner"></div>
+          <div id="fs_format" class="cfg_row">
+            <button onclick="format_h()" class="c_btn btn_mini">Format</button>
+          </div>
         </div>
       </div>
 
@@ -133,10 +154,12 @@ function render_main(v) {
         <div class="cfg_row cfg_head">
           <label><span class="icon cfg_icon"></span>Upload</label>
         </div>
-        <div class="upload_row">
-          <input class="cfg_inp" type="text" id="file_upload_path" value="/">
-          <input type="file" id="file_upload" style="display:none" onchange="uploadFile(this)">
-          <button id="file_upload_btn" onclick="file_upload.click()" class="c_btn upl_button">Upload</button>
+        <div id="fs_upload">
+          <div class="upload_row">
+            <input class="cfg_inp inp_wbtn" type="text" id="file_upload_path" value="/">
+            <input type="file" id="file_upload" style="display:none" onchange="uploadFile(this)">
+            <button id="file_upload_btn" onclick="file_upload.click()" class="c_btn upl_button">Upload</button>
+          </div>
         </div>
       </div>
 
@@ -144,14 +167,16 @@ function render_main(v) {
         <div class="cfg_row cfg_head">
           <label><span class="icon cfg_icon"></span>OTA FILE</label>
         </div>
-        <div class="cfg_row">
-          <div>
-            <input type="file" id="ota_upload" style="display:none" onchange="uploadOta(this, 'flash')">
-            <button onclick="ota_upload.click()" class="c_btn btn_mini">Flash</button>
-            <input type="file" id="ota_upload_fs" style="display:none" onchange="uploadOta(this, 'fs')">
-            <button onclick="ota_upload_fs.click()" class="c_btn btn_mini">Filesystem</button>
+        <div id="fs_otaf">
+          <div class="cfg_row">
+            <div>
+              <input type="file" id="ota_upload" style="display:none" onchange="uploadOta(this, 'flash')">
+              <button onclick="ota_upload.click()" class="c_btn btn_mini">Flash</button>
+              <input type="file" id="ota_upload_fs" style="display:none" onchange="uploadOta(this, 'fs')">
+              <button onclick="ota_upload_fs.click()" class="c_btn btn_mini">Filesystem</button>
+            </div>
+            <label style="font-size:18px" id="ota_label">IDLE</label>
           </div>
-          <label style="font-size:18px" id="ota_label">IDLE</label>
         </div>
       </div>
 
@@ -159,13 +184,15 @@ function render_main(v) {
         <div class="cfg_row cfg_head">
           <label><span class="icon cfg_icon"></span>OTA URL</label>
         </div>
-        <div class="upload_row">
-          <input class="cfg_inp" type="text" id="ota_url_f">
-          <button id="ota_url_btn" onclick="otaUrl(ota_url_f.value,'flash')" class="c_btn upl_button">Flash</button>
-        </div>
-        <div class="upload_row">
-          <input class="cfg_inp" type="text" id="ota_url_fs">
-          <button id="ota_url_btn" onclick="otaUrl(ota_url_fs.value,'fs')" class="c_btn upl_button">FS</button>
+        <div id="fs_otaurl">
+          <div class="upload_row">
+            <input class="cfg_inp inp_wbtn" type="text" id="ota_url_f">
+            <button id="ota_url_btn" onclick="otaUrl(ota_url_f.value,'flash')" class="c_btn upl_button">Flash</button>
+          </div>
+          <div class="upload_row">
+            <input class="cfg_inp inp_wbtn" type="text" id="ota_url_fs">
+            <button id="ota_url_btn" onclick="otaUrl(ota_url_fs.value,'fs')" class="c_btn upl_button">FS</button>
+          </div>
         </div>
       </div>
 

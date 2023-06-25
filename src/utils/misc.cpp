@@ -21,29 +21,6 @@ char* GH_splitter(char* list, char div) {
     return NULL;
 }
 
-String GH_uptime() {
-    uint32_t sec = millis() / 1000ul;
-    uint8_t second = sec % 60ul;
-    sec /= 60ul;
-    uint8_t minute = sec % 60ul;
-    sec /= 60ul;
-    uint16_t hour = sec % 24ul;
-    sec /= 24ul;
-    String s;
-    s.reserve(10);
-    s += sec;  // day
-    s += ':';
-    s += hour / 10;
-    s += hour % 10;
-    s += ':';
-    s += minute / 10;
-    s += minute % 10;
-    s += ':';
-    s += second / 10;
-    s += second % 10;
-    return s;
-}
-
 void GH_escapeChar(String* s, char c) {
     if (c <= 13) {
         *s += '\\';

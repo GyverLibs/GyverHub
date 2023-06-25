@@ -44,10 +44,10 @@ class HubMQTT {
 
     void beginMQTT() {
         mqtt.setCallback([this](char* topic, uint8_t* data, uint16_t len) {
-            char data_c[len + 1];
-            if (len) strncpy(data_c, (char*)data, len);
-            data_c[len] = 0;
-            parse(topic, data_c, GH_MQTT, false);
+            char buf[len + 1] = "";
+            memcpy(buf, data, len);
+            buf[len] = 0;
+            parse(topic, buf, GH_MQTT, false);
         });
     }
 

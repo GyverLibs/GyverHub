@@ -15,7 +15,6 @@ let tout_interval = null;
 let ping_interval = null;
 let oninput_tout = null;
 let refresh_ui = false;
-let oninp_buffer = {};
 
 const Conn = {
   SERIAL: 0,
@@ -30,6 +29,7 @@ const ConnNames = ['Serial', 'BT', 'WS', 'MQTT', 'None', 'Error'];
 // ============== SEND ================
 function post(cmd, name = '', value = '') {
   if (!focused) return;
+  if (cmd == 'set' && !readModule(Modules.SET)) return;
   let id = focused;
   cmd = cmd.toString();
   name = name.toString();
@@ -128,6 +128,19 @@ function reset_ping() {
     }
   }, ping_prd);
 }
+function parsePacket(id, text, conn) {
+  let st = text.startsWith('\n{');
+  let end = text.endsWith('}\n');
+  if (st && end) parseDevice(id, text, conn);
+  else if (st) {
+    devices_t[id]['buffer'][ConnNames[conn]] = text;
+  } else if (end) {
+    devices_t[id]['buffer'][ConnNames[conn]] += text;
+    parseDevice(id, devices_t[id]['buffer'][ConnNames[conn]], conn);
+  } else {
+    devices_t[id]['buffer'][ConnNames[conn]] += text;
+  }
+}
 
 // =============== MQTT ================
 /*NON-ESP*/
@@ -210,18 +223,7 @@ function mq_start() {
           return;
         }
 
-        let st = text.startsWith('\n{');
-        let end = text.endsWith('}\n');
-        if (st && end) parseDevice(id, text, Conn.MQTT);
-        else if (st) {
-          devices_t[id].buffer.mq = text;
-        } else if (end) {
-          log('End MQTT UI chunk #' + id);
-          devices_t[id].buffer.mq += text;
-          parseDevice(id, devices_t[id].buffer.mq, Conn.MQTT);
-        } else {
-          devices_t[id].buffer.mq += text;
-        }
+        parsePacket(id, text, Conn.MQTT);
 
         // prefix/hub/id/get/name
       } else if (topic.startsWith(pref + '/hub/') && topic.includes('/get/')) {
@@ -269,6 +271,7 @@ function mq_show_err(state) {
 // ============= WEBSOCKET ==============
 function ws_start(id) {
   if (!cfg.use_ws) return;
+  checkHTTP(id);
   if (devices_t[id].ws) return;
   if (devices[id].ip == 'unset') return;
   log(`WS ${id} open...`);
@@ -297,18 +300,7 @@ function ws_start(id) {
 
   devices_t[id].ws.onmessage = function (event) {
     reset_tout();
-    let st = event.data.startsWith('\n{');
-    let end = event.data.endsWith('}\n');
-    if (st && end) parseDevice(id, event.data, Conn.WS);
-    else if (st) {
-      devices_t[id].buffer.ws = event.data;
-    } else if (end) {
-      log('End WS UI chunk #' + id);
-      devices_t[id].buffer.ws += event.data;
-      parseDevice(id, devices_t[id].buffer.ws, Conn.WS);
-    } else {
-      devices_t[id].buffer.ws += event.data;
-    }
+    parsePacket(id, event.data, Conn.WS);
   };
 }
 function ws_stop(id) {
@@ -399,6 +391,21 @@ function manual_ws_h(ip) {
   log('WS manual ' + ip);
   ws_discover_ip(ip);
   back_h();
+}
+function checkHTTP(id) {
+  if (devices_t[id].http_cfg) return;
+
+  let xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+      devices_t[id].http_cfg = JSON.parse(this.responseText);
+    } else if (this.status == 404) {
+      devices_t[id].http_cfg = {upload: 0, download: 0, ota: 0};
+    }
+  }
+  xhr.timeout = tout_prd;
+  xhr.open("GET", 'http://' + devices[id].ip + ':' + http_port + '/hub_http_cfg');
+  xhr.send();
 }
 
 // ================= HTTP =================

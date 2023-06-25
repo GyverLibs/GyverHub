@@ -11,7 +11,7 @@ function applyUpdate(name, value) {
     return;
   }
   if (name in confirms) {
-    release_all();log(confirms[name].label);
+    release_all(); log(confirms[name].label);
     let res = confirm(value ? value : confirms[name].label);
     set_h(name, res ? 1 : 0);
     return;
@@ -59,6 +59,8 @@ function updateDevice(mem, dev) {
   mem.PIN = dev.PIN;
   mem.version = dev.version;
   mem.max_upl = dev.max_upl;
+  mem.modules = dev.modules;
+  mem.ota_t = dev.ota_t;
   save_devices();
 }
 function compareDevice(mem, dev) {
@@ -67,7 +69,9 @@ function compareDevice(mem, dev) {
     mem.icon != dev.icon ||
     mem.PIN != dev.PIN ||
     mem.version != dev.version ||
-    mem.max_upl != dev.max_upl;
+    mem.max_upl != dev.max_upl ||
+    mem.modules != dev.modules ||
+    mem.ota_t != dev.ota_t;
 }
 function parseDevice(fromID, text, conn, ip = 'unset') {
   let device;
@@ -111,6 +115,11 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
     case 'discover':
       if (focused) return;
 
+      // COMPATIBILITY
+      if (device.modules == undefined) device.modules = 0;
+      if (device.ota_t == undefined) device.ota_t = 'bin';
+      //
+
       if (id in devices) {
         let upd = false;
         if (compareDevice(devices[id], device)) upd = true;
@@ -143,7 +152,7 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
       }
 
       if (!(id in devices_t)) {
-        devices_t[id] = { conn: Conn.NONE, ws: null, controls: null, granted: false, buffer: { ws: '', mq: '', serial: '', bt: '' } };
+        devices_t[id] = { conn: Conn.NONE, ws: null, controls: null, granted: false, buffer: { WS: '', MQTT: '', Serial: '', BT: '' } };
       }
 
       EL(`device#${id}`).className = "device";
@@ -215,12 +224,7 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
 
       fetch_file += device.data;
       if (device.chunk == device.amount - 1) {
-        EL('download#' + fetch_index).style.display = 'unset';
-        EL('download#' + fetch_index).href = 'data:' + getMime(fetch_name) + ';base64,' + fetch_file;
-        EL('download#' + fetch_index).download = fetch_name;
-        EL('open#' + fetch_index).style.display = 'unset';
-        EL('process#' + fetch_index).style.display = 'none';
-        stopFS();
+        fetchEnd(fetch_name, fetch_index, ('data:' + getMime(fetch_name) + ';base64,' + fetch_file));
       } else {
         EL('process#' + fetch_index).innerHTML = Math.round(device.chunk / device.amount * 100) + '%';
         post('fetch_chunk');
@@ -231,8 +235,7 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
     // ============= UPLOAD =============
     case 'upload_err':
       showPopupError('Upload aborted');
-      EL('file_upload_btn').innerHTML = 'Error!';
-      setTimeout(() => EL('file_upload_btn').innerHTML = 'Upload', 2000);
+      setLabelTout('file_upload_btn', 'Error!', 'Upload');
       stopFS();
       break;
 
@@ -252,16 +255,14 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
     case 'upload_end':
       showPopup('Upload Done!');
       stopFS();
-      EL('file_upload_btn').innerHTML = 'Done!';
-      setTimeout(() => EL('file_upload_btn').innerHTML = 'Upload', 2000);
+      setLabelTout('file_upload_btn', 'Done!', 'Upload');
       post('fsbr');
       break;
 
     // ============= OTA =============
     case 'ota_err':
       showPopupError('Ota aborted');
-      EL('ota_label').innerHTML = 'Error!';
-      setTimeout(() => EL('ota_label').innerHTML = '', 3000);
+      setLabelTout('ota_label', 'ERROR', 'IDLE');
       stopFS();
       break;
 
@@ -281,10 +282,8 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
     case 'ota_end':
       showPopup('OTA Done! Reboot');
       stopFS();
-      EL('ota_label').innerHTML = 'Done!';
-      setTimeout(() => EL('ota_label').innerHTML = '', 3000);
+      setLabelTout('ota_label', 'DONE', 'IDLE');
       break;
-
 
     // ============ OTA URL ============
     case 'ota_url_ok':
@@ -300,6 +299,7 @@ function showControls(controls) {
   EL('controls').style.visibility = 'hidden';
   EL('controls').innerHTML = '';
   if (!controls) return;
+  oninp_buffer = {};
   gauges = {};
   canvases = {};
   pickers = {};
@@ -311,7 +311,7 @@ function showControls(controls) {
   btn_row_count = 0;
   wid_row_id = null;
   btn_row_id = null;
-  
+
   for (ctrl of controls) {
     if (devices[focused].show_names && ctrl.name) ctrl.label = ctrl.name;
     ctrl.wlabel = ctrl.label ? ctrl.label : ctrl.type;
@@ -353,8 +353,8 @@ function showControls(controls) {
       case 'stream': addStream(ctrl); break;
       case 'joy': addJoy(ctrl); break;
       case 'js': eval(ctrl.value); break;
-      case 'confirm': confirms[ctrl.name] = {label: ctrl.label}; break;
-      case 'prompt': prompts[ctrl.name] = {label: ctrl.label, value: ctrl.value}; break;
+      case 'confirm': confirms[ctrl.name] = { label: ctrl.label }; break;
+      case 'prompt': prompts[ctrl.name] = { label: ctrl.label, value: ctrl.value }; break;
       case 'menu': addMenu(ctrl);
     }
   }
@@ -380,24 +380,39 @@ function showControls(controls) {
   if (!gauges.length && !canvases.length && !pickers.length && !joys.length) EL('controls').style.visibility = 'visible';
 }
 function showInfo(device) {
-  EL('info_lib_v').innerHTML = device.info[0];
-  EL('info_firm_v').innerHTML = device.info[1];
-  if (device.info.length == 2) return;
-  let count = 2;
-  for (let id in info_labels_esp) {
-    EL(id).innerHTML = device.info[count];
-    count++;
+  function addInfo(el, label, value, title = '') {
+    EL(el).innerHTML += `
+    <div class="cfg_row info">
+      <label>${label}</label>
+      <label title="${title}" class="lbl_info">${value}</label>
+    </div>`;
   }
-  let ver = devices[focused].version;
-  let info_v = EL('info_firm_v');
-  if (ver.includes('@')) {
-    let link = 'https://github.com/' + ver.split('@')[0];
-    info_v.onclick = function () { openURL(link); };
-    info_v.classList.add('info_link');
-    info_v.title = link;
-  } else {
-    info_v.onclick = function () { };
-    info_v.classList.remove('info_link');
-    info_v.title = '';
+
+  for (let i in device.info.version) addInfo('info_version', i, device.info.version[i]);
+  for (let i in device.info.net) addInfo('info_net', i, device.info.net[i]);
+  for (let i in device.info.memory) {
+    if (typeof (device.info.memory[i]) == 'object') {
+      let used = device.info.memory[i][0];
+      let total = device.info.memory[i][1];
+      let mem = (used / 1000).toFixed(1) + ' kB';
+      if (total) mem += ' [' + (used / total * 100).toFixed(0) + '%]';
+      addInfo('info_memory', i, mem, `Total ${(total / 1000).toFixed(1)} kB`);
+    } else addInfo('info_memory', i, device.info.memory[i]);
   }
+  for (let i in device.info.system) {
+    if (i == 'Uptime') {
+      let sec = device.info.system[i];
+      let upt = Math.floor(sec / 86400) + ':' + new Date(sec * 1000).toISOString().slice(11, 19);
+      let d = new Date();
+      let utc = d.getTime() - (d.getTimezoneOffset() * 60000);
+      addInfo('info_system', i, upt);
+      addInfo('info_system', 'Started', new Date(utc - sec * 1000).toISOString().split('.')[0].replace('T', ' '));
+      continue;
+    }
+    addInfo('info_system', i, device.info.system[i]);
+  }
+}
+function setLabelTout(el, text1, text2) {
+  EL(el).innerHTML = text1;
+  setTimeout(() => EL(el).innerHTML = text2, 3000);
 }

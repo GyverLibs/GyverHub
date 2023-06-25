@@ -15,7 +15,8 @@ GH_PGM(_GH_BLD2, "COUNT");
 GH_PGM(_GH_BLD3, "READ");
 GH_PGM(_GH_BLD4, "UI");
 GH_PGM(_GH_BLD5, "TG");
-GH_PGM_LIST(_GH_bld_list, _GH_BLD0, _GH_BLD1, _GH_BLD2, _GH_BLD3, _GH_BLD4, _GH_BLD5);
+GH_PGM(_GH_BLD6, "INFO");
+GH_PGM_LIST(_GH_bld_list, _GH_BLD0, _GH_BLD1, _GH_BLD2, _GH_BLD3, _GH_BLD4, _GH_BLD5, _GH_BLD6);
 FSTR GHreadBuild(GHbuild_t n) {
     return (FSTR)_GH_bld_list[n];
 }

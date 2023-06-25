@@ -65,24 +65,25 @@ function showFsbr(device) {
     if (fs_arr[i].endsWith('/')) {
       inner += `<div class="fs_file fs_folder" onclick="file_upload_path.value='${fs_arr[i]}'/*;file_upload_btn.click()*/">${fs_arr[i]}</div>`;
     } else {
+      let none = "style='display:none'";
       inner += `<div class="fs_file" onclick="openFSctrl(${i})">${fs_arr[i]}<div class="fs_weight">${(device.fs[fs_arr[i]] / 1000).toFixed(2)} kB</div></div>
       <div id="fs#${i}" class="fs_controls">
-        <button title="Rename" class="icon cfg_btn_tab" onclick="renameFile(${i})"></button>
-        <button title="Delete" class="icon cfg_btn_tab" onclick="deleteFile(${i})"></button>
-        <button title="Fetch" class="icon cfg_btn_tab" onclick="fetchFile(${i})"></button>
+        <button ${readModule(Modules.RENAME) ? '' : none} title="Rename" class="icon cfg_btn_tab" onclick="renameFile(${i})"></button>
+        <button ${readModule(Modules.DELETE) ? '' : none} title="Delete" class="icon cfg_btn_tab" onclick="deleteFile(${i})"></button>
+        <button ${readModule(Modules.DOWNLOAD) ? '' : none} title="Fetch" class="icon cfg_btn_tab" onclick="fetchFile(${i})"></button>
         <label id="process#${i}"></label>
         <a id="download#${i}" title="Download" class="icon cfg_btn_tab" href="" download="" style="display:none"></a>
         <button id="open#${i}" title="Open" class="icon cfg_btn_tab" onclick="openFile(EL('download#${i}').href)" style="display:none"></button>
       </div>`;
     }
   }
-  inner += `<div class="fs_info">Used ${(device.used / 1000).toFixed(2)} kB (${Math.round(device.used / device.total * 100)}%) from ${(device.total / 1000).toFixed(2)} kB (${((device.total - device.used) / 1000).toFixed(2)} kB free)</div>`;
+  inner += `<div class="fs_info">Used ${(device.used / 1000).toFixed(2)} / ${(device.total / 1000).toFixed(2)} kB [${Math.round(device.used / device.total * 100)}%]</div>`;
   EL('fsbr_inner').innerHTML = inner;
-  let accept = device.gzip ? '.gz' : '.bin';
-  EL('ota_upload').accept = accept;
-  EL('ota_upload_fs').accept = accept;
-  EL('ota_url_f').value = "http://url_to_flash" + accept;
-  EL('ota_url_fs').value = "http://url_to_filesystem" + accept;
+  let ota_t = '.' + devices[focused].ota_t;
+  EL('ota_upload').accept = ota_t;
+  EL('ota_upload_fs').accept = ota_t;
+  EL('ota_url_f').value = "http://url_to_flash" + ota_t;
+  EL('ota_url_fs').value = "http://url_to_filesystem" + ota_t;
 }
 function openFSctrl(i) {
   let current = EL(`fs#${i}`).style.display == 'flex';
@@ -119,7 +120,8 @@ function fetchFile(i) {
   let path = fs_arr[i];
   fetch_index = i;
   fetch_name = path.split('/').pop();
-  post('fetch', path);
+  if (devices_t[focused].conn == Conn.WS && devices_t[focused].http_cfg.download && path.startsWith('/fs/')) fetchHTTP(path, fetch_name, fetch_index)
+  else post('fetch', path);
 }
 function openFile(src) {
   let w = window.open();
@@ -129,26 +131,95 @@ function format_h() {
   if (confirm('Format filesystem?')) post('format');
 }
 
+/*
+function fetchHTTP(path, name, index) {
+  EL('process#' + index).innerHTML = 'Fetching...';
+  var xhr = new XMLHttpRequest();
+  xhr.onload = function () {
+    var reader = new FileReader();
+    reader.onloadend = function () {
+      fetchEnd(name, index, reader.result);
+    }
+    reader.readAsDataURL(xhr.response);
+  };
+  xhr.open('GET', 'http://' + devices[focused].ip + ':' + http_port + path);
+  xhr.responseType = 'blob';
+  xhr.send();
+}
+*/
+async function fetchHTTP(path, name, index) {
+  EL('process#' + index).innerHTML = 'Fetching...';
+  const response = await fetch('http://' + devices[focused].ip + ':' + http_port + path, { cache: "no-store" });
+  const blob = await response.blob();
+  return new Promise(() => {
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onload = function () {
+        fetchEnd(name, index, this.result);
+      };
+    } catch (e) {
+    }
+  });
+}
+function fetchEnd(name, index, data) {
+  EL('download#' + index).style.display = 'unset';
+  EL('download#' + index).href = data;
+  EL('download#' + index).download = name;
+  EL('open#' + index).style.display = 'unset';
+  EL('process#' + index).style.display = 'none';
+  stopFS();
+}
+
 // ============ UPLOAD =============
 function uploadFile(arg) {
   if (fetching || uploading) {
     showPopupError('Busy');
     return;
   }
-  
+
   let reader = new FileReader();
+  reader.readAsArrayBuffer(arg.files[0]);
+
   reader.onload = function (e) {
     if (!e.target.result) return;
     let buffer = new Uint8Array(e.target.result);
-    if (!confirm('Upload ' + file_upload_path.value + arg.files[0].name + ' (' + buffer.length + ' bytes)?')) return;
-    upload_bytes = [];
-    for (b of buffer) upload_bytes.push(b);
-    upload_size = upload_bytes.length;
-    post('upload', file_upload_path.value + arg.files[0].name);
+    let path = file_upload_path.value;
+    if (!path.startsWith('/')) path = '/' + path;
+    if (!path.endsWith('/')) path += '/';
+    path += arg.files[0].name;
+    if (!confirm('Upload ' + path + ' (' + buffer.length + ' bytes)?')) return;
+
+    if (devices_t[focused].conn == Conn.WS && devices_t[focused].http_cfg.upload) {
+      EL('file_upload_btn').innerHTML = 'Wait...';
+      let xhr = new XMLHttpRequest();
+      let formData = new FormData();
+      formData.append('upload', arg.files[0], path);
+      console.log(formData);
+      xhr.onreadystatechange = function () {
+        if (this.responseText == 'OK') showPopup('Done');
+        if (this.responseText == 'FAIL') showPopupError('Error');
+      }
+      xhr.onload = () => {
+        setLabelTout('file_upload_btn', 'Done', 'Upload');
+        post('fsbr');
+      }
+      xhr.onerror = () => {
+        setLabelTout('file_upload_btn', 'Error!', 'Upload');
+      }
+      xhr.open("POST", 'http://' + devices[focused].ip + ':' + http_port + '/upload');
+      xhr.send(formData);
+
+    } else {
+      upload_bytes = [];
+      for (b of buffer) upload_bytes.push(b);
+      upload_size = upload_bytes.length;
+      post('upload', path);
+    }
+
     arg.value = null;
   }
 
-  reader.readAsArrayBuffer(arg.files[0]);
 }
 function uploadNextChunk() {
   let i = 0;
@@ -174,11 +245,33 @@ function uploadOta(arg, type) {
 
   reader.onload = function (e) {
     if (!e.target.result) return;
-    let buffer = new Uint8Array(e.target.result);
-    upload_bytes = [];
-    for (b of buffer) upload_bytes.push(b);
-    upload_size = upload_bytes.length;
-    post('ota', type);
+
+    if (devices_t[focused].http_cfg.ota) {
+      EL('ota_label').innerHTML = 'WAIT...';
+      let xhr = new XMLHttpRequest();
+      let formData = new FormData();
+      formData.append('ota', arg.files[0], type);
+      xhr.onreadystatechange = function () {
+        if (this.responseText == 'OK') showPopup('Done');
+        if (this.responseText == 'FAIL') showPopupError('Error');
+      }
+      xhr.onload = () => {
+        setLabelTout('ota_label', 'DONE', 'IDLE');
+      }
+      xhr.onerror = () => {
+        setLabelTout('ota_label', 'ERROR', 'IDLE');
+      }
+
+      xhr.open("POST", 'http://' + devices[focused].ip + ':' + http_port + '/ota');
+      xhr.send(formData);
+
+    } else {
+      let buffer = new Uint8Array(e.target.result);
+      upload_bytes = [];
+      for (b of buffer) upload_bytes.push(b);
+      upload_size = upload_bytes.length;
+      post('ota', type);
+    }
     arg.value = null;
   }
 

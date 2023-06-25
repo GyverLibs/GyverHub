@@ -1,4 +1,7 @@
-#include "mime.h"
+#pragma once
+
+#include <Arduino.h>
+#include "../macro.hpp"
 
 #define GH_MIME_AMOUNT 17
 
@@ -39,10 +42,3 @@ GH_PGM(_GH_MIME14, "text/plain");
 GH_PGM(_GH_MIME15, "audio/wav");
 GH_PGM(_GH_MIME16, "application/xml");
 GH_PGM_LIST(_GH_mimie_list, _GH_MIME0, _GH_MIME1, _GH_MIME2, _GH_MIME3, _GH_MIME4, _GH_MIME5, _GH_MIME6, _GH_MIME7, _GH_MIME8, _GH_MIME9, _GH_MIME10, _GH_MIME11, _GH_MIME12, _GH_MIME13, _GH_MIME14, _GH_MIME15, _GH_MIME16);
-
-String GHgetMime(const String& path) {
-    for (uint16_t i = 0; i < GH_MIME_AMOUNT; i++) {
-        if (path.endsWith(FPSTR(_GH_mimie_ex_list[i]))) return FPSTR(_GH_mimie_list[i]);
-    }
-    return F("text/plain");
-}

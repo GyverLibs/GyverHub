@@ -170,6 +170,24 @@ class GyverHub : public HubBuilder {
         manual_cb = *handler;
     }
 
+    // ========================= INFO =========================
+
+    // подключить функцию-сборщик инфо
+    void onInfo(void (*handler)(GHinfo_t info)) {
+        info_cb = *handler;
+    }
+
+    // добавить поле в info
+    void addInfo(const String& label, const String& text) {
+        if (sptr) {
+            *sptr += '\'';
+            *sptr += label;
+            *sptr += F("':'");
+            *sptr += text;
+            *sptr += F("',");
+        }
+    }
+
     // ========================= CLI =========================
 
     // подключить обработчик входящих сообщений с веб-консоли
@@ -524,7 +542,6 @@ class GyverHub : public HubBuilder {
 
                 case 3:  // info
                     if (modules.read(GH_MOD_INFO)) answerInfo();
-                    else answerDsbl();
                     return sendEvent(GH_INFO, conn);
 
 #ifdef GH_ESP_BUILD
@@ -533,7 +550,7 @@ class GyverHub : public HubBuilder {
                     if (modules.read(GH_MOD_FSBR)) {
                         if (fs_mounted) answerFsbr();
                         else answerType(F("fs_error"));
-                    } else answerDsbl();
+                    }
 #else
                     answerDsbl();
 #endif
@@ -546,7 +563,7 @@ class GyverHub : public HubBuilder {
                         GH_FS.end();
                         fs_mounted = GH_FS.begin();
                         answerFsbr();
-                    } else answerDsbl();
+                    }
 #else
                     answerDsbl();
 #endif
@@ -556,7 +573,7 @@ class GyverHub : public HubBuilder {
                     if (modules.read(GH_MOD_REBOOT)) {
                         reboot_f = GH_REB_BUTTON;
                         answerType();
-                    } else answerDsbl();
+                    }
                     return sendEvent(GH_REBOOT, conn);
 
                 case 7:  // fetch_chunk
@@ -619,8 +636,11 @@ class GyverHub : public HubBuilder {
             // delete
             case 2:
 #ifndef GH_NO_FS
-                if (modules.read(GH_MOD_DELETE) && GH_FS.remove(name)) answerFsbr();
-                else answerDsbl();
+                if (modules.read(GH_MOD_DELETE)) {
+                    GH_FS.remove(name);
+                    _fsrmdir(name);
+                    answerFsbr();
+                }
 #else
                 answerDsbl();
 #endif
@@ -630,7 +650,6 @@ class GyverHub : public HubBuilder {
             case 3:
 #ifndef GH_NO_FS
                 if (modules.read(GH_MOD_RENAME) && GH_FS.rename(name, value)) answerFsbr();
-                else answerDsbl();
 #else
                 answerDsbl();
 #endif
@@ -658,6 +677,7 @@ class GyverHub : public HubBuilder {
             case 5:
 #ifndef GH_NO_FS
                 if (!file_d && !file_u && !ota_f && !fs_buffer && modules.read(GH_MOD_UPLOAD)) {
+                    _fsmakedir(name);
                     file_u = GH_FS.open(name, "w");
                     if (file_u) {
                         fs_buffer = (char*)malloc(GH_UPL_CHUNK_SIZE + 10);
@@ -704,7 +724,11 @@ class GyverHub : public HubBuilder {
                         size_t ota_size;
                         if (ota_type == 1) {
                             ota_type = U_FLASH;
+#ifdef ESP8266
                             ota_size = (size_t)((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000);
+#else
+                            ota_size = UPDATE_SIZE_UNKNOWN;
+#endif
                         } else {
 #ifdef ESP8266
                             ota_type = U_FS;
@@ -908,6 +932,9 @@ class GyverHub : public HubBuilder {
     // ======================================= PRIVATE =========================================
     // =========================================================================================
    private:
+    void _rebootOTA() {
+        reboot_f = GH_REB_OTA;
+    }
     const char* getPrefix() {
         return prefix;
     }
@@ -945,6 +972,39 @@ class GyverHub : public HubBuilder {
 #endif
 #endif
     }
+    void _fsmakedir(const char* path) {
+#ifdef ESP32
+        if (!GH_FS.exists(path)) {
+            if (strchr(path, '/')) {
+                char* pathStr = strdup(path);
+                if (pathStr) {
+                    char* ptr = strchr(pathStr, '/');
+                    while (ptr) {
+                        *ptr = 0;
+                        GH_FS.mkdir(pathStr);
+                        *ptr = '/';
+                        ptr = strchr(ptr + 1, '/');
+                    }
+                }
+                free(pathStr);
+            }
+        }
+#endif
+    }
+    void _fsrmdir(const char* path) {
+#ifdef ESP32
+        char* pathStr = strdup(path);
+        if (pathStr) {
+            char* ptr = strrchr(pathStr, '/');
+            while (ptr) {
+                *ptr = 0;
+                GH_FS.rmdir(pathStr);
+                ptr = strrchr(pathStr, '/');
+            }
+            free(pathStr);
+        }
+#endif
+    }
 
     // ======================= INFO ========================
     void answerInfo() {
@@ -953,25 +1013,65 @@ class GyverHub : public HubBuilder {
         _jsBegin(answ);
         _jsID(answ);
         _jsStr(answ, F("type"), F("info"));
-        answ += F("'info':[");
-        _jsArr(answ, GH_VERSION);
-        _jsArr(answ, version);
+
+        answ += F("'info':{'version':{");
+        _jsStr(answ, F("Library"), GH_LIB_VERSION);
+        if (version) _jsStr(answ, F("Firmware"), version);
+
+        checkEndInfo(answ, GH_INFO_VERSION);
+        answ += (F(",'net':{"));
 #ifdef GH_ESP_BUILD
-        _jsArr(answ, WiFi.getMode() == WIFI_AP ? F("AP") : (WiFi.getMode() == WIFI_STA ? F("STA") : F("AP_STA")));
-        _jsArr(answ, WiFi.SSID());
-        _jsArr(answ, WiFi.localIP().toString());
-        _jsArr(answ, WiFi.softAPIP().toString());
-        _jsArr(answ, WiFi.macAddress());
-        _jsArr(answ, "📶 " + String(constrain(2 * (WiFi.RSSI() + 100), 0, 100)) + '%');
-        _jsArr(answ, GH_uptime());
-        _jsArr(answ, String(ESP.getFreeHeap() / 1000.0, 3) + " kB");
-        _jsArr(answ, String(ESP.getSketchSize() / 1000.0, 1) + " kB (" + String(ESP.getFreeSketchSpace() / 1000.0, 1) + ")");
-        _jsArr(answ, String(ESP.getFlashChipSize() / 1000.0, 1) + " kB");
-        _jsArr(answ, String(ESP.getCpuFreqMHz()) + F(" MHz"));
+        _jsStr(answ, F("Mode"), WiFi.getMode() == WIFI_AP ? F("AP") : (WiFi.getMode() == WIFI_STA ? F("STA") : F("AP_STA")));
+        _jsStr(answ, F("MAC"), WiFi.macAddress());
+        _jsStr(answ, F("SSID"), WiFi.SSID());
+        _jsStr(answ, F("RSSI"), String(constrain(2 * (WiFi.RSSI() + 100), 0, 100)) + '%');
+        _jsStr(answ, F("IP"), WiFi.localIP().toString());
+        _jsStr(answ, F("AP_IP"), WiFi.softAPIP().toString());
 #endif
-        answ[answ.length() - 1] = ']';  // ',' = ']'
+        checkEndInfo(answ, GH_INFO_NETWORK);
+        answ += (F(",'memory':{"));
+
+#ifdef GH_ESP_BUILD
+        _jsVal(answ, F("RAM"), String("[") + ESP.getFreeHeap() + ",0]");
+
+#ifdef ESP8266
+        FSInfo fs_info;
+        GH_FS.info(fs_info);
+        _jsVal(answ, F("Flash"), String("[") + fs_info.usedBytes + ',' + fs_info.totalBytes + "]");
+#else
+        _jsVal(answ, F("Flash"), String("[") + GH_FS.usedBytes() + ',' + GH_FS.totalBytes() + "]");
+#endif
+
+        _jsVal(answ, F("Sketch"), String("[") + ESP.getSketchSize() + ',' + ESP.getFreeSketchSpace() + "]");
+#endif
+
+        checkEndInfo(answ, GH_INFO_MEMORY);
+        answ += (F(",'system':{"));
+        _jsVal(answ, F("Uptime"), millis() / 1000ul);
+#ifdef GH_ESP_BUILD
+#ifdef ESP8266
+        _jsStr(answ, F("Model"), F("ESP8266"));
+#else
+        _jsStr(answ, F("Model"), F("ESP32"));
+#endif
+        _jsVal(answ, F("CPU_MHz"), ESP.getCpuFreqMHz());
+        _jsStr(answ, F("Flash_chip"), String(ESP.getFlashChipSize() / 1000.0, 1) + " kB");
+#endif
+
+        checkEndInfo(answ, GH_INFO_SYSTEM);
+        answ += (F("}"));
+
         _jsEnd(answ);
         answer(answ);
+    }
+    void checkEndInfo(String& answ, GHinfo_t info) {
+        if (info_cb) {
+            sptr = &answ;
+            info_cb(info);
+            sptr = nullptr;
+        }
+        if (answ[answ.length() - 1] == ',') answ[answ.length() - 1] = '}';
+        else answ += '}';
     }
 
     // ======================= UI ========================
@@ -1060,12 +1160,6 @@ class GyverHub : public HubBuilder {
         _jsID(answ);
         _jsStr(answ, F("type"), F("fsbr"));
 
-#ifdef ATOMIC_FS_UPDATE
-        _jsVal(answ, F("gzip"), 1);
-#else
-        _jsVal(answ, F("gzip"), 0);
-#endif
-
 #ifdef ESP8266
         FSInfo fs_info;
         GH_FS.info(fs_info);
@@ -1104,7 +1198,13 @@ class GyverHub : public HubBuilder {
         _jsStr(answ, F("icon"), icon);
         _jsVal(answ, F("PIN"), hash);
         _jsStr(answ, F("version"), version);
-        _jsVal(answ, F("max_upl"), GH_UPL_CHUNK_SIZE, true);
+        _jsVal(answ, F("max_upl"), GH_UPL_CHUNK_SIZE);
+#ifdef ATOMIC_FS_UPDATE
+        _jsStr(answ, F("ota_t"), F("gz"));
+#else
+        _jsStr(answ, F("ota_t"), F("bin"));
+#endif
+        _jsVal(answ, F("modules"), modules.mods, true);
         _jsEnd(answ);
         answer(answ, true);
     }
@@ -1173,7 +1273,8 @@ class GyverHub : public HubBuilder {
     }
 
     // ========================== ADDER ==========================
-    void _jsVal(String& s, FSTR key, uint32_t value, bool last = false) {
+    template <typename T>
+    void _jsVal(String& s, FSTR key, T value, bool last = false) {
         s += '\'';
         s += key;
         s += F("':");
@@ -1185,12 +1286,6 @@ class GyverHub : public HubBuilder {
         s += '\'';
         s += key;
         s += F("':'");
-        s += value;
-        s += '\'';
-        if (!last) s += ',';
-    }
-    void _jsArr(String& s, const String& value, bool last = false) {
-        s += '\'';
         s += value;
         s += '\'';
         if (!last) s += ',';
@@ -1217,6 +1312,7 @@ class GyverHub : public HubBuilder {
     char id[9];
 
     void (*build_cb)() = nullptr;
+    void (*info_cb)(GHinfo_t info) = nullptr;
     void (*cli_cb)(String& str) = nullptr;
     void (*manual_cb)(String& s, GHconn_t conn, bool broadcast) = nullptr;
     void (*event_cb)(GHevent_t state, GHconn_t conn) = nullptr;

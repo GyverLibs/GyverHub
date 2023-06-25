@@ -39,9 +39,9 @@ class HubWS {
 
                 case WStype_TEXT: {
                     clientID = num;
-                    /*char data_c[len + 1];
-                    if (len) strcpy(data_c, (char*)data);
-                    data_c[len] = 0;*/
+                    /*char buf[len + 1] = "";
+                    memcpy(buf, data, len);
+                    buf[len] = 0;*/
                     parse((char*)data, GH_WS, false);
                 } break;
 
