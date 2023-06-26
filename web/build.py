@@ -1,7 +1,7 @@
 # GyverHub Web Builder
 
-version = '0.43b'
-notes = 'Minor fixes'
+version = '0.44b'
+notes = 'Drag and drop for upload and OTA'
 
 js_files = [
     'src/include/main.js',

@@ -1470,6 +1470,15 @@ input:checked+.chbutton_s {
   border-radius: 0px 5px 5px 0px;
 }
 
+.drop_area {}
+
+.drop_area.active {
+  border: 2px dashed var(--prim);
+  background: var(--back);
+  color: var(--prim);
+  padding: 2px 6px;
+}
+
 /* =================================== */
 /* =============== CLI =============== */
 /* =================================== */

@@ -157,7 +157,7 @@ function render_main(v) {
         <div id="fs_upload">
           <div class="upload_row">
             <input class="cfg_inp inp_wbtn" type="text" id="file_upload_path" value="/">
-            <input type="file" id="file_upload" style="display:none" onchange="uploadFile(this)">
+            <input type="file" id="file_upload" style="display:none" onchange="uploadFile(this.files[0], file_upload_path.value)">
             <button id="file_upload_btn" onclick="file_upload.click()" class="c_btn upl_button">Upload</button>
           </div>
         </div>
@@ -170,10 +170,10 @@ function render_main(v) {
         <div id="fs_otaf">
           <div class="cfg_row">
             <div>
-              <input type="file" id="ota_upload" style="display:none" onchange="uploadOta(this, 'flash')">
-              <button onclick="ota_upload.click()" class="c_btn btn_mini">Flash</button>
-              <input type="file" id="ota_upload_fs" style="display:none" onchange="uploadOta(this, 'fs')">
-              <button onclick="ota_upload_fs.click()" class="c_btn btn_mini">Filesystem</button>
+              <input type="file" id="ota_upload" style="display:none" onchange="uploadOta(this.files[0], 'flash')">
+              <button onclick="ota_upload.click()" class="c_btn btn_mini drop_area" ondrop="uploadOta(event.dataTransfer.files[0], 'flash')">Flash</button>
+              <input type="file" id="ota_upload_fs" style="display:none" onchange="uploadOta(this.files[0], 'fs')">
+              <button onclick="ota_upload_fs.click()" class="c_btn btn_mini drop_area" ondrop="uploadOta(event.dataTransfer.files[0], 'fs')">Filesystem</button>
             </div>
             <label style="font-size:18px" id="ota_label">IDLE</label>
           </div>

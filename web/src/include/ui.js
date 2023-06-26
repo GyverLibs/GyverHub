@@ -65,6 +65,7 @@ window.onload = function () {
   if (cfg.use_pin) show_keypad(true);
   else startup();
   started = true;
+  setDrop();
 }
 function startup() {
   if (isESP()) cfg.use_ws = true;
@@ -176,6 +177,33 @@ async function loadProj(rep) {
   `;
 }
 /*/NON-ESP*/
+
+// ============== DROP ==============
+function setDrop() {
+  function preventDrop(e) {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => {
+    document.body.addEventListener(e, preventDrop, false);
+  });
+
+  ['dragenter', 'dragover'].forEach(e => {
+    document.body.addEventListener(e, function () {
+      document.querySelectorAll('.drop_area').forEach((el) => {
+        el.classList.add('active');
+      });
+    }, false);
+  });
+
+  ['dragleave', 'drop'].forEach(e => {
+    document.body.addEventListener(e, function () {
+      document.querySelectorAll('.drop_area').forEach((el) => {
+        el.classList.remove('active');
+      });
+    }, false);
+  });
+}
 
 // =============== PIN ================
 function pass_type(v) {
