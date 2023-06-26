@@ -593,6 +593,13 @@ class GyverHub : public HubBuilder {
                     }
 #endif
                     break;
+
+                case 8:  // fetch_stop
+#ifndef GH_NO_FS
+                    sendEvent(GH_DOWNLOAD_ABORTED, fs_hub.conn);
+                    if (file_d) file_d.close();
+#endif
+                    break;                    
 #endif
                 default:  // unknown
                     clearFocus(conn);
@@ -860,7 +867,7 @@ class GyverHub : public HubBuilder {
 #endif
 
                 case GH_DOWNLOAD_ABORTED:
-                    file_d.close();
+                    if (file_d) file_d.close();
                     sendEvent(GH_DOWNLOAD_ABORTED, fs_hub.conn);
                     break;
 
@@ -876,14 +883,14 @@ class GyverHub : public HubBuilder {
                     GH_B64toFile(file_u, fs_buffer);
                     delete fs_buffer;
                     fs_buffer = nullptr;
-                    file_u.close();
+                    if (file_u) file_u.close();
                     hub_ptr = &fs_hub;
                     answerType(F("upload_end"));
                     sendEvent(GH_UPLOAD_FINISH, fs_hub.conn);
                     break;
 
                 case GH_UPLOAD_ABORTED:
-                    file_u.close();
+                    if (file_u) file_u.close();
                     sendEvent(GH_UPLOAD_ABORTED, fs_hub.conn);
                     break;
 #ifndef GH_NO_OTA

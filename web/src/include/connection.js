@@ -49,11 +49,11 @@ function post(cmd, name = '', value = '') {
     case Conn.WS:
       ws_send(id, uri);
       break;
-/*NON-ESP*/
+    /*NON-ESP*/
     case Conn.MQTT:
       mq_send(uri0 + (name.length ? ('/' + name) : ''), value);
       break;
-/*/NON-ESP*/
+    /*/NON-ESP*/
   }
   reset_ping();
   reset_tout();
@@ -393,14 +393,21 @@ function manual_ws_h(ip) {
   back_h();
 }
 function checkHTTP(id) {
-  if (devices_t[id].http_cfg) return;
+  if (devices_t[id].http_cfg.upd) return;
 
   let xhr = new XMLHttpRequest();
   xhr.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
-      devices_t[id].http_cfg = JSON.parse(this.responseText);
-    } else if (this.status == 404) {
-      devices_t[id].http_cfg = {upload: 0, download: 0, ota: 0};
+      devices_t[id].http_cfg.upd = 1;
+      let resp;
+      try {
+        resp = JSON.parse(this.responseText);
+      } catch (e) {
+        return;
+      }
+      for (let i in resp) {
+        if (resp[i]) devices_t[id].http_cfg[i] = resp[i];
+      }
     }
   }
   xhr.timeout = tout_prd;

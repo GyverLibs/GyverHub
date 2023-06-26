@@ -5,6 +5,7 @@ let fetch_name;
 let fetch_index;
 let fetch_file = '';
 let fetch_tout;
+let fetch_to_file = false;
 
 let uploading = null;
 let upload_tout;
@@ -14,6 +15,7 @@ let ota_tout;
 
 // ============ TIMEOUT ============
 function stopFS() {
+  if (fetching) {post('fetch_stop');log(13123123123)}
   stop_fetch_tout();
   stop_upload_tout();
   stop_ota_tout();
@@ -28,7 +30,7 @@ function reset_fetch_tout() {
   stop_fetch_tout();
   fetch_tout = setTimeout(() => {
     stopFS();
-    EL('process#' + fetch_index).innerHTML = 'Error!';
+    if (!fetch_to_file) EL('process#' + fetch_index).innerHTML = 'Error!';
   }, tout_prd);
 }
 function stop_upload_tout() {
@@ -120,7 +122,8 @@ function fetchFile(i) {
   let path = fs_arr[i];
   fetch_index = i;
   fetch_name = path.split('/').pop();
-  if (devices_t[focused].conn == Conn.WS && devices_t[focused].http_cfg.download && path.startsWith('/fs/')) fetchHTTP(path, fetch_name, fetch_index)
+  fetch_to_file = false;
+  if (devices_t[focused].conn == Conn.WS && devices_t[focused].http_cfg.download && path.startsWith(devices_t[focused].http_cfg.path)) fetchHTTP(path, fetch_name, fetch_index)
   else post('fetch', path);
 }
 function openFile(src) {
@@ -149,6 +152,7 @@ function fetchHTTP(path, name, index) {
 */
 async function fetchHTTP(path, name, index) {
   EL('process#' + index).innerHTML = 'Fetching...';
+  fetching = focused;
   const response = await fetch('http://' + devices[focused].ip + ':' + http_port + path, { cache: "no-store" });
   const blob = await response.blob();
   return new Promise(() => {
@@ -156,18 +160,21 @@ async function fetchHTTP(path, name, index) {
       const reader = new FileReader();
       reader.readAsDataURL(blob);
       reader.onload = function () {
-        fetchEnd(name, index, this.result);
+        fetchEnd(name, index, this.result.split('base64,')[1]);
       };
     } catch (e) {
     }
   });
 }
+
 function fetchEnd(name, index, data) {
+  if (!fetching) return;
   EL('download#' + index).style.display = 'unset';
-  EL('download#' + index).href = data;
+  EL('download#' + index).href = ('data:' + getMime(name) + ';base64,' + data);
   EL('download#' + index).download = name;
   EL('open#' + index).style.display = 'unset';
   EL('process#' + index).style.display = 'none';
+  fetching = null;
   stopFS();
 }
 

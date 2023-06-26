@@ -1,4 +1,5 @@
 let push_timer = 0;
+let delay_tmr = null;
 
 function applyUpdate(name, value) {
   if (name in prompts) {
@@ -23,9 +24,9 @@ function applyUpdate(name, value) {
   if (cl.contains('icon_t')) el.style.color = value;
   else if (cl.contains('text_t')) el.innerHTML = value;
   else if (cl.contains('input_t')) el.value = value;
-  else if (cl.contains('date_t')) el.value = new Date(ctrl.value * 1000).toISOString().split('T')[0];
-  else if (cl.contains('time_t')) el.value = new Date(ctrl.value * 1000).toISOString().split('T')[1].split('.')[0];
-  else if (cl.contains('datetime_t')) el.value = new Date(ctrl.value * 1000).toISOString().split('.')[0];
+  else if (cl.contains('date_t')) el.value = new Date(value * 1000).toISOString().split('T')[0];
+  else if (cl.contains('time_t')) el.value = new Date(value * 1000).toISOString().split('T')[1].split('.')[0];
+  else if (cl.contains('datetime_t')) el.value = new Date(value * 1000).toISOString().split('.')[0];
   else if (cl.contains('slider_t')) el.value = value, EL('out#' + name).innerHTML = value, moveSlider(el, false);
   else if (cl.contains('switch_t')) el.checked = (value == '1');
   else if (cl.contains('select_t')) el.value = value;
@@ -152,7 +153,11 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
       }
 
       if (!(id in devices_t)) {
-        devices_t[id] = { conn: Conn.NONE, ws: null, controls: null, granted: false, buffer: { WS: '', MQTT: '', Serial: '', BT: '' } };
+        devices_t[id] = {
+          conn: Conn.NONE, ws: null, controls: null, granted: false,
+          buffer: { WS: '', MQTT: '', Serial: '', BT: '' },
+          http_cfg: { upd: 0, upload: 0, download: 0, ota: 0, path: '/fs/' }
+        };
       }
 
       EL(`device#${id}`).className = "device";
@@ -174,7 +179,7 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
     case 'ui':
       if (id != focused) return;
       devices_t[id].controls = device.controls;
-      showControls(device.controls, id);
+      showControls(device.controls);
       break;
 
     case 'info':
@@ -202,14 +207,6 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
       break;
 
     // ============= FETCH =============
-    case 'fetch_err':
-      if (id != focused) return;
-
-      EL('process#' + fetch_index).innerHTML = 'Aborted';
-      showPopupError('Fetch aborted');
-      stopFS();
-      break;
-
     case 'fetch_start':
       if (id != focused) return;
 
@@ -224,12 +221,24 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
 
       fetch_file += device.data;
       if (device.chunk == device.amount - 1) {
-        fetchEnd(fetch_name, fetch_index, ('data:' + getMime(fetch_name) + ';base64,' + fetch_file));
+        if (fetch_to_file) downloadFileEnd(fetch_file);
+        else fetchEnd(fetch_name, fetch_index, fetch_file);
       } else {
-        EL('process#' + fetch_index).innerHTML = Math.round(device.chunk / device.amount * 100) + '%';
+        let perc = Math.round(device.chunk / device.amount * 100) + '%';
+        if (fetch_to_file) processFile(perc);
+        else EL('process#' + fetch_index).innerHTML = perc;
         post('fetch_chunk');
         reset_fetch_tout();
       }
+      break;
+
+    case 'fetch_err':
+      if (id != focused) return;
+
+      if (fetch_to_file) errorFile();
+      else EL('process#' + fetch_index).innerHTML = 'Aborted';
+      showPopupError('Fetch aborted');
+      stopFS();
       break;
 
     // ============= UPLOAD =============
@@ -295,7 +304,9 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
       break;
   }
 }
-function showControls(controls) {
+function showControls(controls, from_buffer = false) {
+  if (delay_tmr) clearTimeout(delay_tmr);
+  delay_tmr = null;
   EL('controls').style.visibility = 'hidden';
   EL('controls').innerHTML = '';
   if (!controls) return;
@@ -307,6 +318,7 @@ function showControls(controls) {
   prompts = {};
   confirms = {};
   dup_names = [];
+  files = [];
   wid_row_count = 0;
   btn_row_count = 0;
   wid_row_id = null;
@@ -368,15 +380,17 @@ function showControls(controls) {
   scrollDown();
   resizeSpinners();
 
-  setTimeout(() => {
+  delay_tmr = setTimeout(() => {
     if (dup_names.length) showPopupError('Duplicated names: ' + dup_names);
     showCanvases();
     showGauges();
     showPickers();
     showJoys();
+    if (!from_buffer) nextFile();
     EL('controls').style.visibility = 'visible';
+    delay_tmr = null;
   }, 10);
-
+  
   if (!gauges.length && !canvases.length && !pickers.length && !joys.length) EL('controls').style.visibility = 'visible';
 }
 function showInfo(device) {

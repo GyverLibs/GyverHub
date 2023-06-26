@@ -292,6 +292,7 @@ function refresh_h() {
   else discover();
 }
 function back_h() {
+  stopFS();
   if (menu_f) {
     menuDeact();
     menu_show(0);
@@ -340,6 +341,7 @@ function menu_h() {
   menu_show(!menu_f);
 }
 function info_h() {
+  stopFS();
   menuDeact();
   menu_show(0);
   if (readModule(Modules.INFO)) post('info');
@@ -351,7 +353,7 @@ function fsbr_h() {
   menu_show(0);
   if (readModule(Modules.FSBR)) {
     post('fsbr');
-    EL('fsbr_inner').innerHTML = '<div class="fsbr_wait"><span style="font-size:50px;color:var(--prim)" class="icon spinning"></span></div>';
+    EL('fsbr_inner').innerHTML = waiter;
   }
   EL('fs_browser').style.display = readModule(Modules.FSBR) ? 'block' : 'none';
   EL('fs_upload').style.display = readModule(Modules.UPLOAD) ? 'block' : 'none';
@@ -399,7 +401,7 @@ function open_device(id) {
   log('Open device #' + id + ' via ' + ConnNames[devices_t[id].conn]);
 
   EL('menu_user').innerHTML = '';
-  showControls(devices_t[id].controls);
+  showControls(devices_t[id].controls, true);
   show_screen('device');
   reset_ping();
 }
@@ -437,8 +439,8 @@ function clear_all() {
   show_screen('main');
 }
 function show_screen(nscreen) {
-  screen = nscreen;
   stopFS();
+  screen = nscreen;
   show_keypad(false);
   let proj_s = EL('projects_cont').style;
   let test_s = EL('test_cont').style;

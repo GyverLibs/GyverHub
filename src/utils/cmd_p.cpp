@@ -10,11 +10,12 @@ GH_PGM(_GH_CMD4, "fsbr");
 GH_PGM(_GH_CMD5, "format");
 GH_PGM(_GH_CMD6, "reboot");
 GH_PGM(_GH_CMD7, "fetch_chunk");
+GH_PGM(_GH_CMD8, "fetch_stop");
 #endif
 
 #ifdef GH_ESP_BUILD
-#define GH_CMD_LEN 8
-GH_PGM_LIST(_GH_cmd_list, _GH_CMD0, _GH_CMD1, _GH_CMD2, _GH_CMD3, _GH_CMD4, _GH_CMD5, _GH_CMD6, _GH_CMD7);
+#define GH_CMD_LEN 9
+GH_PGM_LIST(_GH_cmd_list, _GH_CMD0, _GH_CMD1, _GH_CMD2, _GH_CMD3, _GH_CMD4, _GH_CMD5, _GH_CMD6, _GH_CMD7, _GH_CMD8);
 #else
 #define GH_CMD_LEN 4
 GH_PGM_LIST(_GH_cmd_list, _GH_CMD0, _GH_CMD1, _GH_CMD2, _GH_CMD3);

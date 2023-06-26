@@ -230,7 +230,9 @@ function getLocalIP() {
     }, function (e) { return; });
   });
   /*/NON-ESP*/
-  return window_ip();
+  return new Promise(function (resolve, reject) {
+    resolve(window_ip());
+  });
 }
 function update_ip_h() {
   if (!Boolean(window.webkitRTCPeerConnection || window.mozRTCPeerConnection)) notSupported();

@@ -13,6 +13,7 @@ let joys = {};
 let prompts = {};
 let confirms = {};
 let oninp_buffer = {};
+let files = [];
 
 let wid_row_id = null;
 let wid_row_count = 0;
@@ -20,6 +21,8 @@ let wid_row_size = 0;
 let btn_row_id = null;
 let btn_row_count = 0;
 let dis_scroll_f = false;
+
+const waiter = '<div class="waiter"><span style="font-size:50px;color:var(--prim)" class="icon spinning"></span></div>';
 
 const Modules = {
   INFO: (1 << 0),
@@ -1011,18 +1014,20 @@ function addHTML(ctrl) {
 function addImage(ctrl) {
   checkWidget(ctrl);
   endButtons();
+  let id = 'file#' + files.length;
   if (wid_row_id) {
     let inner = `
-    <img src="${ctrl.value}" style="width: 100%">
+    <div id="${id}">${waiter}</div>
     `;
     addWidget(ctrl.tab_w, '', ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="cv_block cv_block_back">
-      <img src="${ctrl.value}" style="width: 100%">
+    <div id="${id}">${waiter}</div>
     </div>
     `;
   }
+  files.push({ id: id, path: ctrl.value, type: 'img' });
 }
 function addStream(ctrl) {
   checkWidget(ctrl);
@@ -1106,4 +1111,45 @@ function formatToStep(val, step) {
 function scrollDown() {
   let logs = document.querySelectorAll(".c_log");
   logs.forEach((log) => log.scrollTop = log.scrollHeight);
+}
+
+// ================ DOWNLOAD =================
+function nextFile() {
+  if (!files.length) return;
+  fetch_to_file = true;
+  if (devices_t[focused].conn == Conn.WS && devices_t[focused].http_cfg.download && files[0].path.startsWith(devices_t[focused].http_cfg.path)) downloadFile(files[0].path);
+  else post('fetch', files[0].path);
+}
+async function downloadFile(path) {
+  fetching = focused;
+  const response = await fetch('http://' + devices[focused].ip + ':' + http_port + path, { cache: "no-store" });
+  const blob = await response.blob();
+  return new Promise(() => {
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onload = function () {
+        downloadFileEnd(this.result.split('base64,')[1]);
+      };
+    } catch (e) {
+    }
+  });
+}
+function downloadFileEnd(data) {
+  switch (files[0].type) {
+    case 'img':
+      EL(files[0].id).innerHTML = `<img style="width: 100%" src="data:${getMime(files[0].path)};base64,${data}">`;
+      break;
+  }
+  files.shift();
+  nextFile();
+  fetching = null;
+  stopFS();
+}
+function processFile(perc) {
+  EL(files[0].id).innerHTML = `<label>${perc}</label>`;
+}
+function errorFile() {
+  files.shift();
+  nextFile();
 }

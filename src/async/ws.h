@@ -43,8 +43,7 @@ class HubWS {
                     AwsFrameInfo* ws_info = (AwsFrameInfo*)arg;
                     if (ws_info->final && ws_info->index == 0 && ws_info->len == len && ws_info->opcode == WS_TEXT) {
                         clientID = client->id();
-                        if (!bufp) bufp = strdup((char*)data);
-                        //parse((char*)data, GH_WS, false);
+                        parse((char*)data, GH_WS, false);
                     }
                 } break;
 
@@ -62,11 +61,6 @@ class HubWS {
 
     void tickWS() {
         ws.cleanupClients();
-        if (bufp) {
-            parse(bufp, GH_WS, false);
-            free(bufp);
-            bufp = nullptr;
-        }
     }
 
     void sendWS(const String& answ) {
@@ -82,7 +76,6 @@ class HubWS {
     AsyncWebServer server;
     AsyncWebSocket ws;
     uint32_t clientID = 0;
-    char* bufp = nullptr;
 };
 #endif
 #endif

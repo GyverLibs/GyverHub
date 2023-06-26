@@ -66,7 +66,7 @@ class HubHTTP {
             req->send(resp);
         });
         server.on("/hub_http_cfg", HTTP_GET, [this](AsyncWebServerRequest* req) {
-            AsyncWebServerResponse* resp = req->beginResponse(200, F("text/plain"), F("{\"upload\":" GH_HTTP_UPLOAD ",\"download\":" GH_HTTP_DOWNLOAD ",\"ota\":" GH_HTTP_OTA "}"));
+            AsyncWebServerResponse* resp = req->beginResponse(200, F("text/plain"), F("{\"upload\":" GH_HTTP_UPLOAD ",\"download\":" GH_HTTP_DOWNLOAD ",\"ota\":" GH_HTTP_OTA ",\"path\":" GH_HTTP_PATH "}"));
             req->send(resp);
         });
 

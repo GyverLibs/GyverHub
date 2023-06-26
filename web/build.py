@@ -1,7 +1,7 @@
 # GyverHub Web Builder
 
-version = '0.41b'
-notes = 'Changed Info API, added HTTP hooks for files'
+version = '0.42b'
+notes = 'Minor fixes'
 
 js_files = [
     'src/include/main.js',
@@ -233,7 +233,6 @@ js_min = re.sub(r'(^\s+)', '' , js_min, flags=re.MULTILINE)
 
 with open('esp/script.js', 'w') as f: f.write(js_min)
 with open('esp/script.js', 'rb') as f_in, gzip.open('esp/script.js.gz', 'wb') as f_out: f_out.writelines(f_in)
-os.remove("esp/script.js")
 
 # CSS
 fa_min_b64 = 'data:font/woff2;charset=utf-8;base64,'
@@ -251,7 +250,6 @@ for file in css_files:
 
 with open('esp/style.css', 'w') as f: f.write(css_min)
 with open('esp/style.css', 'rb') as f_in, gzip.open('esp/style.css.gz', 'wb') as f_out: f_out.writelines(f_in)
-os.remove("esp/style.css")
 
 # INDEX
 shutil.copyfile('src/index.html', 'esp/index.html')
@@ -270,6 +268,9 @@ with open('esp/index.html', "r+") as f:
     f.truncate()
 
 with open('esp/index.html', 'rb') as f_in, gzip.open('esp/index.html.gz', 'wb') as f_out: f_out.writelines(f_in)
+
+os.remove("esp/script.js")
+os.remove("esp/style.css")
 os.remove("esp/index.html")
 
 ###############################################################
