@@ -71,7 +71,7 @@ class HubHTTP {
             server.send(200, F("text/plain"), F("OK"));
         });
         server.on("/hub_http_cfg", [this]() {
-            server.send(200, F("text/plain"), F("{\"upload\":" GH_HTTP_UPLOAD ",\"download\":" GH_HTTP_DOWNLOAD ",\"ota\":" GH_HTTP_OTA ",\"path\":" GH_HTTP_PATH "}"));
+            server.send(200, F("text/plain"), F("{\"upload\":" GH_HTTP_UPLOAD ",\"download\":" GH_HTTP_DOWNLOAD ",\"ota\":" GH_HTTP_OTA ",\"path\":\"" GH_HTTP_PATH "\"}"));
         });
 
 #ifndef GH_NO_HTTP_DOWNLOAD
@@ -106,13 +106,17 @@ class HubHTTP {
             "/ota", HTTP_POST, [this]() {
         server.sendHeader(F("Connection"), F("close"));
         server.send(200, F("text/plain"), Update.hasError() ? F("FAIL") : F("OK"));
-        _rebootOTA(); },
+        _rebootOTA();
+        },
             [this]() {
                 HTTPUpload& upload = server.upload();
                 if (upload.status == UPLOAD_FILE_START) {
                     int ota_type = 0;
-                    if (!strcmp_P(upload.filename.c_str(), PSTR("flash"))) ota_type = 1;
-                    else if (!strcmp_P(upload.filename.c_str(), PSTR("fs"))) ota_type = 2;
+                    if (server.args()) {
+                        if (!strcmp_P(server.arg(0).c_str(), PSTR("flash"))) ota_type = 1;
+                        else if (!strcmp_P(server.arg(0).c_str(), PSTR("fs"))) ota_type = 2;
+                    }
+
                     if (ota_type) {
                         size_t ota_size;
                         if (ota_type == 1) {

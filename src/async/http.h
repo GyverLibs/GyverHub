@@ -66,7 +66,7 @@ class HubHTTP {
             req->send(resp);
         });
         server.on("/hub_http_cfg", HTTP_GET, [this](AsyncWebServerRequest* req) {
-            AsyncWebServerResponse* resp = req->beginResponse(200, F("text/plain"), F("{\"upload\":" GH_HTTP_UPLOAD ",\"download\":" GH_HTTP_DOWNLOAD ",\"ota\":" GH_HTTP_OTA ",\"path\":" GH_HTTP_PATH "}"));
+            AsyncWebServerResponse* resp = req->beginResponse(200, F("text/plain"), F("{\"upload\":" GH_HTTP_UPLOAD ",\"download\":" GH_HTTP_DOWNLOAD ",\"ota\":" GH_HTTP_OTA ",\"path\":\"" GH_HTTP_PATH "\"}"));
             req->send(resp);
         });
 
@@ -109,12 +109,17 @@ class HubHTTP {
             "/ota", HTTP_POST, [this](AsyncWebServerRequest* request) { 
                 AsyncWebServerResponse* resp = request->beginResponse(200, F("text/plain"), Update.hasError() ? F("FAIL") : F("OK"));
                 request->send(resp);
-                _rebootOTA(); },
+                _rebootOTA();
+                },
             [this](AsyncWebServerRequest* request, String filename, size_t index, uint8_t* data, size_t len, bool final) {
                 if (!index) {
                     int ota_type = 0;
-                    if (!strcmp_P(filename.c_str(), PSTR("flash"))) ota_type = 1;
-                    else if (!strcmp_P(filename.c_str(), PSTR("fs"))) ota_type = 2;
+                    if (request->params()) {
+                        AsyncWebParameter* p = request->getParam(0);
+                        if (!strcmp_P(p->value().c_str(), PSTR("flash"))) ota_type = 1;
+                        else if (!strcmp_P(p->value().c_str(), PSTR("fs"))) ota_type = 2;
+                    }
+
                     if (ota_type) {
                         size_t ota_size;
                         if (ota_type == 1) {

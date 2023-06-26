@@ -269,7 +269,7 @@ function uploadOta(arg, type) {
         setLabelTout('ota_label', 'ERROR', 'IDLE');
       }
 
-      xhr.open("POST", 'http://' + devices[focused].ip + ':' + http_port + '/ota');
+      xhr.open("POST", 'http://' + devices[focused].ip + ':' + http_port + '/ota?type=' + type);
       xhr.send(formData);
 
     } else {
