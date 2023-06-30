@@ -65,6 +65,8 @@ class HubHTTP {
             AsyncWebServerResponse* resp = req->beginResponse(200, F("text/plain"), F("OK"));
             req->send(resp);
         });
+
+#ifndef GH_NO_FS
         server.on("/hub_http_cfg", HTTP_GET, [this](AsyncWebServerRequest* req) {
             AsyncWebServerResponse* resp = req->beginResponse(200, F("text/plain"), F("{\"upload\":" GH_HTTP_UPLOAD ",\"download\":" GH_HTTP_DOWNLOAD ",\"ota\":" GH_HTTP_OTA ",\"path\":\"" GH_HTTP_PATH "\"}"));
             req->send(resp);
@@ -152,6 +154,7 @@ class HubHTTP {
                     Update.end(true);
                 }
             });
+#endif
 #endif
 
 #if defined(GH_INCLUDE_PORTAL) && !defined(GH_NO_DNS)

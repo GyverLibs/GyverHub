@@ -64,10 +64,10 @@ void build() {
 
   GHbuild b = hub.getBuild();  // получить свойства текущего билда
 
-  // Serial.println(GHreadBuild(b.type));    // тип билда
-  // Serial.println(GHreadConn(b.hub.conn)); // соединение
-  // Serial.println(b.hub.id);               // id клиента
-  if (b.type == GH_BUILD_ACTION) {                  // это действие
+  // Serial.println(GHreadBuild(b.type));       // тип билда
+  // Serial.println(GHreadConn(b.client.from)); // соединение
+  // Serial.println(b.client.id);               // id клиента
+  if (b.type == GH_BUILD_ACTION) {                // это действие
     Serial.println(b.action.name);                // имя компонента
     Serial.println(b.action.value);               // значение
     Serial.println();
@@ -196,9 +196,9 @@ void setup() {
   });
 
   // обработчик статуса для отладки
-  hub.onEvent([](GHevent_t event, GHconn_t conn) {
+  hub.onEvent([](GHevent_t event, GHconn_t from) {
     // GHreadXXXX берёт текстовое описание статуса из PROGMEM
-    Serial.print(GHreadConn(conn));
+    Serial.print(GHreadConn(from));
     Serial.print(": ");
     Serial.println(GHreadEvent(event));
   });

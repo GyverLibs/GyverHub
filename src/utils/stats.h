@@ -1,6 +1,12 @@
 #pragma once
 #include "../config.hpp"
 
+enum GHsource_t {
+    GH_ESP,
+    GH_MANUAL,
+    GH_STREAM
+};
+
 // тип info
 enum GHinfo_t {
     GH_INFO_VERSION,
@@ -30,6 +36,28 @@ enum GHconn_t {
 
 // системные события
 enum GHevent_t {
+    GH_FOCUS,
+    GH_PING,
+    GH_UNFOCUS,
+    GH_INFO,
+    GH_FSBR,
+    GH_FORMAT,
+    GH_REBOOT,
+    GH_DOWNLOAD_CHUNK,
+    GH_DOWNLOAD_ABORTED,
+    
+    GH_DATA,
+    GH_SET,
+    GH_CLI,
+    GH_DELETE,
+    GH_RENAME,
+    GH_DOWNLOAD,
+    GH_UPLOAD,
+    GH_UPLOAD_CHUNK,
+    GH_OTA,
+    GH_OTA_CHUNK,
+    GH_OTA_URL,
+
     GH_IDLE,
     GH_START,
     GH_STOP,
@@ -42,39 +70,18 @@ enum GHevent_t {
     GH_UNKNOWN,
     GH_DISCOVER_ALL,
     GH_DISCOVER,
-    GH_FOCUS,
-    GH_UNFOCUS,
-
-    GH_SET,
-    GH_CLI,
-    GH_PING,
 
     GH_READ_HOOK,
     GH_SET_HOOK,
-    GH_INFO,
-    GH_REBOOT,
-    GH_FSBR,
-    GH_FORMAT,
-    GH_DELETE,
-    GH_RENAME,
 
-    GH_DOWNLOAD,
-    GH_DOWNLOAD_CHUNK,
     GH_DOWNLOAD_ERROR,
-    GH_DOWNLOAD_ABORTED,
     GH_DOWNLOAD_FINISH,
 
-    GH_UPLOAD,
-    GH_UPLOAD_CHUNK,
     GH_UPLOAD_ERROR,
     GH_UPLOAD_ABORTED,
     GH_UPLOAD_FINISH,
 
-    GH_OTA,
-    GH_OTA_CHUNK,
     GH_OTA_ERROR,
     GH_OTA_ABORTED,
     GH_OTA_FINISH,
-
-    GH_OTA_URL,
 };

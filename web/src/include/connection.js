@@ -13,8 +13,11 @@ let mq_pref_list = [];
 let ws_focus_flag = false;
 let tout_interval = null;
 let ping_interval = null;
+let set_tout = null;
 let oninput_tout = null;
 let refresh_ui = false;
+
+let s_port = null, s_state = false, s_reader = null, s_buf = '';
 
 const Conn = {
   SERIAL: 0,
@@ -30,17 +33,23 @@ const ConnNames = ['Serial', 'BT', 'WS', 'MQTT', 'None', 'Error'];
 function post(cmd, name = '', value = '') {
   if (!focused) return;
   if (cmd == 'set' && !readModule(Modules.SET)) return;
+  if (cmd == 'set') {
+    if (set_tout) clearTimeout(set_tout);
+    prev_set = { name: name, value: value };
+    set_tout = setTimeout(() => { set_tout = prev_set = null; }, tout_prd);
+  }
   let id = focused;
   cmd = cmd.toString();
   name = name.toString();
   value = value.toString();
-  let uri0 = devices[id].prefix + '/' + id + '/' + cfg.hub_id + '/' + cmd;
+  let uri0 = devices[id].prefix + '/' + id + '/' + cfg.id + '/' + cmd;
   let uri = uri0;
   if (name) uri += '/' + name;
   if (value) uri += '=' + value;
 
   switch (devices_t[id].conn) {
     case Conn.SERIAL:
+      serial_send(uri);
       break;
 
     case Conn.BT:
@@ -129,16 +138,21 @@ function reset_ping() {
   }, ping_prd);
 }
 function parsePacket(id, text, conn) {
-  let st = text.startsWith('\n{');
-  let end = text.endsWith('}\n');
-  if (st && end) parseDevice(id, text, conn);
-  else if (st) {
-    devices_t[id]['buffer'][ConnNames[conn]] = text;
-  } else if (end) {
-    devices_t[id]['buffer'][ConnNames[conn]] += text;
-    parseDevice(id, devices_t[id]['buffer'][ConnNames[conn]], conn);
+  function checkPacket() {
+    if (devices_t[id]['buffer'][ConnNames[conn]].endsWith('}\n')) {
+      if (devices_t[id]['buffer'][ConnNames[conn]].startsWith('\n{')) parseDevice(id, devices_t[id]['buffer'][ConnNames[conn]], conn);
+      devices_t[id]['buffer'][ConnNames[conn]] = '';
+    }
+  }
+
+  if (conn == Conn.BT || conn == Conn.SERIAL) {
+    for (let i = 0; i < text.length; i++) {
+      devices_t[id]['buffer'][ConnNames[conn]] += text[i];
+      checkPacket();
+    }
   } else {
     devices_t[id]['buffer'][ConnNames[conn]] += text;
+    checkPacket();
   }
 }
 
@@ -164,24 +178,20 @@ function mq_start() {
   try {
     mq_client = mqtt.connect(url, options);
   } catch (e) {
-    showPopupError('MQTT error');
-    log('MQTT error');
-    mq_show_err(1);
+    mq_show_icon(0);
     return;
   }
 
   mq_client.on('connect', function () {
-    showPopup('MQTT connected');
-    log('MQTT connected');
-    mq_show_err(0);
+    mq_show_icon(1);
     mq_client.subscribe(cfg.prefix + '/hub');
 
     mq_pref_list = [cfg.prefix];
-    mq_client.subscribe(cfg.prefix + '/hub/' + cfg.hub_id + '/#');
+    mq_client.subscribe(cfg.prefix + '/hub/' + cfg.id + '/#');
 
     for (let id in devices) {
       if (!mq_pref_list.includes(devices[id].prefix)) {
-        mq_client.subscribe(devices[id].prefix + '/hub/' + cfg.hub_id + '/#');
+        mq_client.subscribe(devices[id].prefix + '/hub/' + cfg.id + '/#');
         mq_pref_list.push(devices[id].prefix);
       }
       mq_client.subscribe(devices[id].prefix + '/hub/' + id + '/get/#');
@@ -194,16 +204,12 @@ function mq_start() {
   });
 
   mq_client.on('error', function () {
-    showPopupError('MQTT error');
-    log('MQTT error');
-    mq_show_err(1);
+    mq_show_icon(0);
     mq_client.end();
   });
 
   mq_client.on('close', function () {
-    showPopupError('MQTT closed');
-    log('MQTT closed');
-    mq_show_err(1);
+    mq_show_icon(0);
     mq_client.end();
   });
 
@@ -216,9 +222,9 @@ function mq_start() {
         parseDevice('broadcast', text, Conn.MQTT);
 
         // prefix/hub/hubid/id
-      } else if (topic.startsWith(pref + '/hub/' + cfg.hub_id + '/')) {
+      } else if (topic.startsWith(pref + '/hub/' + cfg.id + '/')) {
         let id = topic.split('/').slice(-1);
-        if (!(id in devices)) {
+        if (!(id in devices) || !(id in devices_t)) {
           parseDevice(id, text, Conn.MQTT);
           return;
         }
@@ -250,7 +256,7 @@ function mq_state() {
 function mq_discover() {
   if (!mq_state()) mq_discover_flag = true;
   else for (let id in devices) {
-    mq_send(devices[id].prefix + '/' + id, cfg.hub_id);
+    mq_send(devices[id].prefix + '/' + id, cfg.id);
   }
   log('MQTT discover');
 }
@@ -259,12 +265,13 @@ function mq_discover_all() {
   if (!(cfg.prefix in mq_pref_list)) {
     mq_client.subscribe(cfg.prefix + '/hub');
     mq_pref_list.push(cfg.prefix);
+    mq_client.subscribe(cfg.prefix + '/hub/' + cfg.id + '/#');
   }
-  mq_send(cfg.prefix, cfg.hub_id);
+  mq_send(cfg.prefix, cfg.id);
   log('MQTT discover all');
 }
-function mq_show_err(state) {
-  EL('head_err').style.display = (state && cfg.use_mqtt) ? 'unset' : 'none';
+function mq_show_icon(state) {
+  EL('mqtt_ok').style.display = state ? 'inline-block' : 'none';
 }
 /*/NON-ESP*/
 
@@ -414,6 +421,106 @@ function checkHTTP(id) {
   xhr.open("GET", 'http://' + devices[id].ip + ':' + http_port + '/hub_http_cfg');
   xhr.send();
 }
+
+// ================ SERIAL ================
+/*NON-ESP*/
+async function serial_select() {
+  await serial_stop();
+  const ports = await navigator.serial.getPorts();
+  for (let port of ports) await port.forget();
+  try {
+    await navigator.serial.requestPort();
+  } catch (e) {
+  }
+  serial_change();
+}
+async function serial_discover() {
+  serial_send(cfg.prefix);
+}
+async function serial_start() {
+  try {
+    s_state = true;
+    const ports = await navigator.serial.getPorts();
+    if (!ports.length) return;
+    s_port = ports[0];
+    await s_port.open({ baudRate: cfg.serial_baudrate });
+
+    log('[Serial] Open');
+    serial_show_icon(true);
+    if (s_buf) {
+      tout_interval = setTimeout(function () {
+        serial_send(s_buf);
+        s_buf = '';
+      }, 2000);
+    }
+
+    while (s_port.readable) {
+      s_reader = s_port.readable.getReader();
+      let buffer = '';
+      try {
+        while (true && s_state) {
+          const { value, done } = await s_reader.read();
+          if (done) break;
+          const data = new TextDecoder().decode(value);
+          if (focused) {
+            parsePacket(focused, data, Conn.SERIAL);
+          } else {
+            buffer += data;
+            if (buffer.endsWith("}\n")) {
+              parseDevice('broadcast', buffer, Conn.SERIAL);
+              buffer = '';
+            }
+          }
+        }
+      } catch (error) {
+        log("[Serial] " + error);
+      } finally {
+        await s_reader.releaseLock();
+        await s_port.close();
+        log('[Serial] Close');
+        break;
+      }
+    }
+  } catch (error) {
+    log("[Serial] " + error);
+  }
+  s_reader = null;
+  s_state = false;
+  serial_show_icon(false);
+}
+async function serial_send(text) {
+  if (!s_state) {
+    serial_start();
+    s_buf = text;
+    return;
+  }
+  try {
+    const encoder = new TextEncoder();
+    const writer = s_port.writable.getWriter();
+    await writer.write(encoder.encode(text + '\0'));
+    writer.releaseLock();
+  } catch (e) {
+    log("[Serial] " + e);
+  }
+}
+async function serial_stop() {
+  if (s_reader) s_reader.cancel();
+  s_state = false;
+}
+function serial_toggle() {
+  if (s_state) serial_stop();
+  else serial_start();
+}
+function serial_show_icon(state) {
+  EL('serial_ok').style.display = state ? 'inline-block' : 'none';
+}
+async function serial_change() {
+  serial_show_icon(0);
+  if (s_state) await serial_stop();
+  const ports = await navigator.serial.getPorts();
+  EL('serial_btn').style.display = ports.length ? 'inline-block' : 'none';
+}
+/*/NON-ESP*/
 
 // ================= HTTP =================
 /*

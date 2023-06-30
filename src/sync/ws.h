@@ -19,8 +19,8 @@ class HubWS {
    protected:
     HubWS() : ws(GH_WS_PORT, "", "hub") {}
 
-    virtual void parse(char* url, GHconn_t conn, bool manual) = 0;
-    virtual void sendEvent(GHevent_t state, GHconn_t conn) = 0;
+    virtual void parse(char* url, GHconn_t from) = 0;
+    virtual void sendEvent(GHevent_t state, GHconn_t from) = 0;
 
     void beginWS() {
         ws.onEvent([this](uint8_t num, WStype_t type, uint8_t* data, GH_UNUSED size_t len) {
@@ -39,10 +39,10 @@ class HubWS {
 
                 case WStype_TEXT: {
                     clientID = num;
-                    /*char buf[len + 1] = "";
+                    /*char buf[len + 1];
                     memcpy(buf, data, len);
                     buf[len] = 0;*/
-                    parse((char*)data, GH_WS, false);
+                    parse((char*)data, GH_WS);
                 } break;
 
                 case WStype_BIN:

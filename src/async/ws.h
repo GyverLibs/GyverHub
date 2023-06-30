@@ -21,8 +21,8 @@ class HubWS {
         server.addHandler(&ws);
     }
 
-    virtual void parse(char* url, GHconn_t conn, bool manual) = 0;
-    virtual void sendEvent(GHevent_t state, GHconn_t conn) = 0;
+    virtual void parse(char* url, GHconn_t from) = 0;
+    virtual void sendEvent(GHevent_t state, GHconn_t from) = 0;
 
     void beginWS() {
         ws.onEvent([this](GH_UNUSED AsyncWebSocket* server, GH_UNUSED AsyncWebSocketClient* client, AwsEventType etype, void* arg, uint8_t* data, size_t len) {
@@ -43,7 +43,7 @@ class HubWS {
                     AwsFrameInfo* ws_info = (AwsFrameInfo*)arg;
                     if (ws_info->final && ws_info->index == 0 && ws_info->len == len && ws_info->opcode == WS_TEXT) {
                         clientID = client->id();
-                        parse((char*)data, GH_WS, false);
+                        parse((char*)data, GH_WS);
                     }
                 } break;
 

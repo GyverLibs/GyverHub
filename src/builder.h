@@ -5,12 +5,12 @@
 #include "config.hpp"
 #include "macro.hpp"
 #include "utils/build.h"
+#include "utils/button.h"
 #include "utils/color.h"
 #include "utils/datatypes.h"
 #include "utils/log.h"
 #include "utils/misc.h"
 #include "utils/pos.h"
-#include "utils/button.h"
 
 class HubBuilder {
    public:
@@ -235,6 +235,47 @@ class HubBuilder {
         }
     }
 
+    // ========================= TABLE ==========================
+    void Table_(FSTR name, FSTR text = nullptr, FSTR align = nullptr, FSTR width = nullptr, FSTR label = nullptr) {
+        _table(true, name, text, align, width, label);
+    }
+    void Table_(CSREF name, CSREF text = "", CSREF align = "", CSREF width = "", CSREF label = "") {
+        _table(false, name.c_str(), text.c_str(), align.c_str(), width.c_str(), label.c_str());
+    }
+
+    void Table() {
+        Table_(0);
+    }
+    void Table(FSTR text = nullptr, FSTR align = nullptr, FSTR width = nullptr, FSTR label = nullptr) {
+        Table_(0, text, align, width, label);
+    }
+    void Table(CSREF text = "", CSREF align = "", CSREF width = "", CSREF label = "") {
+        Table_("", text.c_str(), align.c_str(), width.c_str(), label.c_str());
+    }
+
+    void _table(bool fstr, VSPTR name, VSPTR value, VSPTR align, VSPTR width, VSPTR label) {
+        if (_nameAuto(name, fstr)) name = nullptr;
+        if (_isUI()) {
+            _begin(F("table"));
+            _name(name, fstr);
+            _value();
+            _quot();
+            GH_escapeStr(sptr, value, fstr);
+            _quot();
+            _add(F(",'align':'"));
+            _add(align, fstr);
+            _quot();
+            _add(F(",'width':'"));
+            _add(width, fstr);
+            _quot();
+            _label(label, fstr);
+            _tabw();
+            _end();
+        } else if (_isRead()) {
+            if (_checkName(name, fstr)) GH_escapeStr(sptr, value, fstr);
+        }
+    }
+
     // ========================== HTML ==========================
     void HTML_(FSTR name, FSTR value = nullptr, FSTR label = nullptr) {
         _html(true, name, value, label);
@@ -297,7 +338,6 @@ class HubBuilder {
         return _input(false, F("input"), name.c_str(), var, type, label.c_str(), maxv, regex.c_str(), color);
     }
 
-    
     bool Input(void* var = nullptr, GHdata_t type = GH_NULL) {
         return Input_(0, var, type);
     }
@@ -853,19 +893,27 @@ class HubBuilder {
     }
 
     // ========================= IMAGE =========================
-    void Image(FSTR url, int prd = 0, FSTR label = nullptr) {
-        _image(true, url, prd, label);
+    void Image_(FSTR name, FSTR path, FSTR label = nullptr) {
+        _image(true, name, path, label);
     }
-    void Image(CSREF url, int prd = 0, CSREF label = "") {
-        _image(false, url.c_str(), prd, label.c_str());
+    void Image_(CSREF name, CSREF path, CSREF label = "") {
+        _image(false, name.c_str(), path.c_str(), label.c_str());
     }
-    void _image(bool fstr, VSPTR url, int prd, VSPTR label) {
+
+    void Image(FSTR path, FSTR label = nullptr) {
+        Image_(0, path, label);
+    }
+    void Image(CSREF path, CSREF label = "") {
+        Image_("", path.c_str(), label.c_str());
+    }
+
+    void _image(bool fstr, VSPTR name, VSPTR path, VSPTR label) {
+        if (_nameAuto(name, fstr)) name = nullptr;
         if (_isUI()) {
             _begin(F("image"));
-            _value(url, fstr);
+            _name(name, fstr);
+            _value(path, fstr);
             _label(label, fstr);
-            _add(F(",'prd':"));
-            *sptr += prd;
             _tabw();
             _end();
         }
@@ -1005,7 +1053,7 @@ class HubBuilder {
         if (!name) f = 1;
         else if (fstr) f = !pgm_read_byte((uint8_t*)name);
         else f = !(*(uint8_t*)name);
-        if (f) bptr->count++;
+        if (f) bptr->action.count++;
         return f;
     }
     bool _checkName(VSPTR name, bool fstr) {
@@ -1015,7 +1063,7 @@ class HubBuilder {
                 return true;
             }
         } else {
-            if (bptr->autoNameEq()) {
+            if (bptr->action.autoNameEq()) {
                 bptr->type = GH_BUILD_NONE;
                 return true;
             }
@@ -1071,7 +1119,7 @@ class HubBuilder {
         if (name) _add(name, fstr);
         else {
             *sptr += F("_n");
-            *sptr += bptr->count;
+            *sptr += bptr->action.count;
         }
         _quot();
     }

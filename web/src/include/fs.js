@@ -6,6 +6,7 @@ let fetch_index;
 let fetch_file = '';
 let fetch_tout;
 let fetch_to_file = false;
+let edit_idx = 0;
 
 let uploading = null;
 let upload_tout;
@@ -70,16 +71,17 @@ function showFsbr(device) {
       let none = "style='display:none'";
       inner += `<div class="fs_file" onclick="openFSctrl(${i})">${fs_arr[i]}<div class="fs_weight">${(device.fs[fs_arr[i]] / 1000).toFixed(2)} kB</div></div>
       <div id="fs#${i}" class="fs_controls">
-        <button ${readModule(Modules.RENAME) ? '' : none} title="Rename" class="icon cfg_btn_tab" onclick="renameFile(${i})"></button>
+        <button ${readModule(Modules.RENAME) ? '' : none} title="Rename" class="icon cfg_btn_tab" onclick="renameFile(${i})"></button>
         <button ${readModule(Modules.DELETE) ? '' : none} title="Delete" class="icon cfg_btn_tab" onclick="deleteFile(${i})"></button>
         <button ${readModule(Modules.DOWNLOAD) ? '' : none} title="Fetch" class="icon cfg_btn_tab" onclick="fetchFile(${i})"></button>
         <label id="process#${i}"></label>
         <a id="download#${i}" title="Download" class="icon cfg_btn_tab" href="" download="" style="display:none"></a>
         <button id="open#${i}" title="Open" class="icon cfg_btn_tab" onclick="openFile(EL('download#${i}').href)" style="display:none"></button>
+        <button id="edit#${i}" title="Edit" class="icon cfg_btn_tab" onclick="editFile(EL('download#${i}').href,'${i}')" style="display:none"></button>
       </div>`;
     }
   }
-  inner += `<div class="fs_info">Used ${(device.used / 1000).toFixed(2)} / ${(device.total / 1000).toFixed(2)} kB [${Math.round(device.used / device.total * 100)}%]</div>`;
+  inner += `<div class="fs_info">Used ${(device.used / 1000).toFixed(2)}/${(device.total / 1000).toFixed(2)} kB [${Math.round(device.used / device.total * 100)}%]</div>`;
   EL('fsbr_inner').innerHTML = inner;
   let ota_t = '.' + devices[focused].ota_t;
   EL('ota_upload').accept = ota_t;
@@ -134,6 +136,26 @@ function format_h() {
   if (confirm('Format filesystem?')) post('format');
 }
 
+function editFile(data, idx) {
+  EL('editor_area').value = window.atob(data.split('base64,')[1]);
+  EL('editor_area').scrollTop = 0;
+  EL('fsbr').style.display = 'none';
+  EL('fsbr_edit').style.display = 'block';
+  edit_idx = idx;
+}
+function editor_save() {
+  editor_cancel();
+  let div = fs_arr[edit_idx].lastIndexOf('/');
+  let path = fs_arr[edit_idx].slice(0, div);
+  let name = fs_arr[edit_idx].slice(div + 1);
+  EL('download#' + edit_idx).href = ('data:' + getMime(name) + ';base64,' + window.btoa(EL('editor_area').value));
+  uploadFile(new File([EL('editor_area').value], name, { type: getMime(name), lastModified: new Date() }), path);
+}
+function editor_cancel() {
+  EL('fsbr').style.display = 'block';
+  EL('fsbr_edit').style.display = 'none';
+}
+
 /*
 function fetchHTTP(path, name, index) {
   EL('process#' + index).innerHTML = 'Fetching...';
@@ -169,10 +191,11 @@ async function fetchHTTP(path, name, index) {
 
 function fetchEnd(name, index, data) {
   if (!fetching) return;
-  EL('download#' + index).style.display = 'unset';
+  EL('download#' + index).style.display = 'inline-block';
   EL('download#' + index).href = ('data:' + getMime(name) + ';base64,' + data);
   EL('download#' + index).download = name;
-  EL('open#' + index).style.display = 'unset';
+  EL('open#' + index).style.display = 'inline-block';
+  EL('edit#' + index).style.display = 'inline-block';
   EL('process#' + index).style.display = 'none';
   fetching = null;
   stopFS();
@@ -182,18 +205,19 @@ function fetchEnd(name, index, data) {
 function uploadFile(file, path) {
   if (fetching || uploading) {
     showPopupError('Busy');
-    return;
+    return clearFiles();
   }
-
+  
   let reader = new FileReader();
   reader.readAsArrayBuffer(file);
   reader.onload = function (e) {
-    if (!e.target.result) return;
+    if (!e.target.result) return clearFiles();
+
     let buffer = new Uint8Array(e.target.result);
     if (!path.startsWith('/')) path = '/' + path;
     if (!path.endsWith('/')) path += '/';
     path += file.name;
-    if (!confirm('Upload ' + path + ' (' + buffer.length + ' bytes)?')) return;
+    if (!confirm('Upload ' + path + ' (' + buffer.length + ' bytes)?')) return clearFiles();
 
     if (devices_t[focused].conn == Conn.WS && devices_t[focused].http_cfg.upload) {
       EL('file_upload_btn').innerHTML = 'Wait...';
@@ -220,6 +244,7 @@ function uploadFile(file, path) {
       upload_size = upload_bytes.length;
       post('upload', path);
     }
+    clearFiles();
   }
 
 }
@@ -235,23 +260,29 @@ function uploadNextChunk() {
   EL('file_upload_btn').innerHTML = Math.round((upload_size - upload_bytes.length) / upload_size * 100) + '%';
   post('upload_chunk', (upload_bytes.length) ? 'next' : 'last', window.btoa(data));
 }
+function clearFiles() {
+  EL('file_upload').value = '';
+  EL('ota_upload').value = '';
+  EL('ota_upload_fs').value = '';
+}
 
 // ============== OTA ==============
 function uploadOta(file, type) {
   if (fetching || uploading) {
     showPopupError('Busy');
-    return;
+    return clearFiles();
   }
   if (!file.name.endsWith(devices[focused].ota_t)) {
     alert('Wrong file! Use .' + devices[focused].ota_t);
-    return;
+    return clearFiles();
   }
-  if (!confirm('Upload OTA ' + type + '?')) return;
+  if (!confirm('Upload OTA ' + type + '?')) return clearFiles();
+
 
   let reader = new FileReader();
   reader.readAsArrayBuffer(file);
   reader.onload = function (e) {
-    if (!e.target.result) return;
+    if (!e.target.result) return clearFiles();
 
     if (devices_t[focused].http_cfg.ota) {
       EL('ota_label').innerHTML = 'WAIT...';
@@ -279,6 +310,7 @@ function uploadOta(file, type) {
       upload_size = upload_bytes.length;
       post('ota', type);
     }
+    clearFiles();
   }
 }
 function otaNextChunk() {

@@ -36,10 +36,10 @@ class HubMQTT {
 
     // ============ PROTECTED =============
    protected:
-    virtual void parse(char* url, char* value, GHconn_t conn, bool manual) = 0;
+    virtual void parse(char* url, char* value, GHconn_t from) = 0;
     virtual const char* getPrefix() = 0;
     virtual const char* getID() = 0;
-    virtual void sendEvent(GHevent_t state, GHconn_t conn) = 0;
+    virtual void sendEvent(GHevent_t state, GHconn_t from) = 0;
 
     void beginMQTT() {
         mqtt.onConnect([this](GH_UNUSED bool pres) {
@@ -73,10 +73,10 @@ class HubMQTT {
         });
 
         mqtt.onMessage([this](char* topic, char* data, GH_UNUSED AsyncMqttClientMessageProperties prop, size_t len, GH_UNUSED size_t index, GH_UNUSED size_t total) {
-            char buf[len + 1] = "";
+            char buf[len + 1];
             memcpy(buf, data, len);
             buf[len] = 0;
-            parse(topic, buf, GH_MQTT, false);
+            parse(topic, buf, GH_MQTT);
         });
     }
 

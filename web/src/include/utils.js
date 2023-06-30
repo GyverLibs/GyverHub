@@ -32,6 +32,7 @@ const themes = {
   DARK: 0,
   LIGHT: 1
 };
+const baudrates = [4800, 9600, 19200, 38400, 57600, 74880, 115200, 230400, 250000, 500000, 1000000, 2000000];
 const theme_cols = [
   ['#1b1c20', '#26272c', '#eee', '#ccc', '#141516', '#444', '#0e0e0e', 'dark', '#222', '#000'],
   ['#eee', '#fff', '#111', '#333', '#ddd', '#999', '#bdbdbd', 'light', '#fff', '#000000a3']
@@ -155,11 +156,23 @@ function ratio() {
 function resize_h() {
   showGauges();
 }
-function renameFile(src, name) {
-  return new File([src], name, {
-      type: src.type,
-      lastModified: src.lastModified,
-  });
+function parseCSV(str) {
+  // https://stackoverflow.com/a/14991797
+  const arr = [];
+  let quote = false;
+  for (let row = 0, col = 0, c = 0; c < str.length; c++) {
+    let cc = str[c], nc = str[c + 1];
+    arr[row] = arr[row] || [];
+    arr[row][col] = arr[row][col] || '';
+    if (cc == '"' && quote && nc == '"') { arr[row][col] += cc; ++c; continue; }
+    if (cc == '"') { quote = !quote; continue; }
+    if (cc == ',' && !quote) { ++col; continue; }
+    if (cc == '\r' && nc == '\n' && !quote) { ++row; col = 0; ++c; continue; }
+    if (cc == '\n' && !quote) { ++row; col = 0; continue; }
+    if (cc == '\r' && !quote) { ++row; col = 0; continue; }
+    arr[row][col] += cc;
+  }
+  return arr;
 }
 
 // ========== POPUP ==============
@@ -183,8 +196,8 @@ function showErr(v) {
 
 
 // ============ IP ================
+/*NON-ESP*/
 function getLocalIP() {
-  /*NON-ESP*/
   return new Promise(function (resolve, reject) {
     var RTCPeerConnection = window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
     if (!RTCPeerConnection) reject('Not supported');
@@ -229,19 +242,20 @@ function getLocalIP() {
       rtc.setLocalDescription(offerDesc);
     }, function (e) { return; });
   });
-  /*/NON-ESP*/
-  return new Promise(function (resolve, reject) {
-    resolve(window_ip());
-  });
 }
+/*/NON-ESP*/
 function update_ip_h() {
+  /*NON-ESP*/
   if (!Boolean(window.webkitRTCPeerConnection || window.mozRTCPeerConnection)) notSupported();
   else getLocalIP().then((ip) => {
     if (ip.indexOf("local") > 0) alert(`Disable WEB RTC anonymizer: ${browser()}://flags/#enable-webrtc-hide-local-ips-with-mdns`);
     else EL('client_ip').value = ip;
   });
+  /*/NON-ESP*/
+  if (isESP()) EL('client_ip').value = window_ip();
 }
 function update_ip() {
+  /*NON-ESP*/
   if (!Boolean(window.webkitRTCPeerConnection || window.mozRTCPeerConnection)) return;
   getLocalIP().then((ip) => {
     if (ip.indexOf("local") < 0) {
@@ -249,7 +263,13 @@ function update_ip() {
       cfg.client_ip = ip;
     }
   });
+  /*/NON-ESP*/
+  if (isESP()) {
+    EL('client_ip').value = window_ip();
+    cfg.client_ip = window_ip();
+  }
 }
+
 function checkIP(ip) {
   return Boolean(ip.match(/^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|$)){4}$/));
 }

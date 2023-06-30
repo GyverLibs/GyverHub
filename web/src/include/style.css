@@ -28,7 +28,6 @@
   --font_inv: #fff;
   --dark: #a8a8a8;
   --thumb: #999;
-  --thumb: #222;
   --scheme: light;
   --base_width: 450px;
   --ui_width: 450px;
@@ -350,6 +349,10 @@ body::-webkit-scrollbar-thumb {
   color: var(--font);
 }
 
+.cfg_clickable {
+  cursor: pointer;
+}
+
 .cfg_inp {
   font-size: 17px;
   border: none;
@@ -374,7 +377,7 @@ body::-webkit-scrollbar-thumb {
 .cfg_btn_tab {
   cursor: pointer;
   color: var(--prim);
-  padding: 0px 5px;
+  padding: 0px 6px;
 }
 
 .cfg_btn_row {
@@ -519,6 +522,7 @@ body::-webkit-scrollbar-thumb {
   cursor: text;
   overflow-wrap: break-word;
   font-size: 16px;
+  max-width: 50%;
 }
 
 .info_small {
@@ -740,6 +744,33 @@ input::-webkit-inner-spin-button {
 /* Firefox */
 input[type=number] {
   -moz-appearance: textfield;
+}
+
+/* table */
+.c_table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.c_table td,
+.c_table th {
+  border: 1px solid var(--font3);
+  padding: 4px 8px;
+}
+
+.c_table tr:nth-child(even) {
+  /*background-color: var(--font2);
+  color: black;*/
+}
+
+.c_table tr:hover {
+  /*background-color: var(--font2);*/
+}
+
+.c_table th {
+  /*background-color: var(--prim);
+  color: white;*/
 }
 
 /* =================================== */

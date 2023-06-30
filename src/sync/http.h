@@ -70,6 +70,8 @@ class HubHTTP {
         server.on("/hub_discover_all", [this]() {
             server.send(200, F("text/plain"), F("OK"));
         });
+
+#ifndef GH_NO_FS
         server.on("/hub_http_cfg", [this]() {
             server.send(200, F("text/plain"), F("{\"upload\":" GH_HTTP_UPLOAD ",\"download\":" GH_HTTP_DOWNLOAD ",\"ota\":" GH_HTTP_OTA ",\"path\":\"" GH_HTTP_PATH "\"}"));
         });
@@ -145,6 +147,7 @@ class HubHTTP {
                 }
                 yield();
             });
+#endif
 #endif
 
 #if defined(GH_INCLUDE_PORTAL) && !defined(GH_NO_DNS)

@@ -1,7 +1,12 @@
 let push_timer = 0;
 let delay_tmr = null;
+let prev_set = null;
 
 function applyUpdate(name, value) {
+  if (prev_set && prev_set.name == name && prev_set.value == value) {
+    prev_set = null;
+    return;
+  }
   if (name in prompts) {
     release_all();
     let res = prompt(value ? value : prompts[name].label, prompts[name].value);
@@ -17,6 +22,10 @@ function applyUpdate(name, value) {
     set_h(name, res ? 1 : 0);
     return;
   }
+  if (name in pickers) {
+    pickers[name].setColor(intToCol(value));
+    return;
+  }
 
   let el = EL('#' + name);
   if (!el) return;
@@ -30,6 +39,11 @@ function applyUpdate(name, value) {
   else if (cl.contains('slider_t')) el.value = value, EL('out#' + name).innerHTML = value, moveSlider(el, false);
   else if (cl.contains('switch_t')) el.checked = (value == '1');
   else if (cl.contains('select_t')) el.value = value;
+  else if (cl.contains('image_t')) {
+    files.push({ id: '#' + name, path: value, type: 'img' });
+    EL('#' + ctrl.name).innerHTML = waiter;
+    if (files.length == 1) nextFile();
+  }
   else if (cl.contains('canvas_t')) {
     if (name in canvases) {
       if (!canvases[name].value) {
@@ -79,14 +93,14 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
   try {
     device = JSON.parse(text.replaceAll("\'", "\""));
   } catch (e) {
-    log('Wrong packet (JSON)');
+    log('Wrong packet (JSON):' + text);
     return;
   }
 
   let id = device.id;
   if (!id) return log('Wrong packet (ID)');
   if (fromID != 'broadcast' && fromID != id) return log('Wrong packet (Unknown ID)');
-  if (fromID == 'broadcast' && device.type != 'discover' && device.type != 'update' && device.type != 'push' && device.type != 'print') return log('Wrong packet (error)');
+  if (fromID == 'broadcast' && device.type != 'discover' && device.type != 'update' && device.type != 'push' && device.type != 'print' && device.type != 'data') return log('Wrong packet (error)');
 
   log('Got packet from #' + id + ' ' + device.type + ' via ' + ConnNames[conn]);
 
@@ -97,6 +111,10 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
   }
 
   switch (device.type) {
+    case 'data':
+      
+      break;
+
     case 'alert':
       release_all();
       alert(device.text);
@@ -145,7 +163,7 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
         /*NON-ESP*/
         if (mq_state()) {
           mq_client.subscribe(devices[id].prefix + '/hub/' + id + '/get/#');
-          mq_client.subscribe(devices[id].prefix + '/hub/' + cfg.hub_id + '/#');
+          mq_client.subscribe(devices[id].prefix + '/hub/' + cfg.id + '/#');
           if (!mq_pref_list.includes(devices[id].prefix)) mq_pref_list.push(devices[id].prefix);
         }
         /*/NON-ESP*/
@@ -156,6 +174,7 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
         devices_t[id] = {
           conn: Conn.NONE, ws: null, controls: null, granted: false,
           buffer: { WS: '', MQTT: '', Serial: '', BT: '' },
+          port: null,
           http_cfg: { upd: 0, upload: 0, download: 0, ota: 0, path: '/fs/' }
         };
       }
@@ -368,6 +387,7 @@ function showControls(controls, from_buffer = false) {
       case 'confirm': confirms[ctrl.name] = { label: ctrl.label }; break;
       case 'prompt': prompts[ctrl.name] = { label: ctrl.label, value: ctrl.value }; break;
       case 'menu': addMenu(ctrl);
+      case 'table': addTable(ctrl);
     }
   }
   if (devices[focused].show_names) {
@@ -390,7 +410,7 @@ function showControls(controls, from_buffer = false) {
     EL('controls').style.visibility = 'visible';
     delay_tmr = null;
   }, 10);
-  
+
   if (!gauges.length && !canvases.length && !pickers.length && !joys.length) EL('controls').style.visibility = 'visible';
 }
 function showInfo(device) {
@@ -401,6 +421,10 @@ function showInfo(device) {
       <label title="${title}" class="lbl_info">${value}</label>
     </div>`;
   }
+  EL('info_version').innerHTML = '';
+  EL('info_net').innerHTML = '';
+  EL('info_memory').innerHTML = '';
+  EL('info_system').innerHTML = '';
 
   for (let i in device.info.version) addInfo('info_version', i, device.info.version[i]);
   for (let i in device.info.net) addInfo('info_net', i, device.info.net[i]);

@@ -7,8 +7,13 @@ function render_main(v) {
         <span><span id="title"></span><sup id="conn"></sup><span class='version' id='version'>${v}</span></span>
       </div>
 
+      <div id="conn_icons" style="display:flex">
+        <span id='mqtt_ok' style="display:none;margin:0" class="icon cfg_icon"></span>
+        <span id='serial_ok' style="display:none;margin:0" class="icon cfg_icon"></span>
+        <span id='bt_ok' style="display:none;margin:0" class="icon cfg_icon"></span>
+      </div>
+
       <div class="head_btns">
-        <span id='head_err' style="display:none"><strike>MQTT</strike></span>
         <span class="icon i_hover" id='icon_refresh' onclick="refresh_h()"></span>
         <span class="icon i_hover" id='icon_cfg' style="display:none" onclick="config_h()"></span>
         <span class="icon i_hover" id='icon_menu' style="display:none" onclick="menu_h()"></span>
@@ -55,7 +60,7 @@ function render_main(v) {
     <!--<a href="https://alexgyver.ru/support_alex/" target="_blank"><span class="icon info_icon info_icon_u"></span>Support</a>-->
     <a style="cursor:pointer" onclick="projects_h()"><span class="icon info_icon info_icon_u"></span>Projects</a>
     <a style="cursor:pointer" onclick="test_h()"><span class="icon info_icon info_icon_u"></span>Test</a>
-    <a href="https://github.com/GyverLibs/GyverHub/wiki" target="_blank"><span class="icon info_icon info_icon_u"></span>Docs</a>
+    <a href="https://github.com/GyverLibs/GyverHub/wiki" target="_blank"><span class="icon info_icon info_icon_u"></span>Wiki</a>
   </div>
   `;
   /*/NON-ESP*/
@@ -137,6 +142,21 @@ function render_main(v) {
       </div>
     </div>
 
+    <div id="fsbr_edit" class="main_col">
+      <div class="cfg_col">
+        <div class="cfg_row cfg_head">
+          <label><span class="icon cfg_icon"></span>Editor</label>
+        </div>
+        <div class="cfg_row">
+          <textarea rows=20 id="editor_area" class="cfg_inp c_log"></textarea>
+        </div>
+        <div class="cfg_row">
+          <button id="editor_save" onclick="editor_save()" class="c_btn btn_mini">Save & Upload</button>
+          <button onclick="editor_cancel()" class="c_btn btn_mini">Cancel</button>
+        </div>
+      </div>
+    </div>
+
     <div id="fsbr" class="main_col">
       <div class="cfg_col">
         <div class="cfg_row cfg_head">
@@ -209,9 +229,9 @@ function render_main(v) {
       </div>
 
       <div class="cfg_col">
-        <div class="cfg_row cfg_head">
-          <label class="cfg_label" id="ws_label"><span class="icon cfg_icon"></span>WS</label>
-          <label class="switch"><input type="checkbox" id="use_ws" onchange="update_cfg(this)"><span class="slider"></span></label>
+        <div class="cfg_row cfg_head cfg_clickable" onclick="use_ws.click()">
+          <label class="cfg_label cfg_clickable" id="ws_label"><span class="icon cfg_icon"></span>WS</label>
+          <input type="checkbox" id="use_ws" onchange="update_cfg(this)" style="display:none">
         </div>
         <div id="ws_block" style="display:none">
           <div class="cfg_row" id="http_only_http" style="display:none">
@@ -257,9 +277,9 @@ function render_main(v) {
 
       <!--NON-ESP-->
       <div class="cfg_col" id="mq_col">
-        <div class="cfg_row cfg_head">
-          <label class="cfg_label" id="mqtt_label"><span class="icon cfg_icon"></span>MQTT</label>
-          <label class="switch"><input type="checkbox" id="use_mqtt" onchange="update_cfg(this);mq_change(this.checked)"><span class="slider"></span></label>
+        <div class="cfg_row cfg_head cfg_clickable" onclick="use_mqtt.click()">
+          <label class="cfg_label cfg_clickable" id="mqtt_label"><span class="icon cfg_icon"></span>MQTT</label>
+          <input type="checkbox" id="use_mqtt" onchange="update_cfg(this);mq_change(this.checked)" style="display:none">
         </div>
 
         <div id="mq_block" style="display:none">
@@ -288,21 +308,31 @@ function render_main(v) {
         </div>
       </div>
       
-      <div class="cfg_col" id="serial_col" style="display:none">
-        <div class="cfg_row cfg_head">
-          <label class="cfg_label" id="serial_label"><span class="icon cfg_icon"></span>Serial</label>
-          <label class="switch"><input type="checkbox" id="use_serial" onchange="update_cfg(this)"><span class="slider"></span></label>
+      <div class="cfg_col" id="serial_col" ${("serial" in navigator) ? '' : 'style="display:none"'}>
+        <div class="cfg_row cfg_head cfg_clickable" onclick="use_serial.click()">
+          <label class="cfg_label cfg_clickable" id="serial_label"><span class="icon cfg_icon"></span>Serial</label>
+          <input type="checkbox" id="use_serial" onchange="serial_change();update_cfg(this)" style="display:none">
         </div>
 
         <div id="serial_block" style="display:none">
+          <div class="cfg_row">
+            <label class="cfg_label">Baudrate</label>
+            <select class="cfg_inp c_inp_block с_inp_fix" id='baudrate' onchange="update_cfg(this)"></select>
+          </div>
+          <div class="cfg_row">
+            <label class="cfg_label">Port</label>
+            <div class="cfg_btn_row">
+              <button class="c_btn btn_mini" onclick="serial_select()">Select</button>
+              <button id="serial_btn" class="c_btn btn_mini" onclick="serial_toggle()">Connect</button>
+            </div>
+          </div>
         </div>
-
       </div>
 
       <div class="cfg_col" id="bt_col" style="display:none">
-        <div class="cfg_row cfg_head">
-          <label class="cfg_label" id="bt_label"><span class="icon cfg_icon"></span>Bluetooth</label>
-          <label class="switch"><input type="checkbox" id="use_bt" onchange="update_cfg(this)"><span class="slider"></span></label>
+        <div class="cfg_row cfg_head cfg_clickable" onclick="use_bt.click()">
+          <label class="cfg_label cfg_clickable" id="bt_label"><span class="icon cfg_icon"></span>Bluetooth</label>
+          <input type="checkbox" id="use_bt" onchange="update_cfg(this)" style="display:none">
         </div>
 
         <div id="bt_block" style="display:none">
@@ -366,9 +396,9 @@ function render_main(v) {
       </div>
 
       <div class="cfg_col">
-        <div class="cfg_row cfg_head">
-          <label id="pin_label" class="cfg_label"><span class="icon cfg_icon"></span>PIN</label>
-          <label class="switch"><input type="checkbox" id="use_pin" onchange="update_cfg(this)"><span class="slider"></span></label>
+        <div class="cfg_row cfg_head cfg_clickable" onclick="use_pin.click()">
+          <label id="pin_label" class="cfg_label cfg_clickable"><span class="icon cfg_icon"></span>PIN</label>
+          <input type="checkbox" id="use_pin" onchange="update_cfg(this)" style="display:none">
         </div>
 
         <div id="pin_block" style="display:none">

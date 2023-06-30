@@ -13,8 +13,9 @@ let cfg = {
   use_bt: false, use_serial: false,
   use_mqtt: false, mq_host: 'test.mosquitto.org', mq_port: '8081', mq_login: '', mq_pass: '',
   use_pin: false, hub_pin: '',
-  hub_id: new Date().getTime().toString().hashCode().toString(16),
-  ui_width: 450, theme: 'DARK', maincolor: 'GREEN', font: 'monospace', version: app_version, check_upd: true
+  id: new Date().getTime().toString().hashCode().toString(16),
+  ui_width: 450, theme: 'DARK', maincolor: 'GREEN', font: 'monospace', version: app_version, check_upd: true,
+  serial_baudrate: 115200,
 };
 
 document.addEventListener('keydown', function (e) {
@@ -57,7 +58,7 @@ window.onload = function () {
   render_main(app_version);
   EL('title').innerHTML = app_title;
   load_cfg();
-  let title = 'GyverHub v' + app_version + ' [' + cfg.hub_id + '] ' + (isPWA() ? 'PWA ' : '') + (isSSL() ? 'SSL ' : '') + (isLocal() ? 'Local ' : '') + (isESP() ? 'ESP ' : '') + (isApp() ? 'App ' : '');
+  let title = 'GyverHub v' + app_version + ' [' + cfg.id + '] ' + (isPWA() ? 'PWA ' : '') + (isSSL() ? 'SSL ' : '') + (isLocal() ? 'Local ' : '') + (isESP() ? 'ESP ' : '') + (isApp() ? 'App ' : '');
   EL('title').title = title;
   log(title);
 
@@ -89,6 +90,7 @@ function startup() {
   }
   if (isApp()) EL('app_block').style.display = 'none';
 
+  serial_change();
   if (cfg.use_mqtt) mq_start();
   setInterval(() => {
     if (cfg.use_mqtt && !mq_state()) {
@@ -280,6 +282,12 @@ function update_info() {
   EL('info_system').innerHTML = '';
 }
 function render_selects() {
+  /*NON-ESP*/
+  for (let baud of baudrates) {
+    EL('baudrate').innerHTML += `
+    <option value="${baud}">${baud}</option>`;
+  }
+  /*/NON-ESP*/
   for (let color in colors) {
     EL('maincolor').innerHTML += `
     <option value="${color}">${color}</option>`;
@@ -320,6 +328,10 @@ function refresh_h() {
   else discover();
 }
 function back_h() {
+  if (EL('fsbr_edit').style.display == 'block') {
+    editor_cancel();
+    return;
+  }
   stopFS();
   if (menu_f) {
     menuDeact();
@@ -411,6 +423,7 @@ function open_device(id) {
 
   switch (devices_t[id].conn) {
     case Conn.SERIAL:
+      post('focus');
       break;
 
     case Conn.BT:
@@ -437,6 +450,7 @@ function close_device() {
   showErr(false);
   switch (devices_t[focused].conn) {
     case Conn.SERIAL:
+      post('unfocus');
       break;
 
     case Conn.BT:
@@ -470,6 +484,7 @@ function show_screen(nscreen) {
   stopFS();
   screen = nscreen;
   show_keypad(false);
+  let conns_s = EL('conn_icons').style;
   let proj_s = EL('projects_cont').style;
   let test_s = EL('test_cont').style;
   let main_s = EL('main_cont').style;
@@ -485,6 +500,7 @@ function show_screen(nscreen) {
   let version_s = EL('version').style;
   let title_row_s = EL('title_row').style;
 
+  conns_s.display = 'none';
   main_s.display = 'block';
   test_s.display = 'none';
   proj_s.display = 'none';
@@ -502,6 +518,7 @@ function show_screen(nscreen) {
   EL('title').innerHTML = app_title;
 
   if (screen == 'main') {
+    conns_s.display = 'flex';
     version_s.display = 'unset';
     devices_s.display = 'grid';
     icon_cfg_s.display = 'inline-block';
@@ -511,12 +528,14 @@ function show_screen(nscreen) {
     showCLI(false);
 
   } else if (screen == 'test') {
+    conns_s.display = 'flex';
     main_s.display = 'none';
     test_s.display = 'block';
     back_s.display = 'inline-block';
     EL('title').innerHTML = 'UI Test';
 
   } else if (screen == 'projects') {
+    conns_s.display = 'flex';
     main_s.display = 'none';
     proj_s.display = 'block';
     back_s.display = 'inline-block';
@@ -530,6 +549,7 @@ function show_screen(nscreen) {
     EL('title').innerHTML = devices[focused].name;
 
   } else if (screen == 'config') {
+    conns_s.display = 'flex';
     config_s.display = 'block';
     icon_cfg_s.display = 'inline-block';
     back_s.display = 'inline-block';
@@ -595,6 +615,7 @@ function sendCLI() {
 function sendDiscover() {
   /*NON-ESP*/
   if (cfg.use_mqtt) mq_discover();
+  if (cfg.use_serial) serial_discover();
   /*/NON-ESP*/
   if (cfg.use_ws && !isSSL()) ws_discover();
 }
@@ -620,6 +641,7 @@ function discover() {
 function discover_all() {
   /*NON-ESP*/
   if (cfg.use_mqtt) mq_discover_all();
+  if (cfg.use_serial) serial_discover();
   /*/NON-ESP*/
   if (cfg.use_ws && !isSSL()) ws_discover_all();
   back_h();
@@ -628,7 +650,7 @@ function discover_all() {
 // ============= CFG ==============
 /*NON-ESP*/
 function mq_change(start = false) {
-  mq_show_err(1);
+  mq_show_icon(0);
   mq_stop();
   if (start) mq_start();
 }

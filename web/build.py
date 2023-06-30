@@ -1,7 +1,7 @@
 # GyverHub Web Builder
 
-version = '0.44b'
-notes = 'Drag and drop for upload and OTA'
+version = '0.45b'
+notes = 'A lot of new features'
 
 js_files = [
     'src/include/main.js',
@@ -63,13 +63,13 @@ import base64
 
 if os.path.exists('app'): shutil.rmtree('app')
 if os.path.exists('esp'): shutil.rmtree('esp')
-if os.path.exists('esp_inc'): shutil.rmtree('esp_inc')
+if os.path.exists('../src/esp_inc'): shutil.rmtree('../src/esp_inc')
 if os.path.exists('host'): shutil.rmtree('host')
 if os.path.exists('local'): shutil.rmtree('local')
 
 os.mkdir('app')
 os.mkdir('esp')
-os.mkdir('esp_inc')
+os.mkdir('../src/esp_inc')
 os.mkdir('host')
 os.mkdir('host/icons')
 os.mkdir('local')
@@ -292,6 +292,6 @@ def file_to_h(src, dest, name):
         data += '\n};'
         with open(dest, "w") as f: f.write(data)
 
-file_to_h('esp/index.html.gz', 'esp_inc/index.h', 'hub_index_h')
-file_to_h('esp/style.css.gz', 'esp_inc/style.h', 'hub_style_h')
-file_to_h('esp/script.js.gz', 'esp_inc/script.h', 'hub_script_h')
+file_to_h('esp/index.html.gz', '../src/esp_inc/index.h', 'hub_index_h')
+file_to_h('esp/style.css.gz', '../src/esp_inc/style.h', 'hub_style_h')
+file_to_h('esp/script.js.gz', '../src/esp_inc/script.h', 'hub_script_h')

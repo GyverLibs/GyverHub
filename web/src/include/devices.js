@@ -46,6 +46,7 @@ function save_devices() {
 function load_devices() {
   if (localStorage.hasOwnProperty('devices')) {
     devices = JSON.parse(localStorage.getItem('devices'));
+    
   }
 }
 
@@ -315,6 +316,7 @@ function addSwitchIcon(ctrl) {
   endButtons();
   let ch = ctrl.value ? 'checked' : '';
   let text = ctrl.text ? ctrl.text : '';
+  if (isESP()) text = "";
   if (wid_row_id) {
     let col = (ctrl.color != null) ? `<style>#swlabel_${ctrl.name} input:checked+.switch_i_tab{background:${intToCol(ctrl.color)};color:var(--font_inv)} #swlabel_${ctrl.name} .switch_i_tab{box-shadow: 0 0 0 2px ${intToCol(ctrl.color)};color:${intToCol(ctrl.color)}}</style>` : '';
     let inner = `${col}
@@ -463,7 +465,7 @@ function openPicker(id) {
 function showPickers() {
   for (let picker in pickers) {
     let id = '#' + picker;
-    Pickr.create({
+    let obj = Pickr.create({
       el: EL(id),
       theme: 'nano',
       default: pickers[picker],
@@ -482,6 +484,7 @@ function showPickers() {
       set_h(picker, colToInt(col));
       EL('color_btn' + id).style.color = col;
     });
+    pickers[picker] = obj;
   }
 }
 
@@ -998,36 +1001,34 @@ function addHTML(ctrl) {
   if (checkDup(ctrl)) return;
   checkWidget(ctrl);
   endButtons();
+  let inner = `<div name="text" id="#${ctrl.name}" title='${ctrl.name}' class="c_text text_t">${ctrl.value}</div>`;
   if (wid_row_id) {
-    let inner = `
-    <div name="text" id="#${ctrl.name}" title='${ctrl.name}' class="c_text text_t">${ctrl.value}</div>
-    `;
     addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="control control_nob">
-      <div name="text" id="#${ctrl.name}" title='${ctrl.name}' class="c_text text_t">${ctrl.value}</div>
+      ${inner}
     </div>
     `;
   }
 }
 function addImage(ctrl) {
+  if (checkDup(ctrl)) return;
   checkWidget(ctrl);
   endButtons();
-  let id = 'file#' + files.length;
   if (wid_row_id) {
     let inner = `
-    <div id="${id}">${waiter}</div>
+    <div class="image_t" id="#${ctrl.name}">${waiter}</div>
     `;
-    addWidget(ctrl.tab_w, '', ctrl.wlabel, inner);
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="cv_block cv_block_back">
-    <div id="${id}">${waiter}</div>
+    <div class="image_t" id="#${ctrl.name}">${waiter}</div>
     </div>
     `;
   }
-  files.push({ id: id, path: ctrl.value, type: 'img' });
+  files.push({ id: '#' + ctrl.name, path: ctrl.value, type: 'img' });
 }
 function addStream(ctrl) {
   checkWidget(ctrl);
@@ -1041,6 +1042,33 @@ function addStream(ctrl) {
     EL('controls').innerHTML += `
     <div class="cv_block cv_block_back">
       
+    </div>
+    `;
+  }
+}
+function addTable(ctrl) {
+  if (checkDup(ctrl)) return;
+  checkWidget(ctrl);
+  endButtons();
+  let table = parseCSV(ctrl.value);
+  let aligns = ctrl.align.split(',');
+  let widths = ctrl.width.split(',');
+  let inner = '<table class="c_table">';
+  for (let row of table) {
+    inner += '<tr>';
+    for (let col in row) {
+      inner += `<td width="${widths[col] ? (widths[col] + '%') : ''}" align="${aligns[col] ? aligns[col] : 'center'}">${row[col]}</td>`;
+    }
+    inner += '</tr>';
+  }
+  inner += '</table>';
+
+  if (wid_row_id) {
+    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
+  } else {
+    EL('controls').innerHTML += `
+    <div class="control control_nob">
+      ${inner}
     </div>
     `;
   }
@@ -1138,7 +1166,7 @@ async function downloadFile(path) {
 function downloadFileEnd(data) {
   switch (files[0].type) {
     case 'img':
-      EL(files[0].id).innerHTML = `<img style="width: 100%" src="data:${getMime(files[0].path)};base64,${data}">`;
+      EL(files[0].id).innerHTML = `<img style="width:100%" src="data:${getMime(files[0].path)};base64,${data}">`;
       break;
   }
   files.shift();

@@ -37,17 +37,17 @@ class HubMQTT {
 
     // ============ PROTECTED =============
    protected:
-    virtual void parse(char* url, char* value, GHconn_t conn, bool manual) = 0;
+    virtual void parse(char* url, char* value, GHconn_t from) = 0;
     virtual const char* getPrefix() = 0;
     virtual const char* getID() = 0;
-    virtual void sendEvent(GHevent_t state, GHconn_t conn) = 0;
+    virtual void sendEvent(GHevent_t state, GHconn_t from) = 0;
 
     void beginMQTT() {
         mqtt.setCallback([this](char* topic, uint8_t* data, uint16_t len) {
-            char buf[len + 1] = "";
+            char buf[len + 1];
             memcpy(buf, data, len);
             buf[len] = 0;
-            parse(topic, buf, GH_MQTT, false);
+            parse(topic, buf, GH_MQTT);
         });
     }
 
@@ -104,8 +104,8 @@ class HubMQTT {
 
         if (mq_login) ok = mqtt.connect(m_id.c_str(), mq_login, mq_pass, status.c_str(), qos, ret, offline.c_str());
         else ok = mqtt.connect(m_id.c_str(), status.c_str(), qos, ret, offline.c_str());
-        // if (mq_login) conn = mqtt.connect(m_id.c_str(), mq_login, mq_pass);
-        // else conn = mqtt.connect(m_id.c_str());
+        // if (mq_login) from = mqtt.connect(m_id.c_str(), mq_login, mq_pass);
+        // else from = mqtt.connect(m_id.c_str());
 
         if (ok) {
             String online(F("online"));
