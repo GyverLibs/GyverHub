@@ -42,7 +42,7 @@ function post(cmd, name = '', value = '') {
   cmd = cmd.toString();
   name = name.toString();
   value = value.toString();
-  let uri0 = devices[id].prefix + '/' + id + '/' + cfg.id + '/' + cmd;
+  let uri0 = devices[id].prefix + '/' + id + '/' + hub.cfg.client_id + '/' + cmd;
   let uri = uri0;
   if (name) uri += '/' + name;
   if (value) uri += '=' + value;
@@ -53,6 +53,7 @@ function post(cmd, name = '', value = '') {
       break;
 
     case Conn.BT:
+      bt_send(uri);
       break;
 
     case Conn.WS:
@@ -131,7 +132,9 @@ function reset_ping() {
   ping_interval = setInterval(() => {
     if (refresh_ui) {
       refresh_ui = false;
-      post('focus');
+      if (screen == 'info') post('info');
+      else if (screen == 'fsbr') post('fsbr');
+      else post('focus');
     } else {
       post('ping');
     }
@@ -160,14 +163,14 @@ function parsePacket(id, text, conn) {
 /*NON-ESP*/
 function mq_start() {
   if (mq_client && mq_client.connected) return;
-  if (!cfg.mq_host || !cfg.mq_port) return;
+  if (!hub.cfg.mq_host || !hub.cfg.mq_port) return;
 
-  const url = 'wss://' + cfg.mq_host + ':' + cfg.mq_port + '/mqtt';
+  const url = 'wss://' + hub.cfg.mq_host + ':' + hub.cfg.mq_port + '/mqtt';
   const options = {
     keepalive: 60,
     clientId: 'HUB-' + Math.round(Math.random() * 0xffffffff).toString(16),
-    username: cfg.mq_login,
-    password: cfg.mq_pass,
+    username: hub.cfg.mq_login,
+    password: hub.cfg.mq_pass,
     protocolId: 'MQTT',
     protocolVersion: 4,
     clean: true,
@@ -184,14 +187,14 @@ function mq_start() {
 
   mq_client.on('connect', function () {
     mq_show_icon(1);
-    mq_client.subscribe(cfg.prefix + '/hub');
+    mq_client.subscribe(hub.cfg.prefix + '/hub');
 
-    mq_pref_list = [cfg.prefix];
-    mq_client.subscribe(cfg.prefix + '/hub/' + cfg.id + '/#');
+    mq_pref_list = [hub.cfg.prefix];
+    mq_client.subscribe(hub.cfg.prefix + '/hub/' + hub.cfg.client_id + '/#');
 
     for (let id in devices) {
       if (!mq_pref_list.includes(devices[id].prefix)) {
-        mq_client.subscribe(devices[id].prefix + '/hub/' + cfg.id + '/#');
+        mq_client.subscribe(devices[id].prefix + '/hub/' + hub.cfg.client_id + '/#');
         mq_pref_list.push(devices[id].prefix);
       }
       mq_client.subscribe(devices[id].prefix + '/hub/' + id + '/get/#');
@@ -222,7 +225,7 @@ function mq_start() {
         parseDevice('broadcast', text, Conn.MQTT);
 
         // prefix/hub/hubid/id
-      } else if (topic.startsWith(pref + '/hub/' + cfg.id + '/')) {
+      } else if (topic.startsWith(pref + '/hub/' + hub.cfg.client_id + '/')) {
         let id = topic.split('/').slice(-1);
         if (!(id in devices) || !(id in devices_t)) {
           parseDevice(id, text, Conn.MQTT);
@@ -256,18 +259,18 @@ function mq_state() {
 function mq_discover() {
   if (!mq_state()) mq_discover_flag = true;
   else for (let id in devices) {
-    mq_send(devices[id].prefix + '/' + id, cfg.id);
+    mq_send(devices[id].prefix + '/' + id, hub.cfg.client_id);
   }
   log('MQTT discover');
 }
 function mq_discover_all() {
   if (!mq_state()) return;
-  if (!(cfg.prefix in mq_pref_list)) {
-    mq_client.subscribe(cfg.prefix + '/hub');
-    mq_pref_list.push(cfg.prefix);
-    mq_client.subscribe(cfg.prefix + '/hub/' + cfg.id + '/#');
+  if (!(hub.cfg.prefix in mq_pref_list)) {
+    mq_client.subscribe(hub.cfg.prefix + '/hub');
+    mq_pref_list.push(hub.cfg.prefix);
+    mq_client.subscribe(hub.cfg.prefix + '/hub/' + hub.cfg.client_id + '/#');
   }
-  mq_send(cfg.prefix, cfg.id);
+  mq_send(hub.cfg.prefix, hub.cfg.client_id);
   log('MQTT discover all');
 }
 function mq_show_icon(state) {
@@ -277,7 +280,7 @@ function mq_show_icon(state) {
 
 // ============= WEBSOCKET ==============
 function ws_start(id) {
-  if (!cfg.use_ws) return;
+  if (!hub.cfg.use_ws) return;
   checkHTTP(id);
   if (devices_t[id].ws) return;
   if (devices[id].ip == 'unset') return;
@@ -334,7 +337,7 @@ function ws_discover_ip(ip, id = 'broadcast') {
   let tout = setTimeout(() => {
     if (ws) ws.close();
   }, ws_tout);
-  ws.onopen = () => ws.send(cfg.prefix + (id != 'broadcast' ? ('/' + id) : '') + '\0');
+  ws.onopen = () => ws.send(hub.cfg.prefix + (id != 'broadcast' ? ('/' + id) : '') + '\0');
   ws.onerror = () => ws.close();
   ws.onclose = () => ws = null;
   ws.onmessage = function (event) {
@@ -387,7 +390,7 @@ function http_hook(ips) {
 function ws_discover_all() {
   let ip_arr = getIPs();
   if (ip_arr == null) return;
-  if (cfg.use_hook) http_hook(ip_arr);
+  if (hub.cfg.use_hook) http_hook(ip_arr);
   else ws_discover_ips(ip_arr);
 }
 function manual_ws_h(ip) {
@@ -422,8 +425,8 @@ function checkHTTP(id) {
   xhr.send();
 }
 
-// ================ SERIAL ================
 /*NON-ESP*/
+// ================ SERIAL ================
 async function serial_select() {
   await serial_stop();
   const ports = await navigator.serial.getPorts();
@@ -435,7 +438,7 @@ async function serial_select() {
   serial_change();
 }
 async function serial_discover() {
-  serial_send(cfg.prefix);
+  serial_send(hub.cfg.prefix);
 }
 async function serial_start() {
   try {
@@ -443,12 +446,12 @@ async function serial_start() {
     const ports = await navigator.serial.getPorts();
     if (!ports.length) return;
     s_port = ports[0];
-    await s_port.open({ baudRate: cfg.serial_baudrate });
+    await s_port.open({ baudRate: hub.cfg.ser_baud });
 
     log('[Serial] Open');
     serial_show_icon(true);
     if (s_buf) {
-      tout_interval = setTimeout(function () {
+      setTimeout(function () {
         serial_send(s_buf);
         s_buf = '';
       }, 2000);
@@ -520,6 +523,50 @@ async function serial_change() {
   const ports = await navigator.serial.getPorts();
   EL('serial_btn').style.display = ports.length ? 'inline-block' : 'none';
 }
+
+// ================ BT ================
+function bt_discover() {
+  hub.bt.send(hub.cfg.prefix);
+}
+function bt_toggle() {
+  if (!hub.bt.state()) {
+    hub.bt.open();
+    EL('bt_device').innerHTML = 'Connecting...';
+  } else hub.bt.close();
+}
+function bt_send(text) {
+  hub.bt.send(text);
+}
+function bt_show_ok(state) {
+  EL('bt_ok').style.display = state ? 'inline-block' : 'none';
+}
+hub.bt.onopen = function () {
+  EL('bt_btn').innerHTML = 'Disconnect';
+  EL('bt_device').innerHTML = hub.bt.getName();
+  bt_show_ok(true);
+}
+hub.bt.onclose = function () {
+  EL('bt_btn').innerHTML = 'Connect';
+  EL('bt_device').innerHTML = 'Not Connected';
+  bt_show_ok(false);
+}
+hub.bt.onerror = function (e) {
+  EL('bt_device').innerHTML = 'Not Connected';
+  bt_show_ok(false);
+}
+
+let bt_buffer = '';
+hub.bt.onmessage = function (data) {
+  if (focused) {
+    parsePacket(focused, data, Conn.BT);
+  } else {
+    bt_buffer += data;
+    if (bt_buffer.endsWith("}\n")) {
+      parseDevice('broadcast', bt_buffer, Conn.BT);
+      bt_buffer = '';
+    }
+  }
+}
 /*/NON-ESP*/
 
 // ================= HTTP =================
@@ -544,7 +591,7 @@ function http_discover() {
   log('HTTP discover');
 }
 function http_discover_ip(ip) {
-  http_send(ip, cfg.prefix);
+  http_send(ip, hub.cfg.prefix);
 }
 function http_discover_all() {
   let ips = getIPs();

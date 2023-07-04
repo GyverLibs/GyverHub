@@ -3,6 +3,7 @@ let delay_tmr = null;
 let prev_set = null;
 
 function applyUpdate(name, value) {
+  if (screen != 'device') return;
   if (prev_set && prev_set.name == name && prev_set.value == value) {
     prev_set = null;
     return;
@@ -17,7 +18,7 @@ function applyUpdate(name, value) {
     return;
   }
   if (name in confirms) {
-    release_all(); log(confirms[name].label);
+    release_all();
     let res = confirm(value ? value : confirms[name].label);
     set_h(name, res ? 1 : 0);
     return;
@@ -40,8 +41,9 @@ function applyUpdate(name, value) {
   else if (cl.contains('switch_t')) el.checked = (value == '1');
   else if (cl.contains('select_t')) el.value = value;
   else if (cl.contains('image_t')) {
-    files.push({ id: '#' + name, path: value, type: 'img' });
-    EL('#' + ctrl.name).innerHTML = waiter;
+    files.push({ id: '#' + name, path: (value ? value : EL('#' + name).getAttribute("name")), type: 'img' });
+    //EL('#' + name).innerHTML = waiter;
+    EL('wlabel#' + name).innerHTML = ' [0%]';
     if (files.length == 1) nextFile();
   }
   else if (cl.contains('canvas_t')) {
@@ -157,13 +159,13 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
         }
       } else {
         log('Add new device #' + id);
-        devices[id] = { prefix: cfg.prefix, break_widgets: false, show_names: false, ip: ip };
+        devices[id] = { prefix: hub.cfg.prefix, break_widgets: false, show_names: false, ip: ip };
         updateDevice(devices[id], device);
 
         /*NON-ESP*/
         if (mq_state()) {
           mq_client.subscribe(devices[id].prefix + '/hub/' + id + '/get/#');
-          mq_client.subscribe(devices[id].prefix + '/hub/' + cfg.id + '/#');
+          mq_client.subscribe(devices[id].prefix + '/hub/' + hub.cfg.client_id + '/#');
           if (!mq_pref_list.includes(devices[id].prefix)) mq_pref_list.push(devices[id].prefix);
         }
         /*/NON-ESP*/
@@ -198,7 +200,7 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
     case 'ui':
       if (id != focused) return;
       devices_t[id].controls = device.controls;
-      showControls(device.controls);
+      showControls(device.controls, false, conn, devices[focused].ip);
       break;
 
     case 'info':
@@ -231,7 +233,7 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
 
       fetching = focused;
       fetch_file = '';
-      post('fetch_chunk');
+      post('fetch_chunk', fetch_path);
       reset_fetch_tout();
       break;
 
@@ -243,10 +245,10 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
         if (fetch_to_file) downloadFileEnd(fetch_file);
         else fetchEnd(fetch_name, fetch_index, fetch_file);
       } else {
-        let perc = Math.round(device.chunk / device.amount * 100) + '%';
+        let perc = Math.round(device.chunk / device.amount * 100);
         if (fetch_to_file) processFile(perc);
-        else EL('process#' + fetch_index).innerHTML = perc;
-        post('fetch_chunk');
+        else EL('process#' + fetch_index).innerHTML = perc + '%';
+        post('fetch_chunk', fetch_path);
         reset_fetch_tout();
       }
       break;
@@ -323,7 +325,7 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
       break;
   }
 }
-function showControls(controls, from_buffer = false) {
+function showControls(controls, from_buffer = false, conn = Conn.NONE, ip = 'unset') {
   if (delay_tmr) clearTimeout(delay_tmr);
   delay_tmr = null;
   EL('controls').style.visibility = 'hidden';
@@ -381,7 +383,7 @@ function showControls(controls, from_buffer = false) {
       case 'canvas': addCanvas(ctrl); break;
       case 'gauge': addGauge(ctrl); break;
       case 'image': addImage(ctrl); break;
-      case 'stream': addStream(ctrl); break;
+      case 'stream': addStream(ctrl, conn, ip); break;
       case 'joy': addJoy(ctrl); break;
       case 'js': eval(ctrl.value); break;
       case 'confirm': confirms[ctrl.name] = { label: ctrl.label }; break;

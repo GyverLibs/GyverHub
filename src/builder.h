@@ -920,9 +920,11 @@ class HubBuilder {
     }
 
     // ========================= STREAM =========================
-    void Stream() {
+    void Stream(uint16_t port = 82) {
         if (_isUI()) {
             _begin(F("stream"));
+            _add(F(",'port':"));
+            *sptr += port;
             _tabw();
             _end();
         }

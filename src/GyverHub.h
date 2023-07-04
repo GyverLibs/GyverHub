@@ -272,6 +272,32 @@ class GyverHub : public HubBuilder, public HubStream {
         req_cb = *handler;
     }
 
+    // ========================= FETCH ==========================
+
+    // подключить обработчик скачивания
+    void onFetch(void (*handler)(String& path, bool start)) {
+        fetch_cb = *handler;
+    }
+
+    // отправить файл (вызывать в обработчике onFetch)
+#ifdef GH_ESP_BUILD
+#ifndef GH_NO_FS
+    void fetchFile(const char* path) {
+        file_d = GH_FS.open(path, "r");
+    }
+#endif
+#endif
+
+    // отправить сырые данные (вызывать в обработчике onFetch)
+    void fetchBytes(uint8_t* bytes, uint32_t size) {
+#ifdef GH_ESP_BUILD
+#ifndef GH_NO_FS
+        file_b = bytes;
+        file_b_size = size;
+#endif
+#endif
+    }
+
     // ========================= DATA ==========================
     // подключить обработчик данных (см. GyverHub.js API)
     void onData(void (*handler)(const char* name, const char* value)) {
@@ -510,6 +536,7 @@ class GyverHub : public HubBuilder, public HubStream {
 
     // парсить строку вида PREFIX/ID/HUB_ID/CMD/NAME с отдельным value
     void parse(char* url, char* value, GHconn_t from, GHsource_t source) {
+        if (!running_f) return;
         if (!modules.read(GH_MOD_SERIAL) && from == GH_SERIAL) return;
         if (!modules.read(GH_MOD_BT) && from == GH_BT) return;
         if (!modules.read(GH_MOD_WS) && from == GH_WS) return;
@@ -518,7 +545,6 @@ class GyverHub : public HubBuilder, public HubStream {
 #if defined(GH_ESP_BUILD) && !defined(GH_NO_FS) && !defined(GH_NO_OTA) && !defined(GH_NO_OTA_URL)
         if (ota_url_f) return;
 #endif
-        if (!running_f) return;
 
         if (!strcmp(url, prefix)) {  // == prefix
             GHclient client(from, value, source);
@@ -631,31 +657,6 @@ class GyverHub : public HubBuilder, public HubStream {
                         answerType();
                     }
                     return sendEvent(GH_REBOOT, from);
-
-                case 7:  // fetch_chunk
-#ifndef GH_NO_FS
-                    fs_tmr = millis();
-                    if (!file_d || fs_client != client || !modules.read(GH_MOD_DOWNLOAD)) {
-                        answerType(F("fetch_err"));
-                        return sendEvent(GH_DOWNLOAD_ERROR, from);
-                    } else {
-                        answerChunk();
-                        dwn_chunk_count++;
-                        if (dwn_chunk_count >= dwn_chunk_amount) {
-                            file_d.close();
-                            return sendEvent(GH_DOWNLOAD_FINISH, from);
-                        }
-                        return sendEvent(GH_DOWNLOAD_CHUNK, from);
-                    }
-#endif
-                    break;
-
-                case 8:  // fetch_stop
-#ifndef GH_NO_FS
-                    sendEvent(GH_DOWNLOAD_ABORTED, fs_client.from);
-                    if (file_d) file_d.close();
-#endif
-                    break;
 #endif
             }
             return;
@@ -665,15 +666,13 @@ class GyverHub : public HubBuilder, public HubStream {
         setFocus(from);
 
         switch (cmdn) {
-            // data
-            case 9:
+            case 7:  // data
                 answ_f = 0;
                 if (data_cb) data_cb(name, value);
                 if (!answ_f) answerType();
                 return sendEvent(GH_DATA, from);
 
-            // set
-            case 10:
+            case 8:  // set
                 if (!build_cb || !modules.read(GH_MOD_SET)) {
                     answerType();
                 } else {
@@ -691,8 +690,7 @@ class GyverHub : public HubBuilder, public HubStream {
                 }
                 return sendEvent(GH_SET, from);
 
-            // cli
-            case 11:
+            case 9:  // cli
                 answerType();
                 if (cli_cb) {
                     String str(value);
@@ -701,8 +699,7 @@ class GyverHub : public HubBuilder, public HubStream {
                 return sendEvent(GH_CLI, from);
 
 #ifdef GH_ESP_BUILD
-            // delete
-            case 12:
+            case 10:  // delete
 #ifndef GH_NO_FS
                 if (modules.read(GH_MOD_DELETE)) {
                     GH_FS.remove(name);
@@ -714,8 +711,7 @@ class GyverHub : public HubBuilder, public HubStream {
 #endif
                 return sendEvent(GH_DELETE, from);
 
-            // rename
-            case 13:
+            case 11:  // rename
 #ifndef GH_NO_FS
                 if (modules.read(GH_MOD_RENAME) && GH_FS.rename(name, value)) answerFsbr();
 #else
@@ -723,16 +719,19 @@ class GyverHub : public HubBuilder, public HubStream {
 #endif
                 return sendEvent(GH_RENAME, from);
 
-            // fetch
-            case 14:
+            case 12:  // fetch
 #ifndef GH_NO_FS
-                if (!file_d && !file_u && !ota_f && modules.read(GH_MOD_DOWNLOAD)) {
-                    file_d = GH_FS.open(name, "r");
-                    if (file_d) {
+                if (!file_d && !file_b && !file_u && !ota_f && modules.read(GH_MOD_DOWNLOAD)) {
+                    fetch_path = name;
+                    if (fetch_cb) fetch_cb(fetch_path, true);
+                    if (!file_d && !file_b) file_d = GH_FS.open(name, "r");
+                    if (file_d || file_b) {
                         fs_client = client;
                         fs_tmr = millis();
+                        uint32_t size = file_b ? file_b_size : file_d.size();
+                        file_b_idx = 0;
                         dwn_chunk_count = 0;
-                        dwn_chunk_amount = (file_d.size() + GH_DOWN_CHUNK_SIZE - 1) / GH_DOWN_CHUNK_SIZE;  // round up
+                        dwn_chunk_amount = (size + GH_DOWN_CHUNK_SIZE - 1) / GH_DOWN_CHUNK_SIZE;  // round up
                         answerType(F("fetch_start"));
                         return sendEvent(GH_DOWNLOAD, from);
                     }
@@ -741,10 +740,40 @@ class GyverHub : public HubBuilder, public HubStream {
                 answerType(F("fetch_err"));
                 return sendEvent(GH_DOWNLOAD_ERROR, from);
 
-            // upload
-            case 15:
+            case 13:  // fetch_chunk
 #ifndef GH_NO_FS
-                if (!file_d && !file_u && !ota_f && !fs_buffer && modules.read(GH_MOD_UPLOAD)) {
+                fs_tmr = millis();
+                if ((!file_d && !file_b) || fs_client != client || !modules.read(GH_MOD_DOWNLOAD)) {
+                    answerType(F("fetch_err"));
+                    return sendEvent(GH_DOWNLOAD_ERROR, from);
+                } else {
+                    answerChunk();
+                    dwn_chunk_count++;
+                    if (dwn_chunk_count >= dwn_chunk_amount) {
+                        if (fetch_cb) fetch_cb(fetch_path, false);
+                        if (file_d) file_d.close();
+                        file_b = nullptr;
+                        fetch_path = "";
+                        return sendEvent(GH_DOWNLOAD_FINISH, from);
+                    }
+                    return sendEvent(GH_DOWNLOAD_CHUNK, from);
+                }
+#endif
+                break;
+
+            case 14:  // fetch_stop
+#ifndef GH_NO_FS
+                if (fetch_cb) fetch_cb(fetch_path, false);
+                if (file_d) file_d.close();
+                file_b = nullptr;
+                fetch_path = "";
+                sendEvent(GH_DOWNLOAD_ABORTED, fs_client.from);
+#endif
+                break;
+
+            case 15:  // upload
+#ifndef GH_NO_FS
+                if (!file_d && !file_b && !file_u && !ota_f && !fs_buffer && modules.read(GH_MOD_UPLOAD)) {
                     _fsmakedir(name);
                     file_u = GH_FS.open(name, "w");
                     if (file_u) {
@@ -762,8 +791,7 @@ class GyverHub : public HubBuilder, public HubStream {
                 answerType(F("upload_err"));
                 return sendEvent(GH_UPLOAD_ERROR, from);
 
-            // upload_chunk
-            case 16:
+            case 16:  // upload_chunk
 #ifndef GH_NO_FS
                 if (file_u && fs_client == client && fs_buffer) {
                     if (!strcmp_P(name, PSTR("next"))) {
@@ -780,10 +808,9 @@ class GyverHub : public HubBuilder, public HubStream {
                 answerType(F("upload_err"));
                 return sendEvent(GH_UPLOAD_ERROR, from);
 
-            // ota
-            case 17:
+            case 17:  // ota
 #if !defined(GH_NO_FS) && !defined(GH_NO_OTA)
-                if (!file_d && !file_u && !ota_f && !fs_buffer && modules.read(GH_MOD_OTA)) {
+                if (!file_d && !file_b && !file_u && !ota_f && !fs_buffer && modules.read(GH_MOD_OTA)) {
                     int ota_type = 0;
                     if (!strcmp_P(name, PSTR("flash"))) ota_type = 1;
                     else if (!strcmp_P(name, PSTR("fs"))) ota_type = 2;
@@ -823,8 +850,7 @@ class GyverHub : public HubBuilder, public HubStream {
                 answerType(F("ota_err"));
                 return sendEvent(GH_OTA_ERROR, from);
 
-            // ota_chunk
-            case 18:
+            case 18:  // ota_chunk
 #if !defined(GH_NO_FS) && !defined(GH_NO_OTA)
                 if (ota_f && fs_client == client && fs_buffer) {
                     if (!strcmp_P(name, PSTR("next"))) {
@@ -841,10 +867,9 @@ class GyverHub : public HubBuilder, public HubStream {
                 answerType(F("ota_err"));
                 return sendEvent(GH_OTA_ERROR, from);
 
-            // ota_url
-            case 19:
+            case 19:  // ota_url
 #if !defined(GH_NO_FS) && !defined(GH_NO_OTA) && !defined(GH_NO_OTA_URL)
-                if (!file_d && !file_u && !ota_f && !fs_buffer && modules.read(GH_MOD_OTA_URL)) {
+                if (!file_d && !file_b && !file_u && !ota_f && !fs_buffer && modules.read(GH_MOD_OTA_URL)) {
                     if (!strcmp_P(name, PSTR("flash"))) ota_url_fs = 0;
                     else if (!strcmp_P(name, PSTR("fs"))) ota_url_fs = 1;
                     ota_url = value;
@@ -855,7 +880,6 @@ class GyverHub : public HubBuilder, public HubStream {
 #endif
                 answerErr(F("File busy"));
                 return sendEvent(GH_OTA_URL, from);
-
 #endif
         }
     }
@@ -886,8 +910,8 @@ class GyverHub : public HubBuilder, public HubStream {
 #endif
 
 #ifndef GH_NO_FS
-        if ((file_d || file_u || ota_f) && (uint16_t)millis() - fs_tmr >= (GH_CONN_TOUT * 1000)) {
-            if (file_d) fs_state = GH_DOWNLOAD_ABORTED;
+        if ((file_d || file_b || file_u || ota_f) && (uint16_t)millis() - fs_tmr >= (GH_CONN_TOUT * 1000)) {
+            if (file_d || file_b) fs_state = GH_DOWNLOAD_ABORTED;
             if (file_u) fs_state = GH_UPLOAD_ABORTED;
             if (ota_f) fs_state = GH_OTA_ABORTED;
             if (fs_buffer) {
@@ -928,7 +952,10 @@ class GyverHub : public HubBuilder, public HubStream {
 #endif
 
                 case GH_DOWNLOAD_ABORTED:
+                    if (fetch_cb) fetch_cb(fetch_path, false);
                     if (file_d) file_d.close();
+                    file_b = nullptr;
+                    fetch_path = "";
                     sendEvent(GH_DOWNLOAD_ABORTED, fs_client.from);
                     break;
 
@@ -1310,7 +1337,8 @@ class GyverHub : public HubBuilder, public HubStream {
         _jsVal(answ, F("chunk"), dwn_chunk_count);
         _jsVal(answ, F("amount"), dwn_chunk_amount);
         answ += F("'data':'");
-        GH_fileToB64(file_d, answ);
+        if (file_b) GH_bytesToB64(file_b, file_b_idx, file_b_size, answ);
+        else GH_fileToB64(file_d, answ);
         answ += '\'';
         _jsEnd(answ);
         _answer(answ);
@@ -1423,6 +1451,7 @@ class GyverHub : public HubBuilder, public HubStream {
     uint32_t PIN = 0;
     char id[9];
 
+    void (*fetch_cb)(String& path, bool start) = nullptr;
     void (*data_cb)(const char* name, const char* value) = nullptr;
     void (*build_cb)() = nullptr;
     bool (*req_cb)(GHbuild build) = nullptr;
@@ -1465,6 +1494,9 @@ class GyverHub : public HubBuilder, public HubStream {
     GHclient fs_client;
     GHevent_t fs_state = GH_IDLE;
     char* fs_buffer = nullptr;
+    String fetch_path;
+    uint8_t* file_b = nullptr;
+    uint32_t file_b_size, file_b_idx;
     File file_d, file_u;
     bool ota_f = false;
     uint16_t dwn_chunk_count = 0;

@@ -58,6 +58,9 @@ online	KEYWORD2
 onManual	KEYWORD2
 parse	KEYWORD2
 setBufferSize	KEYWORD2
+onFetch	KEYWORD2
+fetchFile	KEYWORD2
+fetchBytes	KEYWORD2
 
 setRGB	KEYWORD2
 setGray	KEYWORD2

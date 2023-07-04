@@ -60,6 +60,7 @@ body {
 
 body::-webkit-scrollbar {
   width: 7px;
+  height: 7px;
 }
 
 body::-webkit-scrollbar-track {
@@ -301,7 +302,7 @@ body::-webkit-scrollbar-thumb {
 
 .cfg_col {
   margin-bottom: 12px;
-  padding: 5px 0px;
+  padding: 1px 0px 5px 0px;
   border-radius: 10px;
   background: var(--tab);
   box-shadow: 0 0 10px 0px #00000030;
@@ -550,9 +551,13 @@ body::-webkit-scrollbar-thumb {
   right: 6px;
   color: var(--tab);
 }
-
-.d_delete:hover {
-  color: red;
+.device:hover .d_delete{
+  color: rgba(255, 0, 0, 0.603);
+  cursor: pointer;
+}
+.offline .d_delete {
+  color: rgba(255, 0, 0, 0.603);
+  cursor: pointer;
 }
 
 /* =================================== */
@@ -1272,8 +1277,13 @@ input:checked+.chbutton_s {
   background: var(--dark);
 }
 
+.c_area_wrap {
+  white-space: pre;
+}
+
 .c_log::-webkit-scrollbar {
   width: 7px;
+  height: 7px;
 }
 
 .c_log::-webkit-scrollbar-track {

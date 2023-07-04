@@ -108,8 +108,7 @@ class HubHTTP {
             "/ota", HTTP_POST, [this]() {
         server.sendHeader(F("Connection"), F("close"));
         server.send(200, F("text/plain"), Update.hasError() ? F("FAIL") : F("OK"));
-        _rebootOTA();
-        },
+        _rebootOTA(); },
             [this]() {
                 HTTPUpload& upload = server.upload();
                 if (upload.status == UPLOAD_FILE_START) {
@@ -117,6 +116,9 @@ class HubHTTP {
                     if (server.args()) {
                         if (!strcmp_P(server.arg(0).c_str(), PSTR("flash"))) ota_type = 1;
                         else if (!strcmp_P(server.arg(0).c_str(), PSTR("fs"))) ota_type = 2;
+                    } else {
+                        if (!strcmp_P(upload.name.c_str(), PSTR("flash"))) ota_type = 1;
+                        else if (!strcmp_P(upload.name.c_str(), PSTR("fs"))) ota_type = 2;
                     }
 
                     if (ota_type) {

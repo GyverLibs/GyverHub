@@ -46,7 +46,7 @@ function save_devices() {
 function load_devices() {
   if (localStorage.hasOwnProperty('devices')) {
     devices = JSON.parse(localStorage.getItem('devices'));
-    
+
   }
 }
 
@@ -1016,32 +1016,31 @@ function addImage(ctrl) {
   if (checkDup(ctrl)) return;
   checkWidget(ctrl);
   endButtons();
-  if (wid_row_id) {
-    let inner = `
-    <div class="image_t" id="#${ctrl.name}">${waiter}</div>
+  let inner = `
+    <div class="image_t" name="${ctrl.value}" id="#${ctrl.name}">${waiter}</div>
     `;
+  if (wid_row_id) {
     addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="cv_block cv_block_back">
-    <div class="image_t" id="#${ctrl.name}">${waiter}</div>
+    ${inner}
     </div>
     `;
   }
   files.push({ id: '#' + ctrl.name, path: ctrl.value, type: 'img' });
 }
-function addStream(ctrl) {
+function addStream(ctrl, conn, ip) {
   checkWidget(ctrl);
   endButtons();
+  let inner = '<label>No connection</label>';
+  if (conn == Conn.WS && ip != 'unset') inner = `<img style="width:100%" src="http://${ip}:${ctrl.port}/">`;
   if (wid_row_id) {
-    let inner = `
-    
-    `;
     addWidget(ctrl.tab_w, '', ctrl.wlabel, inner);
   } else {
     EL('controls').innerHTML += `
     <div class="cv_block cv_block_back">
-      
+    ${inner}
     </div>
     `;
   }
@@ -1101,7 +1100,7 @@ function addWidget(width, name, label, inner, height = 0, noback = false) {
   }
 
   let h = height ? ('height:' + height + 'px') : '';
-  let lbl = (label && label != '_no') ? `<div class="widget_label" title="${name}">${label}</div>` : '';
+  let lbl = (label && label != '_no') ? `<div class="widget_label" title="${name}">${label}<span id="wlabel#${name}"></span></div>` : '';
   EL(wid_row_id).innerHTML += `
   <div class="widget" style="width:${width}%;${h}">
     <div class="widget_inner ${noback ? 'widget_space' : ''}">
@@ -1140,33 +1139,62 @@ function scrollDown() {
   let logs = document.querySelectorAll(".c_log");
   logs.forEach((log) => log.scrollTop = log.scrollHeight);
 }
+function parseCSV(str) {
+  // https://stackoverflow.com/a/14991797
+  const arr = [];
+  let quote = false;
+  for (let row = 0, col = 0, c = 0; c < str.length; c++) {
+    let cc = str[c], nc = str[c + 1];
+    arr[row] = arr[row] || [];
+    arr[row][col] = arr[row][col] || '';
+    if (cc == '"' && quote && nc == '"') { arr[row][col] += cc; ++c; continue; }
+    if (cc == '"') { quote = !quote; continue; }
+    if (cc == ',' && !quote) { ++col; continue; }
+    if (cc == '\r' && nc == '\n' && !quote) { ++row; col = 0; ++c; continue; }
+    if (cc == '\n' && !quote) { ++row; col = 0; continue; }
+    if (cc == '\r' && !quote) { ++row; col = 0; continue; }
+    arr[row][col] += cc;
+  }
+  return arr;
+}
 
 // ================ DOWNLOAD =================
 function nextFile() {
   if (!files.length) return;
   fetch_to_file = true;
-  if (devices_t[focused].conn == Conn.WS && devices_t[focused].http_cfg.download && files[0].path.startsWith(devices_t[focused].http_cfg.path)) downloadFile(files[0].path);
-  else post('fetch', files[0].path);
+  if (devices_t[focused].conn == Conn.WS && devices_t[focused].http_cfg.download && files[0].path.startsWith(devices_t[focused].http_cfg.path)) {
+    downloadFile();
+    EL('wlabel' + files[0].id).innerHTML = ' [fetch...]';
+  } else {
+    fetch_path = files[0].path;
+    post('fetch', fetch_path);
+  }
 }
-async function downloadFile(path) {
+async function downloadFile() {
   fetching = focused;
-  const response = await fetch('http://' + devices[focused].ip + ':' + http_port + path, { cache: "no-store" });
-  const blob = await response.blob();
-  return new Promise(() => {
-    try {
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onload = function () {
-        downloadFileEnd(this.result.split('base64,')[1]);
-      };
-    } catch (e) {
-    }
-  });
+  fetch('http://' + devices[focused].ip + ':' + http_port + files[0].path, { cache: "no-store" })
+    .then((response) => {
+      response.blob().then(blob => {
+        try {
+          const reader = new FileReader();
+          reader.readAsDataURL(blob);
+          reader.onload = function () {
+            downloadFileEnd(this.result.split('base64,')[1]);
+          };
+        } catch (e) {
+          errorFile();
+        }
+      });
+    })
+    .catch((e) => {
+      errorFile();
+    });
 }
 function downloadFileEnd(data) {
   switch (files[0].type) {
     case 'img':
       EL(files[0].id).innerHTML = `<img style="width:100%" src="data:${getMime(files[0].path)};base64,${data}">`;
+      EL('wlabel' + files[0].id).innerHTML = '';
       break;
   }
   files.shift();
@@ -1175,9 +1203,11 @@ function downloadFileEnd(data) {
   stopFS();
 }
 function processFile(perc) {
-  EL(files[0].id).innerHTML = `<label>${perc}</label>`;
+  //EL(files[0].id).innerHTML = `<label>${perc}</label>`;
+  EL('wlabel' + files[0].id).innerHTML = ` [${perc}%]`;
 }
 function errorFile() {
+  EL('wlabel' + files[0].id).innerHTML = ' [error]';
   files.shift();
   nextFile();
 }

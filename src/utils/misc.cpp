@@ -151,6 +151,32 @@ void GH_fileToB64(File& file, String& str) {
     }
 }
 
+void GH_bytesToB64(byte* bytes, uint32_t& idx, uint32_t& size, String& str) {
+    int16_t len = 0;
+    uint16_t slen = 0;
+    int val = 0, valb = -6;
+    while (idx < size) {
+        val = (val << 8) + bytes[idx++];
+        valb += 8;
+        while (valb >= 0) {
+            str += GH_b64v((val >> valb) & 0x3F);
+            slen++;
+            valb -= 6;
+        }
+        if (++len > GH_DOWN_CHUNK_SIZE) {
+            if (slen % 4 == 0) break;
+        }
+    }
+    if (valb > -6) {
+        str += GH_b64v(((val << 8) >> (valb + 8)) & 0x3F);
+        slen++;
+    }
+    while (slen % 4) {
+        str += '=';
+        slen++;
+    }
+}
+
 void GH_B64toFile(File& file, const char* str) {
     uint16_t len = strlen(str);
     if (len < 4) return;

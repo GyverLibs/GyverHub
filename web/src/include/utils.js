@@ -34,9 +34,29 @@ const themes = {
 };
 const baudrates = [4800, 9600, 19200, 38400, 57600, 74880, 115200, 230400, 250000, 500000, 1000000, 2000000];
 const theme_cols = [
+  // back/tab/font/font2/dark/thumb/black/scheme/font4/shad/font3
   ['#1b1c20', '#26272c', '#eee', '#ccc', '#141516', '#444', '#0e0e0e', 'dark', '#222', '#000'],
   ['#eee', '#fff', '#111', '#333', '#ddd', '#999', '#bdbdbd', 'light', '#fff', '#000000a3']
-];  // back/tab/font/font2/dark/thumb/black/scheme/font4/shad/font3
+];
+
+function isSSL() {
+  return window.location.protocol == 'https:';
+}
+function isLocal() {
+  return window.location.href.startsWith('file') || checkIP(window_ip()) || window_ip() == 'localhost';
+}
+function isApp() {
+  return !non_app;
+}
+function isPWA() {
+  return (window.matchMedia('(display-mode: standalone)').matches) || (window.navigator.standalone) || document.referrer.includes('android-app://');
+}
+function isESP() {
+  return !non_esp;
+}
+function isTouch() {
+  return navigator.maxTouchPoints || 'ontouchstart' in document.documentElement;
+}
 
 function getMime(name) {
   const mime_table = {
@@ -75,32 +95,6 @@ function window_ip() {
 }
 function openURL(url) {
   window.open(url, '_blank').focus();
-}
-function isSSL() {
-  return window.location.protocol == 'https:';
-}
-function isLocal() {
-  return window.location.href.startsWith('file') || checkIP(window_ip()) || window_ip() == 'localhost';
-}
-function isApp() {
-  return !non_app;
-}
-function isPWA() {
-  return (window.matchMedia('(display-mode: standalone)').matches) || (window.navigator.standalone) || document.referrer.includes('android-app://');
-}
-function isESP() {
-  return !non_esp;
-}
-function isTouch() {
-  return navigator.maxTouchPoints || 'ontouchstart' in document.documentElement;
-}
-String.prototype.hashCode = function () {
-  if (!this.length) return 0;
-  let hash = new Uint32Array(1);
-  for (let i = 0; i < this.length; i++) {
-    hash[0] = ((hash[0] << 5) - hash[0]) + this.charCodeAt(i);
-  }
-  return hash[0];
 }
 function intToCol(val) {
   return "#" + Number(val).toString(16).padStart(6, '0');
@@ -152,27 +146,8 @@ function refreshSpin(val) {
 function ratio() {
   return window.devicePixelRatio;
 }
-
 function resize_h() {
   showGauges();
-}
-function parseCSV(str) {
-  // https://stackoverflow.com/a/14991797
-  const arr = [];
-  let quote = false;
-  for (let row = 0, col = 0, c = 0; c < str.length; c++) {
-    let cc = str[c], nc = str[c + 1];
-    arr[row] = arr[row] || [];
-    arr[row][col] = arr[row][col] || '';
-    if (cc == '"' && quote && nc == '"') { arr[row][col] += cc; ++c; continue; }
-    if (cc == '"') { quote = !quote; continue; }
-    if (cc == ',' && !quote) { ++col; continue; }
-    if (cc == '\r' && nc == '\n' && !quote) { ++row; col = 0; ++c; continue; }
-    if (cc == '\n' && !quote) { ++row; col = 0; continue; }
-    if (cc == '\r' && !quote) { ++row; col = 0; continue; }
-    arr[row][col] += cc;
-  }
-  return arr;
 }
 
 // ========== POPUP ==============
@@ -193,7 +168,6 @@ function showPopupError(text) {
 function showErr(v) {
   EL('head_cont').style.background = v ? 'var(--err)' : 'var(--prim)';
 }
-
 
 // ============ IP ================
 /*NON-ESP*/
@@ -249,46 +223,24 @@ function update_ip_h() {
   if (!Boolean(window.webkitRTCPeerConnection || window.mozRTCPeerConnection)) notSupported();
   else getLocalIP().then((ip) => {
     if (ip.indexOf("local") > 0) alert(`Disable WEB RTC anonymizer: ${browser()}://flags/#enable-webrtc-hide-local-ips-with-mdns`);
-    else EL('client_ip').value = ip;
+    else EL('local_ip').value = ip;
   });
   /*/NON-ESP*/
-  if (isESP()) EL('client_ip').value = window_ip();
+  if (isESP()) EL('local_ip').value = window_ip();
 }
-function update_ip() {
-  /*NON-ESP*/
-  if (!Boolean(window.webkitRTCPeerConnection || window.mozRTCPeerConnection)) return;
-  getLocalIP().then((ip) => {
-    if (ip.indexOf("local") < 0) {
-      EL('client_ip').value = ip;
-      cfg.client_ip = ip;
-    }
-  });
-  /*/NON-ESP*/
-  if (isESP()) {
-    EL('client_ip').value = window_ip();
-    cfg.client_ip = window_ip();
-  }
-}
-
 function checkIP(ip) {
   return Boolean(ip.match(/^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|$)){4}$/));
 }
-function intToOctets(ip) {
-  let o1 = (ip >>> 24) & 0xff;
-  let o2 = (ip >>> 16) & 0xff;
-  let o3 = (ip >>> 8) & 0xff;
-  let o4 = ip & 0xff;
-  return (o1 + '.' + o2 + '.' + o3 + '.' + o4);
-}
+
 function getIPs() {
-  let ip = EL('client_ip').value;
+  let ip = EL('local_ip').value;
   if (!checkIP(ip)) {
     showPopupError('Wrong IP!');
     return null;
   }
   let ip_a = ip.split('.');
   let sum_ip = (ip_a[0] << 24) | (ip_a[1] << 16) | (ip_a[2] << 8) | ip_a[3];
-  let cidr = Number(EL('netmask').value);
+  let cidr = Number(hub.cfg.netmask);
   let mask = ~(0xffffffff >>> cidr);
   let network = 0, broadcast = 0, start_ip = 0, end_ip = 0;
   if (cidr === 32) {
@@ -309,7 +261,7 @@ function getIPs() {
   }
   let ips = ['192.168.4.1'];
   for (let ip = start_ip; ip <= end_ip; ip++) {
-    ips.push(intToOctets(ip));
+    ips.push(`${(ip >>> 24) & 0xff}.${(ip >>> 16) & 0xff}.${(ip >>> 8) & 0xff}.${ip & 0xff}`);
   }
   return ips;
 }

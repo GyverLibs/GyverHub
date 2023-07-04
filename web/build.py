@@ -1,9 +1,10 @@
 # GyverHub Web Builder
 
-version = '0.45b'
-notes = 'A lot of new features'
+version = '0.46b'
+notes = 'Many minor fixes'
 
 js_files = [
+    'src/include/GyverHub.js',
     'src/include/main.js',
     'src/include/utils.js',
     'src/include/devices.js',

@@ -1,83 +1,44 @@
 let screen = 'main';
 let deferredPrompt = null;
 let pin_id = null;
-let started = false;
 let show_version = false;
 let cfg_changed = false;
 let menu_f = false;
 let updates = [];
 
 let cfg = {
-  prefix: 'MyDevices',
-  use_ws: false, use_hook: true, client_ip: '192.168.1.1', netmask: 24,
-  use_bt: false, use_serial: false,
-  use_mqtt: false, mq_host: 'test.mosquitto.org', mq_port: '8081', mq_login: '', mq_pass: '',
-  use_pin: false, hub_pin: '',
-  id: new Date().getTime().toString().hashCode().toString(16),
-  ui_width: 450, theme: 'DARK', maincolor: 'GREEN', font: 'monospace', version: app_version, check_upd: true,
-  serial_baudrate: 115200,
+  use_pin: false, pin: '', ui_width: 450, theme: 'DARK', maincolor: 'GREEN', font: 'monospace', version: app_version, check_upd: true,
 };
-
-document.addEventListener('keydown', function (e) {
-  if (!started) return;
-  switch (e.keyCode) {
-    case 116: // refresh on F5
-      if (!e.ctrlKey) {
-        e.preventDefault();
-        refresh_h();
-      }
-      break;
-
-    case 192: // open cli on `
-      if (focused) {
-        e.preventDefault();
-        toggleCLI();
-      }
-      break;
-
-    default:
-      break;
-  }
-  //log(e.keyCode);
-});
 
 // ============= STARTUP ============
 window.onload = function () {
-  /*NON-ESP*/
-  if ('serviceWorker' in navigator && !isLocal() && !isApp()) {
-    navigator.serviceWorker.register('/sw.js');
-    window.addEventListener('beforeinstallprompt', (e) => deferredPrompt = e);
-  }
-  /*/NON-ESP*/
-
-  window.history.pushState({ page: 1 }, "", "");    // back/refresh
-  window.onpopstate = function (e) {
-    window.history.pushState({ page: 1 }, "", "");
-    back_h();
-  }
   render_main(app_version);
   EL('title').innerHTML = app_title;
-  load_cfg();
-  let title = 'GyverHub v' + app_version + ' [' + cfg.id + '] ' + (isPWA() ? 'PWA ' : '') + (isSSL() ? 'SSL ' : '') + (isLocal() ? 'Local ' : '') + (isESP() ? 'ESP ' : '') + (isApp() ? 'App ' : '');
+  let title = 'GyverHub v' + app_version + ' [' + hub.cfg.client_id + '] ' + (isPWA() ? 'PWA ' : '') + (isSSL() ? 'SSL ' : '') + (isLocal() ? 'Local ' : '') + (isESP() ? 'ESP ' : '') + (isApp() ? 'App ' : '');
   EL('title').title = title;
-  log(title);
 
-  // pin
+  load_cfg();
+  load_hcfg();
+  if (isESP()) hub.cfg.use_ws = true;
+  update_ip();
+  update_theme();
+  set_drop();
+  key_change();
+  handle_back();
+  register_SW();
   if (cfg.use_pin) show_keypad(true);
   else startup();
-  started = true;
-  setDrop();
 }
 function startup() {
-  if (isESP()) cfg.use_ws = true;
   render_selects();
   render_info();
-  show_screen('main');
   apply_cfg();
-  update_ip();
+  update_theme();
+  show_screen('main');
   load_devices();
   render_devices();
   discover();
+  if ('Notification' in window && Notification.permission == 'default') Notification.requestPermission();
 
   /*NON-ESP*/
   if (isSSL()) {
@@ -91,13 +52,13 @@ function startup() {
   if (isApp()) EL('app_block').style.display = 'none';
 
   serial_change();
-  if (cfg.use_mqtt) mq_start();
+  if (hub.cfg.use_mqtt) mq_start();
+
   setInterval(() => {
-    if (cfg.use_mqtt && !mq_state()) {
+    if (hub.cfg.use_mqtt && !mq_state()) {
       log('MQTT reconnect');
       mq_start();
     }
-    //if (!focused) sendDiscover();
   }, 5000);
 
   setTimeout(() => {
@@ -105,6 +66,85 @@ function startup() {
   }, 1000);
   /*/NON-ESP*/
 }
+function register_SW() {
+  /*NON-ESP*/
+  if ('serviceWorker' in navigator && !isLocal() && !isApp()) {
+    navigator.serviceWorker.register('/sw.js');
+    window.addEventListener('beforeinstallprompt', (e) => deferredPrompt = e);
+  }
+  /*/NON-ESP*/
+}
+function set_drop() {
+  function preventDrop(e) {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => {
+    document.body.addEventListener(e, preventDrop, false);
+  });
+
+  ['dragenter', 'dragover'].forEach(e => {
+    document.body.addEventListener(e, function () {
+      document.querySelectorAll('.drop_area').forEach((el) => {
+        el.classList.add('active');
+      });
+    }, false);
+  });
+
+  ['dragleave', 'drop'].forEach(e => {
+    document.body.addEventListener(e, function () {
+      document.querySelectorAll('.drop_area').forEach((el) => {
+        el.classList.remove('active');
+      });
+    }, false);
+  });
+}
+function key_change() {
+  document.addEventListener('keydown', function (e) {
+    switch (e.keyCode) {
+      case 116: // refresh on F5
+        if (!e.ctrlKey) {
+          e.preventDefault();
+          refresh_h();
+        }
+        break;
+
+      case 192: // open cli on `
+        if (focused) {
+          e.preventDefault();
+          toggleCLI();
+        }
+        break;
+
+      default:
+        break;
+    }
+    //log(e.keyCode);
+  });
+}
+function handle_back() {
+  window.history.pushState({ page: 1 }, "", "");
+  window.onpopstate = function (e) {
+    window.history.pushState({ page: 1 }, "", "");
+    back_h();
+  }
+}
+function update_ip() {
+  /*NON-ESP*/
+  if (!Boolean(window.webkitRTCPeerConnection || window.mozRTCPeerConnection)) return;
+  getLocalIP().then((ip) => {
+    if (ip.indexOf("local") < 0) {
+      EL('local_ip').value = ip;
+      hub.cfg.local_ip = ip;
+    }
+  });
+  /*/NON-ESP*/
+  if (isESP()) {
+    EL('local_ip').value = window_ip();
+    hub.cfg.local_ip = window_ip();
+  }
+}
+
 /*NON-ESP*/
 async function checkUpdates(id) {
   if (!cfg.check_upd) return;
@@ -180,32 +220,6 @@ async function loadProj(rep) {
 }
 /*/NON-ESP*/
 
-// ============== DROP ==============
-function setDrop() {
-  function preventDrop(e) {
-    e.preventDefault()
-    e.stopPropagation()
-  }
-  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => {
-    document.body.addEventListener(e, preventDrop, false);
-  });
-
-  ['dragenter', 'dragover'].forEach(e => {
-    document.body.addEventListener(e, function () {
-      document.querySelectorAll('.drop_area').forEach((el) => {
-        el.classList.add('active');
-      });
-    }, false);
-  });
-
-  ['dragleave', 'drop'].forEach(e => {
-    document.body.addEventListener(e, function () {
-      document.querySelectorAll('.drop_area').forEach((el) => {
-        el.classList.remove('active');
-      });
-    }, false);
-  });
-}
 
 // =============== PIN ================
 function pass_type(v) {
@@ -219,7 +233,7 @@ function pass_type(v) {
       devices_t[pin_id].granted = true;
     }
   } else {        // app
-    if (hash == cfg.hub_pin) {
+    if (hash == cfg.pin) {
       EL('password').style.display = 'none';
       startup();
       pass_inp.value = '';
@@ -303,12 +317,9 @@ function render_selects() {
     <option value="${theme}">${theme}</option>`;
   }
 
-  for (let i = 0; i < 33; i++) {
-    let imask;
-    if (i == 32) imask = 0xffffffff;
-    else imask = ~(0xffffffff >>> i);
-    EL('netmask').innerHTML += `
-      <option value="${i}">${intToOctets(imask)}</option>`;
+  let masks = getMaskList();
+  for (let mask in masks) {
+    EL('netmask').innerHTML += `<option value="${mask}">${masks[mask]}</option>`;
   }
 }
 
@@ -399,7 +410,8 @@ function fsbr_h() {
   EL('fs_upload').style.display = readModule(Modules.UPLOAD) ? 'block' : 'none';
   EL('fs_otaf').style.display = readModule(Modules.OTA) ? 'block' : 'none';
   EL('fs_otaurl').style.display = readModule(Modules.OTA_URL) ? 'block' : 'none';
-  EL('fs_format').style.display = readModule(Modules.FORMAT) ? 'flex' : 'none';
+  EL('fs_format').style.display = readModule(Modules.FORMAT) ? 'inline-block' : 'none';
+  EL('fs_update').style.display = readModule(Modules.FSBR) ? 'inline-block' : 'none';
   show_screen('fsbr');
   EL('menu_fsbr').classList.add('menu_act');
 }
@@ -427,6 +439,7 @@ function open_device(id) {
       break;
 
     case Conn.BT:
+      post('focus');
       break;
 
     case Conn.WS:
@@ -454,6 +467,7 @@ function close_device() {
       break;
 
     case Conn.BT:
+      post('unfocus');
       break;
 
     case Conn.WS:
@@ -484,6 +498,7 @@ function show_screen(nscreen) {
   stopFS();
   screen = nscreen;
   show_keypad(false);
+  let footer_s = EL('footer_cont').style;
   let conns_s = EL('conn_icons').style;
   let proj_s = EL('projects_cont').style;
   let test_s = EL('test_cont').style;
@@ -515,6 +530,7 @@ function show_screen(nscreen) {
   icon_refresh_s.display = 'none';
   version_s.display = 'none';
   title_row_s.cursor = 'pointer';
+  footer_s.display = 'none';
   EL('title').innerHTML = app_title;
 
   if (screen == 'main') {
@@ -524,18 +540,17 @@ function show_screen(nscreen) {
     icon_cfg_s.display = 'inline-block';
     icon_refresh_s.display = 'inline-block';
     title_row_s.cursor = 'unset';
+    footer_s.display = 'block';
     EL('conn').innerHTML = '';
     showCLI(false);
 
   } else if (screen == 'test') {
-    conns_s.display = 'flex';
     main_s.display = 'none';
     test_s.display = 'block';
     back_s.display = 'inline-block';
     EL('title').innerHTML = 'UI Test';
 
   } else if (screen == 'projects') {
-    conns_s.display = 'flex';
     main_s.display = 'none';
     proj_s.display = 'block';
     back_s.display = 'inline-block';
@@ -598,7 +613,7 @@ function toggleCLI() {
   showCLI(!(EL('cli_cont').style.display == 'block'));
 }
 function showCLI(v) {
-  EL('bottom_space').style.height = v ? '170px' : '70px';
+  EL('bottom_space').style.height = v ? '170px' : '50px';
   EL('cli_cont').style.display = v ? 'block' : 'none';
   if (v) EL('cli_input').focus();
   EL('info_cli_sw').checked = v;
@@ -614,10 +629,11 @@ function sendCLI() {
 // ============== DISCOVER =============
 function sendDiscover() {
   /*NON-ESP*/
-  if (cfg.use_mqtt) mq_discover();
-  if (cfg.use_serial) serial_discover();
+  if (hub.cfg.use_mqtt) mq_discover();
+  if (hub.cfg.use_serial) serial_discover();
+  if (hub.cfg.use_bt) bt_discover();
   /*/NON-ESP*/
-  if (cfg.use_ws && !isSSL()) ws_discover();
+  if (hub.cfg.use_ws && !isSSL()) ws_discover();
 }
 function discover() {
   if (isESP()) {
@@ -640,55 +656,50 @@ function discover() {
 }
 function discover_all() {
   /*NON-ESP*/
-  if (cfg.use_mqtt) mq_discover_all();
-  if (cfg.use_serial) serial_discover();
+  if (hub.cfg.use_mqtt) mq_discover_all();
+  if (hub.cfg.use_serial) serial_discover();
+  if (hub.cfg.use_bt) bt_discover();
   /*/NON-ESP*/
-  if (cfg.use_ws && !isSSL()) ws_discover_all();
+  if (hub.cfg.use_ws && !isSSL()) ws_discover_all();
   back_h();
 }
 
 // ============= CFG ==============
-/*NON-ESP*/
-function mq_change(start = false) {
-  mq_show_icon(0);
-  mq_stop();
-  if (start) mq_start();
-}
-/*/NON-ESP*/
 function update_cfg(el) {
-  cfg_changed = true;
   if (el.type == 'text') el.value = el.value.trim();
-  if (el.type == 'checkbox') cfg[el.id] = el.checked;
-  else cfg[el.id] = el.value;
-  updateTheme();
+  let val = (el.type == 'checkbox') ? el.checked : el.value;
+  if (el.id in cfg) cfg[el.id] = val;
+  else if (el.id in hub.cfg) hub.cfg[el.id] = val;
+  cfg_changed = true;
+  update_theme();
 }
 function save_cfg() {
   localStorage.setItem('config', JSON.stringify(cfg));
+  localStorage.setItem('hub_config', JSON.stringify(hub.cfg));
 }
 function load_cfg() {
   if (localStorage.hasOwnProperty('config')) {
     let cfg_r = JSON.parse(localStorage.getItem('config'));
-    let dif = false;
-
-    for (let key in cfg) {
-      if (cfg_r[key] === undefined) {
-        cfg_r[key] = cfg[key];
-        dif = true;
-      }
-    }
-
-    if (cfg_r['version'] != cfg['version']) {
-      cfg_r['version'] = cfg['version'];
-      dif = true;
+    if (cfg_r.version != cfg.version) {
+      cfg_r.version = cfg.version;
       show_version = true;
     }
-
-    cfg = cfg_r;
-    if (dif) save_cfg();
-  } else {
-    if ('Notification' in window && Notification.permission == 'default') Notification.requestPermission();
+    if (Object.keys(cfg).length == Object.keys(cfg_r).length) {
+      cfg = cfg_r;
+      return;
+    }
   }
-  updateTheme();
+  localStorage.setItem('config', JSON.stringify(cfg));
+}
+function load_hcfg() {
+  if (localStorage.hasOwnProperty('hub_config')) {
+    let cfg_r = JSON.parse(localStorage.getItem('hub_config'));
+    if (Object.keys(hub.cfg).length == Object.keys(cfg_r).length) {
+      hub.cfg = cfg_r;
+      return;
+    }
+  }
+  localStorage.setItem('hub_config', JSON.stringify(hub.cfg));
 }
 function apply_cfg() {
   for (let key in cfg) {
@@ -698,44 +709,45 @@ function apply_cfg() {
     if (el.type == 'checkbox') el.checked = cfg[key];
     else el.value = cfg[key];
   }
-  updateTheme();
+  for (let key in hub.cfg) {
+    let el = EL(key);
+    if (el == undefined) continue;
+    if (el.type == 'checkbox') el.checked = hub.cfg[key];
+    else el.value = hub.cfg[key];
+  }
 }
-
-// ============ IMPORT =============
 async function cfg_export() {
   try {
-    const text = btoa(JSON.stringify(cfg)) + ',' + btoa(encodeURIComponent(JSON.stringify(devices)));
+    const text = btoa(JSON.stringify(cfg)) + ';' + btoa(JSON.stringify(hub.cfg)) + ';' + btoa(encodeURIComponent(JSON.stringify(devices)));
     await navigator.clipboard.writeText(text);
     showPopup('Copied to clipboard');
-  } catch (err) {
+  } catch (e) {
     showPopupError('Export error');
   }
 }
 async function cfg_import() {
   try {
     let text = await navigator.clipboard.readText();
+    text = text.split(';');
     try {
-      cfg = JSON.parse(atob(text.split(',')[0]));
-    } catch (e) {
-    }
-    apply_cfg();
+      cfg = JSON.parse(atob(text[0]));
+    } catch (e) { }
+    try {
+      hub.cfg = JSON.parse(atob(text[1]));
+    } catch (e) { }
+    try {
+      devices = JSON.parse(decodeURIComponent(atob(text[2])));
+    } catch (e) { }
+
     save_cfg();
-
-    try {
-      devices = JSON.parse(decodeURIComponent(atob(text.split(',')[1])));
-    } catch (e) {
-    }
-    render_devices();
     save_devices();
-
     showPopup('Import done');
+    setTimeout(() => location.reload(), 1500);
   } catch (e) {
     showPopupError('Wrong data');
   }
 }
-
-// ============ THEME =============
-function updateTheme() {
+function update_theme() {
   let v = themes[cfg.theme];
   let r = document.querySelector(':root');
   r.style.setProperty('--back', theme_cols[v][0]);
@@ -757,17 +769,17 @@ function updateTheme() {
   let f = 'var(--font)';
   let f3 = 'var(--font3)';
 
-  EL('ws_block').style.display = cfg.use_ws ? b : n;
-  EL('ws_label').style.color = cfg.use_ws ? f : f3;
+  EL('ws_block').style.display = hub.cfg.use_ws ? b : n;
+  EL('ws_label').style.color = hub.cfg.use_ws ? f : f3;
   EL('pin_block').style.display = cfg.use_pin ? b : n;
   EL('pin_label').style.color = cfg.use_pin ? f : f3;
 
   /*NON-ESP*/
-  EL('mq_block').style.display = cfg.use_mqtt ? b : n;
-  EL('mqtt_label').style.color = cfg.use_mqtt ? f : f3;
-  EL('bt_block').style.display = cfg.use_bt ? b : n;
-  EL('bt_label').style.color = cfg.use_bt ? f : f3;
-  EL('serial_block').style.display = cfg.use_serial ? b : n;
-  EL('serial_label').style.color = cfg.use_serial ? f : f3;
+  EL('mq_block').style.display = hub.cfg.use_mqtt ? b : n;
+  EL('mqtt_label').style.color = hub.cfg.use_mqtt ? f : f3;
+  EL('bt_block').style.display = hub.cfg.use_bt ? b : n;
+  EL('bt_label').style.color = hub.cfg.use_bt ? f : f3;
+  EL('serial_block').style.display = hub.cfg.use_serial ? b : n;
+  EL('serial_label').style.color = hub.cfg.use_serial ? f : f3;
   /*/NON-ESP*/
 }

@@ -1,3 +1,5 @@
+let hub = new GyverHub();
+
 function render_main(v) {
   head_cont.innerHTML = `
   <div class="title" id="title_cont">
@@ -148,7 +150,11 @@ function render_main(v) {
           <label><span class="icon cfg_icon"></span>Editor</label>
         </div>
         <div class="cfg_row">
-          <textarea rows=20 id="editor_area" class="cfg_inp c_log"></textarea>
+          <label>Wrap text</label>
+          <label class="switch"><input type="checkbox" id="editor_wrap" onchange="this.checked?editor_area.classList.remove('c_area_wrap'):editor_area.classList.add('c_area_wrap')"><span class="slider"></span></label>
+        </div>
+        <div class="cfg_row">
+          <textarea rows=20 id="editor_area" class="cfg_inp c_log c_area_wrap"></textarea>
         </div>
         <div class="cfg_row">
           <button id="editor_save" onclick="editor_save()" class="c_btn btn_mini">Save & Upload</button>
@@ -164,8 +170,11 @@ function render_main(v) {
         </div>
         <div id="fs_browser">
           <div id="fsbr_inner"></div>
-          <div id="fs_format" class="cfg_row">
-            <button onclick="format_h()" class="c_btn btn_mini">Format</button>
+          <div class="cfg_row">
+            <div>
+              <button id="fs_format" onclick="format_h()" class="c_btn btn_mini">Format</button>
+              <button id="fs_update" onclick="updatefs_h()" class="c_btn btn_mini">Update</button>
+            </div>
           </div>
         </div>
       </div>
@@ -242,9 +251,9 @@ function render_main(v) {
             <div class="cfg_row">
               <label class="cfg_label">My IP</label>
               <div class="cfg_inp_row cfg_inp_row_fix">
-                <input class="cfg_inp" type="text" id="client_ip" onchange="update_cfg(this)">
+                <input class="cfg_inp" type="text" id="local_ip" onchange="update_cfg(this)">
                 <div class="cfg_btn_block">
-                  <button class="icon cfg_btn" onclick="update_ip_h();update_cfg(EL('client_ip'))"></button>
+                  <button class="icon cfg_btn" onclick="update_ip_h();update_cfg(EL('local_ip'))"></button>
                 </div>
               </div>
             </div>
@@ -279,30 +288,34 @@ function render_main(v) {
       <div class="cfg_col" id="mq_col">
         <div class="cfg_row cfg_head cfg_clickable" onclick="use_mqtt.click()">
           <label class="cfg_label cfg_clickable" id="mqtt_label"><span class="icon cfg_icon"></span>MQTT</label>
-          <input type="checkbox" id="use_mqtt" onchange="update_cfg(this);mq_change(this.checked)" style="display:none">
+          <input type="checkbox" id="use_mqtt" onchange="update_cfg(this);mq_stop()" style="display:none">
         </div>
 
         <div id="mq_block" style="display:none">
 
           <div class="cfg_row">
             <label class="cfg_label">Host</label>
-            <div class="cfg_inp_row cfg_inp_row_fix"><input class="cfg_inp" type="text" id="mq_host" onchange="update_cfg(this);mq_change()"></div>
+            <div class="cfg_inp_row cfg_inp_row_fix"><input class="cfg_inp" type="text" id="mq_host" onchange="update_cfg(this);mq_stop()"></div>
           </div>
 
           <div class="cfg_row">
             <label class="cfg_label">Port (WS TLS)</label>
-            <div class="cfg_inp_row cfg_inp_row_fix"><input class="cfg_inp" type="number" id="mq_port" onchange="update_cfg(this);mq_change()"></div>
+            <div class="cfg_inp_row cfg_inp_row_fix"><input class="cfg_inp" type="number" id="mq_port" onchange="update_cfg(this);mq_stop()"></div>
           </div>
 
           <div class="cfg_row">
             <label class="cfg_label">Login</label>
-            <div class="cfg_inp_row cfg_inp_row_fix"><input class="cfg_inp" type="text" id="mq_login" onchange="update_cfg(this);mq_change()"></div>
+            <div class="cfg_inp_row cfg_inp_row_fix"><input class="cfg_inp" type="text" id="mq_login" onchange="update_cfg(this);mq_stop()"></div>
           </div>
 
           <div class="cfg_row">
             <label class="cfg_label">Pass</label>
-            <div class="cfg_inp_row cfg_inp_row_fix"><input class="cfg_inp" type="password" id="mq_pass" onchange="update_cfg(this);mq_change()">
+            <div class="cfg_inp_row cfg_inp_row_fix"><input class="cfg_inp" type="password" id="mq_pass" onchange="update_cfg(this);mq_stop()">
             </div>
+          </div>
+          <div class="cfg_btn_row">
+            <button class="c_btn btn_mini" onclick="mq_start()">Connect</button>
+            <button class="c_btn btn_mini" onclick="mq_stop()">Disconnect</button>
           </div>
 
         </div>
@@ -329,13 +342,17 @@ function render_main(v) {
         </div>
       </div>
 
-      <div class="cfg_col" id="bt_col" style="display:none">
+      <div class="cfg_col" id="bt_col" ${("bluetooth" in navigator) ? '' : 'style="display:none"'}>
         <div class="cfg_row cfg_head cfg_clickable" onclick="use_bt.click()">
           <label class="cfg_label cfg_clickable" id="bt_label"><span class="icon cfg_icon"></span>Bluetooth</label>
           <input type="checkbox" id="use_bt" onchange="update_cfg(this)" style="display:none">
         </div>
 
         <div id="bt_block" style="display:none">
+          <div class="cfg_row">
+            <label class="cfg_label" id="bt_device">Not Connected</label>
+            <button id="bt_btn" class="c_btn btn_mini" onclick="bt_toggle()">Connect</button>
+          </div>
         </div>
 
       </div>
@@ -355,7 +372,7 @@ function render_main(v) {
 
         <div class="cfg_row">
           <label class="cfg_label">Client ID</label>
-          <div class="cfg_inp_row cfg_inp_row_fix"><input class="cfg_inp" type="text" id="hub_id" onchange="update_cfg(this)" oninput="if(this.value.length>8)this.value=this.value.slice(0,-1)">
+          <div class="cfg_inp_row cfg_inp_row_fix"><input class="cfg_inp" type="text" id="client_id" onchange="update_cfg(this)" oninput="if(this.value.length>8)this.value=this.value.slice(0,-1)">
           </div>
         </div>
 
@@ -377,7 +394,7 @@ function render_main(v) {
         <div class="cfg_row">
           <label class="cfg_label">UI Width</label>
           <div class="cfg_inp_row cfg_inp_row_fix">
-            <input class="cfg_inp" type="number" id="ui_width" onchange="update_cfg(this);updateTheme()">
+            <input class="cfg_inp" type="number" id="ui_width" onchange="update_cfg(this);update_theme()">
           </div>
         </div>
 
@@ -405,7 +422,7 @@ function render_main(v) {
           <div class="cfg_row">
             <label class="cfg_label">PIN</label>
             <div class="cfg_inp_row cfg_inp_row_fix"><input class="cfg_inp" type="password" pattern="[0-9]*" inputmode="numeric"
-                id="hub_pin" onchange="this.value=this.value.hashCode();update_cfg(this)" oninput="check_type(this)">
+                id="pin" onchange="this.value=this.value.hashCode();update_cfg(this)" oninput="check_type(this)">
             </div>
           </div>
         </div>

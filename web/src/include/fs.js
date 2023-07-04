@@ -4,6 +4,7 @@ let fetching = null;
 let fetch_name;
 let fetch_index;
 let fetch_file = '';
+let fetch_path = '';
 let fetch_tout;
 let fetch_to_file = false;
 let edit_idx = 0;
@@ -16,7 +17,7 @@ let ota_tout;
 
 // ============ TIMEOUT ============
 function stopFS() {
-  if (fetching) post('fetch_stop');
+  if (fetching) post('fetch_stop', fetch_path);
   stop_fetch_tout();
   stop_upload_tout();
   stop_ota_tout();
@@ -77,11 +78,12 @@ function showFsbr(device) {
         <label id="process#${i}"></label>
         <a id="download#${i}" title="Download" class="icon cfg_btn_tab" href="" download="" style="display:none"></a>
         <button id="open#${i}" title="Open" class="icon cfg_btn_tab" onclick="openFile(EL('download#${i}').href)" style="display:none"></button>
-        <button id="edit#${i}" title="Edit" class="icon cfg_btn_tab" onclick="editFile(EL('download#${i}').href,'${i}')" style="display:none"></button>
+        <button ${readModule(Modules.UPLOAD) ? '' : none} id="edit#${i}" title="Edit" class="icon cfg_btn_tab" onclick="editFile(EL('download#${i}').href,'${i}')" style="display:none"></button>
       </div>`;
     }
   }
-  inner += `<div class="fs_info">Used ${(device.used / 1000).toFixed(2)}/${(device.total / 1000).toFixed(2)} kB [${Math.round(device.used / device.total * 100)}%]</div>`;
+  if (device.total) inner += `<div class="fs_info">Used ${(device.used / 1000).toFixed(2)}/${(device.total / 1000).toFixed(2)} kB [${Math.round(device.used / device.total * 100)}%]</div>`;
+  else inner += `<div class="fs_info">Used ${(device.used / 1000).toFixed(2)} kB</div>`;
   EL('fsbr_inner').innerHTML = inner;
   let ota_t = '.' + devices[focused].ota_t;
   EL('ota_upload').accept = ota_t;
@@ -121,23 +123,32 @@ function fetchFile(i) {
   EL('process#' + i).style.display = 'unset';
   EL('process#' + i).innerHTML = '';
 
-  let path = fs_arr[i];
+  fetch_path = fs_arr[i];
   fetch_index = i;
-  fetch_name = path.split('/').pop();
+  fetch_name = fetch_path.split('/').pop();
   fetch_to_file = false;
-  if (devices_t[focused].conn == Conn.WS && devices_t[focused].http_cfg.download && path.startsWith(devices_t[focused].http_cfg.path)) fetchHTTP(path, fetch_name, fetch_index)
-  else post('fetch', path);
+  if (devices_t[focused].conn == Conn.WS && devices_t[focused].http_cfg.download && fetch_path.startsWith(devices_t[focused].http_cfg.path)) fetchHTTP(fetch_path, fetch_name, fetch_index)
+  else post('fetch', fetch_path);
 }
 function openFile(src) {
   let w = window.open();
-  w.document.write('<iframe src="' + src + '" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>');
+  src =
+    w.document.write('<iframe src="' + src + '" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>');
 }
 function format_h() {
   if (confirm('Format filesystem?')) post('format');
 }
+function updatefs_h() {
+  post('fsbr');
+}
 
 function editFile(data, idx) {
-  EL('editor_area').value = window.atob(data.split('base64,')[1]);
+  function b64ToText(base64) {
+    const binString = atob(base64);
+    return new TextDecoder().decode(Uint8Array.from(binString, (m) => m.codePointAt(0)));
+  }
+
+  EL('editor_area').value = b64ToText(data.split('base64,')[1]);//window.atob(data.split('base64,')[1]);
   EL('editor_area').scrollTop = 0;
   EL('fsbr').style.display = 'none';
   EL('fsbr_edit').style.display = 'block';
@@ -148,7 +159,7 @@ function editor_save() {
   let div = fs_arr[edit_idx].lastIndexOf('/');
   let path = fs_arr[edit_idx].slice(0, div);
   let name = fs_arr[edit_idx].slice(div + 1);
-  EL('download#' + edit_idx).href = ('data:' + getMime(name) + ';base64,' + window.btoa(EL('editor_area').value));
+  //EL('download#' + edit_idx).href = ('data:' + getMime(name) + ';base64,' + window.btoa(EL('editor_area').value));
   uploadFile(new File([EL('editor_area').value], name, { type: getMime(name), lastModified: new Date() }), path);
 }
 function editor_cancel() {
@@ -175,20 +186,25 @@ function fetchHTTP(path, name, index) {
 async function fetchHTTP(path, name, index) {
   EL('process#' + index).innerHTML = 'Fetching...';
   fetching = focused;
-  const response = await fetch('http://' + devices[focused].ip + ':' + http_port + path, { cache: "no-store" });
-  const blob = await response.blob();
-  return new Promise(() => {
-    try {
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onload = function () {
-        fetchEnd(name, index, this.result.split('base64,')[1]);
-      };
-    } catch (e) {
-    }
-  });
-}
 
+  fetch('http://' + devices[focused].ip + ':' + http_port + path, { cache: "no-store" })
+    .then((response) => {
+      response.blob().then(blob => {
+        try {
+          const reader = new FileReader();
+          reader.readAsDataURL(blob);
+          reader.onload = function () {
+            fetchEnd(name, index, this.result.split('base64,')[1]);
+          };
+        } catch (e) {
+          showPopupError('Error fetch ' + path);
+        }
+      });
+    })
+    .catch((e) => {
+      showPopupError('Error fetch ' + path);
+    });
+}
 function fetchEnd(name, index, data) {
   if (!fetching) return;
   EL('download#' + index).style.display = 'inline-block';
@@ -207,7 +223,7 @@ function uploadFile(file, path) {
     showPopupError('Busy');
     return clearFiles();
   }
-  
+
   let reader = new FileReader();
   reader.readAsArrayBuffer(file);
   reader.onload = function (e) {
@@ -278,7 +294,6 @@ function uploadOta(file, type) {
   }
   if (!confirm('Upload OTA ' + type + '?')) return clearFiles();
 
-
   let reader = new FileReader();
   reader.readAsArrayBuffer(file);
   reader.onload = function (e) {
@@ -288,7 +303,7 @@ function uploadOta(file, type) {
       EL('ota_label').innerHTML = 'WAIT...';
       let xhr = new XMLHttpRequest();
       let formData = new FormData();
-      formData.append('ota', file, type);
+      formData.append(type, file, file.name);
       xhr.onreadystatechange = function () {
         if (this.responseText == 'OK') showPopup('Done');
         if (this.responseText == 'FAIL') showPopupError('Error');

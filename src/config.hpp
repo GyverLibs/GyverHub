@@ -5,7 +5,6 @@
 #define GH_CONN_TOUT 5          // таймаут соединения, с
 #define GH_HTTP_PORT 80         // http порт
 #define GH_WS_PORT 81           // websocket порт
-#define GH_HTTPD_PORT 82        // httpd порт (stream)
 #define GH_DOWN_CHUNK_SIZE 512  // размер чанка при скачивании с платы
 #define GH_UPL_CHUNK_SIZE 200   // размер чанка при загрузке на плату
 #define GH_FS_DEPTH 5           // глубина сканирования файловой системы (esp32)
