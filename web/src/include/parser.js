@@ -114,7 +114,7 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
 
   switch (device.type) {
     case 'data':
-      
+
       break;
 
     case 'alert':
