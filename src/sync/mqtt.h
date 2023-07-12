@@ -3,7 +3,7 @@
 #include "../macro.hpp"
 
 #ifdef GH_ESP_BUILD
-#ifdef GH_NO_WS
+#ifdef GH_NO_MQTT
 class HubMQTT {
    public:
     void setupMQTT(const char* host, uint16_t port, const char* login = nullptr, const char* pass = nullptr, uint8_t nqos = 0, bool nret = 0) {}
