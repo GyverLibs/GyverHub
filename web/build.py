@@ -1,6 +1,6 @@
 # GyverHub Web Builder
 
-version = '0.46b'
+version = '0.47b'
 notes = 'Many minor fixes'
 
 js_files = [

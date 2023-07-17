@@ -45,6 +45,9 @@ void GH_escapeChar(String* s, char c) {
         *s += c;
     }
 }
+void GH_escapeStr(String& tar, const String& src) {
+    GH_escapeStr(&tar, src.c_str(), 0);
+}
 void GH_escapeStr(String* s, VSPTR v, bool fstr) {
     if (!v) return;
     if (fstr) {
@@ -58,10 +61,59 @@ void GH_escapeStr(String* s, VSPTR v, bool fstr) {
         for (uint16_t i = 0; i < len; i++) GH_escapeChar(s, str[i]);
     }
 }
+bool GH_needsEscape(const String& str) {
+    const char* cs = str.c_str();
+    char c;
+    for (uint16_t i = 0; i < str.length(); i++) {
+        c = cs[i];
+        if (c < 13 || c == '\"' || c == '\'' || c == '\\') return 1;
+    }
+    return 0;
+}
+String GH_listIdx(const String& li, int idx, char div) {
+    int cnt = 0, p = 0, i = 0;
+    while (1) {
+        if (li[i] == div || !li[i]) {
+            if (cnt == idx) return li.substring(p, i);
+            if (!li[i]) return _GH_empty_str;
+            cnt++;
+            p = i + 1;
+        }
+        i++;
+    }
+    return _GH_empty_str;
+}
 
 // ========================== FS ==========================
 #ifdef GH_ESP_BUILD
 #ifndef GH_NO_FS
+void GH_listDir(String& str, const String& path, char div) {
+    str = "";
+#ifdef ESP8266
+    Dir dir = GH_FS.openDir(path);
+    while (dir.next()) {
+        if (dir.isFile() && dir.fileName().length()) {
+            str += path;
+            str += dir.fileName();
+            str += div;
+        }
+    }
+#else  // ESP32
+    File root = GH_FS.open(path.c_str());
+    if (!root || !root.isDirectory()) return;
+    File file;
+    while (file = root.openNextFile()) {
+        if (!file.isDirectory()) {
+            str += path;
+            str += '/';
+            str += file.name();
+            str += div;
+        }
+    }
+#endif
+    if (str.length()) str.remove(str.length() - 1);
+}
+
 void GH_showFiles(String& answ, const String& path, GH_UNUSED uint8_t levels, uint16_t* count) {
 #ifdef ESP8266
     Dir dir = GH_FS.openDir(path);

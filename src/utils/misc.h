@@ -52,11 +52,16 @@ struct GHparser {
 };
 
 char* GH_splitter(char* list, char div = ',');
+String GH_listIdx(const String& li, int idx, char div = ',');
+
+bool GH_needsEscape(const String& str);
 void GH_escapeChar(String* s, char c);
 void GH_escapeStr(String* s, VSPTR v, bool fstr);
+void GH_escapeStr(String& tar, const String& src);
 
 #ifdef GH_ESP_BUILD
 #ifndef GH_NO_FS
+void GH_listDir(String& str, const String& path = "/", char div = ',');
 void GH_showFiles(String& answ, const String& path, GH_UNUSED uint8_t levels = 0, uint16_t* count = nullptr);
 void GH_fileToB64(File& file, String& str);
 void GH_bytesToB64(byte* bytes, uint32_t& idx, uint32_t& size, String& str);

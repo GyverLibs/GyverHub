@@ -114,7 +114,7 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
 
   switch (device.type) {
     case 'data':
-
+      // RAW DATA
       break;
 
     case 'alert':
@@ -388,8 +388,8 @@ function showControls(controls, from_buffer = false, conn = Conn.NONE, ip = 'uns
       case 'js': eval(ctrl.value); break;
       case 'confirm': confirms[ctrl.name] = { label: ctrl.label }; break;
       case 'prompt': prompts[ctrl.name] = { label: ctrl.label, value: ctrl.value }; break;
-      case 'menu': addMenu(ctrl);
-      case 'table': addTable(ctrl);
+      case 'menu': addMenu(ctrl); break;
+      case 'table': addTable(ctrl); break;
     }
   }
   if (devices[focused].show_names) {

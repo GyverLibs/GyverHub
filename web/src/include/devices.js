@@ -73,12 +73,23 @@ function addButton(ctrl) {
   if (checkDup(ctrl)) return;
   checkWidget(ctrl);
   if (wid_row_id) {
+    let label = ctrl.wlabel, icon = '';
+    if (ctrl.wlabel.charCodeAt(0) >= 0xF005) {
+      icon = label[0];
+      label = label.slice(1).trim();
+    }
     endButtons();
-    let inner = renderButton(ctrl.name, 'icon btn_icon', ctrl.name, '', ctrl.size * 3, ctrl.color, true);
-    addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
+    let inner = renderButton(ctrl.name, 'icon btn_icon', ctrl.name, icon, ctrl.size * 3, ctrl.color, true);
+    addWidget(ctrl.tab_w, ctrl.name, label, inner);
   } else {
     if (!btn_row_id) beginButtons();
-    EL(btn_row_id).innerHTML += `${renderButton(ctrl.name, 'c_btn', ctrl.name, ctrl.clabel, ctrl.size, ctrl.color, false)}`;
+    let label = ctrl.clabel, icon = '';
+    if (ctrl.clabel.charCodeAt(0) >= 0xF005) {
+      icon = label[0];
+      label = label.slice(1).trim();
+      label = `<span class="icon icon_min">${icon}</span>&nbsp;` + label;
+    }
+    EL(btn_row_id).innerHTML += `${renderButton(ctrl.name, 'c_btn', ctrl.name, label, ctrl.size, ctrl.color, false)}`;
   }
 }
 function addButtonIcon(ctrl) {
@@ -839,16 +850,22 @@ function showJoys() {
 
 // other
 function addSpace(ctrl) {
-  /*if (wid_row_id) {
+  if (wid_row_id) {
+    checkWidget(ctrl);
+    wid_row_size += ctrl.tab_w;
+    if (wid_row_size > 100) {
+      beginWidgets();
+      wid_row_size = ctrl.tab_w;
+    }
     EL(wid_row_id).innerHTML += `
     <div class="widget" style="width:${ctrl.tab_w}%"><div class="widget_inner widget_space"></div></div>
   `;
-  } else {*/
-  endButtons();
-  EL('controls').innerHTML += `
+  } else {
+    endButtons();
+    EL('controls').innerHTML += `
     <div style="height:${ctrl.height}px"></div>
   `;
-  //}
+  }
 }
 function addTitle(ctrl) {
   endWidgets();

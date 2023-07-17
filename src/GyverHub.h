@@ -182,9 +182,11 @@ class GyverHub : public HubBuilder, public HubStream {
     void addInfo(const String& label, const String& text) {
         if (sptr) {
             *sptr += '\'';
-            *sptr += label;
+            if (GH_needsEscape(label)) GH_escapeStr(sptr, label.c_str(), 0);
+            else *sptr += label;
             *sptr += F("':'");
-            *sptr += text;
+            if (GH_needsEscape(text)) GH_escapeStr(sptr, text.c_str(), 0);
+            else *sptr += text;
             *sptr += F("',");
         }
     }
@@ -197,13 +199,17 @@ class GyverHub : public HubBuilder, public HubStream {
     }
 
     // отправить текст в веб-консоль. Опционально цвет
-    void print(const String& s, uint32_t color = GH_DEFAULT) {
+    void print(const String& str, uint32_t color = GH_DEFAULT) {
         if (!focused()) return;
+        String esc_str;
+        bool esc = GH_needsEscape(str);
+        if (esc) GH_escapeStr(esc_str, str);
+
         String answ;
         _jsBegin(answ);
         _jsID(answ);
         _jsStr(answ, F("type"), F("print"));
-        _jsStr(answ, F("text"), s);
+        _jsStr(answ, F("text"), esc ? esc_str : str);
         _jsVal(answ, F("color"), color, true);
         _jsEnd(answ);
         _send(answ);
@@ -262,6 +268,11 @@ class GyverHub : public HubBuilder, public HubStream {
         return (bptr && (bptr->type == GH_BUILD_ACTION || bptr->type == GH_BUILD_READ));
     }
 
+    // true - если билдер вызван для запроса компонентов (при загрузке панели управления)
+    bool buildUI() {
+        return (bptr && bptr->type == GH_BUILD_UI);
+    }
+
     // получить текущее действие для ручной обработки значений
     const GHaction& action() const {
         return bptr->action;
@@ -306,15 +317,23 @@ class GyverHub : public HubBuilder, public HubStream {
 
     // ответить клиенту. Вызывать в обработчике onData (см. GyverHub.js API)
     void answer(const String& data) {
+        String esc_str;
+        bool esc = GH_needsEscape(data);
+        if (esc) GH_escapeStr(esc_str, data);
+
         String answ;
-        _datasend(answ, data);
+        _datasend(answ, esc ? data : esc_str);
         _answer(answ);
     }
 
     // отправить сырые данные вручную (см. GyverHub.js API)
     void send(const String& data) {
+        String esc_str;
+        bool esc = GH_needsEscape(data);
+        if (esc) GH_escapeStr(esc_str, data);
+
         String answ;
-        _datasend(answ, data);
+        _datasend(answ, esc ? data : esc_str);
         _send(answ);
     }
 
@@ -323,11 +342,15 @@ class GyverHub : public HubBuilder, public HubStream {
     void sendPush(const String& text) {
         if (!running_f) return;
         upd_f = 1;
+        String esc_str;
+        bool esc = GH_needsEscape(text);
+        if (esc) GH_escapeStr(esc_str, text);
+
         String answ;
         _jsBegin(answ);
         _jsID(answ);
         _jsStr(answ, F("type"), F("push"));
-        _jsStr(answ, F("text"), text, true);
+        _jsStr(answ, F("text"), esc ? esc_str : text, true);
         _jsEnd(answ);
         _send(answ, true);
     }
@@ -336,11 +359,15 @@ class GyverHub : public HubBuilder, public HubStream {
     void sendNotice(const String& text, uint32_t color = GH_GREEN) {
         if (!running_f || !focused()) return;
         upd_f = 1;
+        String esc_str;
+        bool esc = GH_needsEscape(text);
+        if (esc) GH_escapeStr(esc_str, text);
+
         String answ;
         _jsBegin(answ);
         _jsID(answ);
         _jsStr(answ, F("type"), F("notice"));
-        _jsStr(answ, F("text"), text);
+        _jsStr(answ, F("text"), esc ? esc_str : text);
         _jsStr(answ, F("color"), color, true);
         _jsEnd(answ);
         _send(answ);
@@ -350,11 +377,15 @@ class GyverHub : public HubBuilder, public HubStream {
     void sendAlert(const String& text) {
         if (!running_f || !focused()) return;
         upd_f = 1;
+        String esc_str;
+        bool esc = GH_needsEscape(text);
+        if (esc) GH_escapeStr(esc_str, text);
+
         String answ;
         _jsBegin(answ);
         _jsID(answ);
         _jsStr(answ, F("type"), F("alert"));
-        _jsStr(answ, F("text"), text, true);
+        _jsStr(answ, F("text"), esc ? esc_str : text, true);
         _jsEnd(answ);
         _send(answ);
     }
@@ -363,7 +394,11 @@ class GyverHub : public HubBuilder, public HubStream {
 
     // отправить update вручную с указанием значения
     void sendUpdate(const String& name, const String& value) {
-        _sendUpdate(name.c_str(), value.c_str());
+        String esc_str;
+        bool esc = GH_needsEscape(value);
+        if (esc) GH_escapeStr(esc_str, value);
+
+        _sendUpdate(name.c_str(), esc ? esc_str.c_str() : value.c_str());
     }
 
     // отправить update по имени компонента (значение будет прочитано в build). Нельзя вызывать из build. Имена можно передать списком через запятую
@@ -467,12 +502,16 @@ class GyverHub : public HubBuilder, public HubStream {
         if (!running_f) return;
 #ifdef GH_ESP_BUILD
 #ifndef GH_NO_MQTT
+        String esc_str;
+        bool esc = GH_needsEscape(value);
+        if (esc) GH_escapeStr(esc_str, value);
+
         String topic(prefix);
         topic += F("/hub/");
         topic += id;
         topic += F("/get/");
         topic += name;
-        sendMQTT(topic, value);
+        sendMQTT(topic, esc ? esc_str : value);
 #endif
 #endif
     }

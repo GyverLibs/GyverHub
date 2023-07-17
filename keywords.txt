@@ -33,6 +33,7 @@ onInfo	KEYWORD2
 refresh	KEYWORD2
 getBuild	KEYWORD2
 buildRead	KEYWORD2
+buildUI	KEYWORD2
 action	KEYWORD2
 onEvent	KEYWORD2
 onRequest	KEYWORD2
@@ -150,6 +151,12 @@ valueInt	KEYWORD2
 valueFloat	KEYWORD2
 changed	KEYWORD2
 state	KEYWORD2
+
+GH_listDir	KEYWORD2
+GH_listIdx	KEYWORD2
+GH_splitter	KEYWORD2
+GH_needsEscape	KEYWORD2
+GH_escapeStr	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)

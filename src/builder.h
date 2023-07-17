@@ -58,19 +58,19 @@ class HubBuilder {
     }
 
     // ========================== BUTTON ==========================
-    bool Button_(FSTR name, GHbutton* var = nullptr, FSTR label = nullptr, uint32_t color = GH_DEFAULT, int size = 22) {
+    bool Button_(FSTR name, GHbutton* var = nullptr, FSTR label = nullptr, uint32_t color = GH_DEFAULT, int size = 20) {
         return _button(true, F("button"), name, var, label, color, size);
     }
-    bool Button_(CSREF name, GHbutton* var = nullptr, CSREF label = "", uint32_t color = GH_DEFAULT, int size = 22) {
+    bool Button_(CSREF name, GHbutton* var = nullptr, CSREF label = "", uint32_t color = GH_DEFAULT, int size = 20) {
         return _button(false, F("button"), name.c_str(), var, label.c_str(), color, size);
     }
     bool Button(GHbutton* var = nullptr) {
         return Button_(0, var);
     }
-    bool Button(GHbutton* var, FSTR label, uint32_t color = GH_DEFAULT, int size = 22) {
+    bool Button(GHbutton* var, FSTR label, uint32_t color = GH_DEFAULT, int size = 20) {
         return Button_(0, var, label, color, size);
     }
-    bool Button(GHbutton* var, CSREF label, uint32_t color = GH_DEFAULT, int size = 22) {
+    bool Button(GHbutton* var, CSREF label, uint32_t color = GH_DEFAULT, int size = 20) {
         return Button_("", var, label.c_str(), color, size);
     }
 
@@ -133,7 +133,7 @@ class HubBuilder {
             _name(name, fstr);
             _value();
             _quot();
-            *sptr += value;
+            GH_escapeStr(sptr, value.c_str(), 0);
             _quot();
             _label(label, fstr);
             _color(color);
@@ -141,7 +141,7 @@ class HubBuilder {
             _tabw();
             _end();
         } else if (_isRead()) {
-            if (_checkName(name, fstr)) *sptr += value;
+            if (_checkName(name, fstr)) GH_escapeStr(sptr, value.c_str(), 0);
         }
     }
 

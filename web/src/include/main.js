@@ -458,7 +458,7 @@ function render_main(v) {
           <a href="https://github.com/Simonwep/pickr" target="_blank">Pickr</a>
           <a href="https://github.com/mqttjs/MQTT.js" target="_blank">MQTT.js</a>
           <a href="https://github.com/ghornich/sort-paths" target="_blank">sort-paths</a>
-          <a href="https://fontawesome.com/v5/cheatsheet/free/solid" target="_blank">Fontawesome</a>
+          <a href="https://fontawesome.com/v5/search?o=r&m=free&s=solid" target="_blank">Fontawesome</a>
         </div>
       </div>
     </div>
