@@ -870,7 +870,7 @@ input[type=number] {
 select {
   min-width: 120px !important;
   background: var(--back) !important;
-  padding-left: 3px !important;
+  padding: 0 8px !important;
 }
 
 select option {

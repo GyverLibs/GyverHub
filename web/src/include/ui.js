@@ -686,7 +686,7 @@ function load_cfg() {
     }
     if (Object.keys(cfg).length == Object.keys(cfg_r).length) {
       cfg = cfg_r;
-      return;
+      if (!show_version) return;
     }
   }
   localStorage.setItem('config', JSON.stringify(cfg));
