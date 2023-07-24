@@ -6,6 +6,7 @@
 #include "color.h"
 #include "flags.h"
 #include "pos.h"
+#include "misc.h"
 
 enum GHdata_t {
     GH_NULL,

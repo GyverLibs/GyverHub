@@ -5,13 +5,12 @@
 
 class GHlog : public Print {
    public:
-
     // начать и указать размер буфера
     void begin(int n = 64) {
         end();
-        len = head = 0;
         size = n;
         buffer = new char[size];
+        clear();
     }
 
     ~GHlog() {
@@ -27,18 +26,24 @@ class GHlog : public Print {
     }
 
     virtual size_t write(uint8_t n) {
-        if (buffer) _write(n);
+        if (buffer) {
+            _write(n);
+        }
         return 1;
     }
 
     // прочитать в строку
-    void read(String* s) {
+    void read(String* s, bool esc = false) {
         if (!buffer) return;
         bool start = 0;
         for (uint16_t i = 0; i < len; i++) {
             char c = _read(i);
-            if (start && c != '\r') GH_escapeChar(s, c);
-            else if (c == '\n') start = 1;
+            if (start) {
+                if (esc) {
+                    if (c == '\"') *s += '\\';
+                }
+                *s += c;
+            } else if (c == '\n') start = 1;
         }
     }
 
@@ -53,6 +58,7 @@ class GHlog : public Print {
     // очистить
     void clear() {
         len = head = 0;
+        _write('\n');
     }
 
     // есть данные
@@ -74,11 +80,12 @@ class GHlog : public Print {
 
    private:
     void _write(uint8_t n) {
+        if (n == '\r') return;
         if (len < size) len++;
         buffer[head] = n;
         if (++head >= size) head = 0;
     }
-    char _read(int num) {
+    char _read(uint16_t num) {
         return buffer[(len < size) ? num : ((head + num) % size)];
     }
 

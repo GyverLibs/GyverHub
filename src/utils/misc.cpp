@@ -20,56 +20,6 @@ char* GH_splitter(char* list, char div) {
     }
     return NULL;
 }
-
-void GH_escapeChar(String* s, char c) {
-    if (c <= 13) {
-        *s += '\\';
-        switch (c) {
-            case '\r':
-                *s += 'r';
-                break;
-            case '\n':
-                *s += 'n';
-                break;
-            case '\t':
-                *s += 't';
-                break;
-        }
-    } else if (c == '\"' || c == '\'') {
-        *s += '\\';
-        *s += '\"';
-    } else if (c == '\\') {
-        *s += '\\';
-        *s += '\\';
-    } else {
-        *s += c;
-    }
-}
-void GH_escapeStr(String& tar, const String& src) {
-    GH_escapeStr(&tar, src.c_str(), 0);
-}
-void GH_escapeStr(String* s, VSPTR v, bool fstr) {
-    if (!v) return;
-    if (fstr) {
-        uint16_t len = strlen_P((PGM_P)v);
-        char str[len + 1];
-        strcpy_P(str, (PGM_P)v);
-        for (uint16_t i = 0; i < len; i++) GH_escapeChar(s, str[i]);
-    } else {
-        char* str = (char*)v;
-        uint16_t len = strlen(str);
-        for (uint16_t i = 0; i < len; i++) GH_escapeChar(s, str[i]);
-    }
-}
-bool GH_needsEscape(const String& str) {
-    const char* cs = str.c_str();
-    char c;
-    for (uint16_t i = 0; i < str.length(); i++) {
-        c = cs[i];
-        if (c < 13 || c == '\"' || c == '\'' || c == '\\') return 1;
-    }
-    return 0;
-}
 String GH_listIdx(const String& li, int idx, char div) {
     int cnt = 0, p = 0, i = 0;
     while (1) {
@@ -84,6 +34,126 @@ String GH_listIdx(const String& li, int idx, char div) {
     return _GH_empty_str;
 }
 
+void GH_escapeChar(String* s, char c) {
+    switch (c) {
+        case 0 ... 13:
+            *s += '\\';
+            switch (c) {
+                case '\r':
+                    *s += 'r';
+                    break;
+                case '\n':
+                    *s += 'n';
+                    break;
+                case '\t':
+                    *s += 't';
+                    break;
+            }
+            break;
+
+        case '\"':
+            *s += '\\';
+            *s += '\"';
+            break;
+
+        case '\\':
+            *s += '\\';
+            *s += '\\';
+
+        default:
+            *s += c;
+    }
+}
+
+void GH_addEsc(String* s, VSPTR str, bool fstr, char sym) {
+    if (!str) return;
+    PGM_P cstr = (PGM_P)str;
+    if (fstr) {
+        uint16_t len = strlen_P((PGM_P)str);
+        if (memchr_P(cstr, '\"', len)) {
+            char c;
+            for (uint16_t i = 0; i < len; i++) {
+                c = pgm_read_byte(cstr + i);
+                if (c == sym) *s += '\\';
+                *s += c;
+            }
+        } else {
+            *s += (FSTR)str;
+        }
+    } else {
+        if (strchr(cstr, sym)) {
+            uint16_t len = strlen(cstr);
+            for (uint16_t i = 0; i < len; i++) {
+                if (cstr[i] == sym) *s += '\\';
+                *s += cstr[i];
+            }
+        } else {
+            *s += cstr;
+        }
+    }
+}
+/*
+void GH_addEsc(String* s, VSPTR str, bool fstr, const char* sym) {
+    if (!str) return;
+    uint8_t am = strlen(sym);
+    PGM_P cstr = (PGM_P)str;
+    if (fstr) {
+        uint16_t len = strlen_P((PGM_P)str);
+        bool esc = false;
+        if (am == 1) esc = memchr_P(cstr, sym[0], len);
+        else {
+            for (uint8_t i = 0; i < am; i++) {
+                if (memchr_P(cstr, sym[i], len)) {
+                    esc = 1;
+                    break;
+                }
+            }
+        }
+        if (esc) {
+            char c;
+            for (uint16_t i = 0; i < len; i++) {
+                c = pgm_read_byte(cstr + i);
+                if (am == 1) {
+                    if (c == sym[0]) *s += '\\';
+                } else {
+                    for (uint8_t ii = 0; ii < am; ii++) {
+                        if (c == sym[ii]) *s += '\\';
+                    }
+                }
+                *s += c;
+            }
+        } else {
+            *s += (FSTR)str;
+        }
+    } else {
+        bool esc = false;
+        if (am == 1) esc = strchr(cstr, sym[0]);
+        else {
+            for (uint8_t i = 0; i < am; i++) {
+                if (strchr(cstr, sym[i])) {
+                    esc = 1;
+                    break;
+                }
+            }
+        }
+        if (esc) {
+            uint16_t len = strlen(cstr);
+            for (uint16_t i = 0; i < len; i++) {
+                if (am == 1) {
+                    if (cstr[i] == sym[0]) *s += '\\';
+                } else {
+                    for (uint8_t ii = 0; ii < am; ii++) {
+                        if (cstr[i] == sym[ii]) *s += '\\';
+                    }
+                }
+                *s += cstr[i];
+            }
+        } else {
+            *s += cstr;
+        }
+    }
+}
+*/
 // ========================== FS ==========================
 #ifdef GH_ESP_BUILD
 #ifndef GH_NO_FS
@@ -122,9 +192,9 @@ void GH_showFiles(String& answ, const String& path, GH_UNUSED uint8_t levels, ui
             String p(path);
             p += dir.fileName();
             p += '/';
-            answ += '\'';
+            answ += '\"';
             answ += p;
-            answ += "':0,";
+            answ += "\":0,";
             if (count) {
                 *count += answ.length();
                 answ = "";
@@ -133,10 +203,10 @@ void GH_showFiles(String& answ, const String& path, GH_UNUSED uint8_t levels, ui
             GH_showFiles(answ, p);
         }
         if (dir.isFile() && dir.fileName().length()) {
-            answ += '\'';
+            answ += '\"';
             answ += path;
             answ += dir.fileName();
-            answ += "':";
+            answ += "\":";
             answ += dir.fileSize();
             answ += ',';
             if (count) {
@@ -152,20 +222,20 @@ void GH_showFiles(String& answ, const String& path, GH_UNUSED uint8_t levels, ui
     File file;
     while (file = root.openNextFile()) {
         if (file.isDirectory()) {
-            answ += '\'';
+            answ += '\"';
             answ += file.path();
-            answ += "/':0,";
+            answ += "/\":0,";
             if (count) {
                 *count += answ.length();
                 answ = "";
             }
             if (levels) GH_showFiles(answ, file.path(), levels - 1);
         } else {
-            answ += '\'';
+            answ += '\"';
             if (levels != GH_FS_DEPTH) answ += path;
             answ += '/';
             answ += file.name();
-            answ += "':";
+            answ += "\":";
             answ += file.size();
             answ += ',';
             if (count) {

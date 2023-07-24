@@ -5,7 +5,7 @@
 class GHpos {
    public:
     GHpos() {}
-    GHpos(int16_t nx, int16_t ny) : x(nx), y(ny) {}
+    GHpos(int16_t nx, int16_t ny, bool nc = 0) : x(nx), y(ny), _changed(nc) {}
 
     bool changed() {
         return _changed ? (_changed = 0, 1) : 0;

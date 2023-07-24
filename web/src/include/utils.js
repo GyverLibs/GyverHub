@@ -90,9 +90,6 @@ function log(text) {
   if (!log_network && (texts.includes('discover') || texts.startsWith('Post') || texts.startsWith('Got'))) return;
   console.log(text);
 }
-function window_ip() {
-  return window.location.href.split('/')[2].split(':')[0];
-}
 function openURL(url) {
   window.open(url, '_blank').focus();
 }
@@ -148,6 +145,14 @@ function ratio() {
 }
 function resize_h() {
   showGauges();
+}
+function waitAnimationFrame() {
+  return new Promise(res => {
+    requestAnimationFrame(() => res());
+  });
+}
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // ========== POPUP ==============
@@ -230,6 +235,10 @@ function update_ip_h() {
 }
 function checkIP(ip) {
   return Boolean(ip.match(/^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|$)){4}$/));
+}
+function window_ip() {
+  let ip = window.location.href.split('/')[2].split(':')[0];
+  return checkIP(ip) ? ip : 'error';
 }
 
 function getIPs() {

@@ -71,16 +71,16 @@ class GHcanvas {
     void custom(const String& s) {
         if (!ps) return;
         _checkFirst();
-        _quot();
-        GH_escapeStr(ps, s.c_str(), false);
-        _quot();
+        _dquot();
+        _add(s.c_str());
+        _dquot();
     }
     void custom(FSTR s) {
         if (!ps) return;
         _checkFirst();
-        _quot();
-        GH_escapeStr(ps, s, true);
-        _quot();
+        _dquot();
+        _add(s);
+        _dquot();
     }
 
     // =====================================================
@@ -289,7 +289,7 @@ class GHcanvas {
         addCmd(0);
         _div();
         _color(hex, a);
-        _quot();
+        _dquot();
     }
 
     // цвет обводки
@@ -297,7 +297,7 @@ class GHcanvas {
         addCmd(1);
         _div();
         _color(hex, a);
-        _quot();
+        _dquot();
     }
 
     // цвет тени
@@ -305,7 +305,7 @@ class GHcanvas {
         addCmd(2);
         _div();
         _color(hex, a);
-        _quot();
+        _dquot();
     }
 
     // размытость тени, px
@@ -313,7 +313,7 @@ class GHcanvas {
         addCmd(3);
         _div();
         _add(v);
-        _quot();
+        _dquot();
     }
 
     // отступ тени, px
@@ -321,7 +321,7 @@ class GHcanvas {
         addCmd(4);
         _div();
         _add(v);
-        _quot();
+        _dquot();
     }
 
     // отступ тени, px
@@ -329,7 +329,7 @@ class GHcanvas {
         addCmd(5);
         _div();
         _add(v);
-        _quot();
+        _dquot();
     }
 
     // края линий: CV_BUTT (умолч), CV_ROUND, CV_SQUARE
@@ -338,7 +338,7 @@ class GHcanvas {
         addCmd(11);
         _div();
         _add(v);
-        _quot();
+        _dquot();
     }
 
     // соединение линий: CV_MITER (умолч), CV_BEVEL, CV_ROUND
@@ -347,7 +347,7 @@ class GHcanvas {
         addCmd(12);
         _div();
         _add(v);
-        _quot();
+        _dquot();
     }
 
     // ширина линий, px
@@ -355,7 +355,7 @@ class GHcanvas {
         addCmd(6);
         _div();
         _add(v);
-        _quot();
+        _dquot();
     }
 
     // длина соединения CV_MITER, px
@@ -364,7 +364,7 @@ class GHcanvas {
         addCmd(7);
         _div();
         _add(v);
-        _quot();
+        _dquot();
     }
 
     // шрифт: "30px Arial"
@@ -375,7 +375,7 @@ class GHcanvas {
         _dquot();
         _add(v);
         _dquot();
-        _quot();
+        _dquot();
     }
 
     // выравнивание текста: CV_START (умолч), CV_END, CV_CENTER, CV_LEFT, CV_RIGHT
@@ -384,7 +384,7 @@ class GHcanvas {
         addCmd(9);
         _div();
         _add(v);
-        _quot();
+        _dquot();
     }
 
     // позиция текста: CV_ALPHABETIC (умолч), CV_TOP, CV_HANGING, CV_MIDDLE, CV_IDEOGRAPHIC, CV_BOTTOM
@@ -393,7 +393,7 @@ class GHcanvas {
         addCmd(10);
         _div();
         _add(v);
-        _quot();
+        _dquot();
     }
 
     // прозрачность рисовки, 0.0-1.0
@@ -401,7 +401,7 @@ class GHcanvas {
         addCmd(14);
         _div();
         _add(v);
-        _quot();
+        _dquot();
     }
 
     // тип наложения графики: CV_SRC_OVER (умолч), CV_SRC_ATOP, CV_SRC_IN, CV_SRC_OUT, CV_DST_OVER, CV_DST_ATOP, CV_DST_IN, CV_DST_OUT, CV_LIGHTER, CV_COPY, CV_XOR
@@ -410,7 +410,7 @@ class GHcanvas {
         addCmd(13);
         _div();
         _add(v);
-        _quot();
+        _dquot();
     }
 
     // прямоугольник
@@ -418,7 +418,7 @@ class GHcanvas {
         addCmd(17);
         _div();
         _params(4, x, y, w, h);
-        _quot();
+        _dquot();
     }
 
     // скруглённый прямоугольник
@@ -428,7 +428,7 @@ class GHcanvas {
         if (tr < 0) _params(5, x, y, w, h, tl);
         else if (br < 0) _params(6, x, y, w, h, tl, tr);
         else _params(8, x, y, w, h, tl, tr, br, bl);
-        _quot();
+        _dquot();
     }
 
     // закрашенный прямоугольник
@@ -436,7 +436,7 @@ class GHcanvas {
         addCmd(18);
         _div();
         _params(4, x, y, w, h);
-        _quot();
+        _dquot();
     }
 
     // обведённый прямоугольник
@@ -444,7 +444,7 @@ class GHcanvas {
         addCmd(19);
         _div();
         _params(4, x, y, w, h);
-        _quot();
+        _dquot();
     }
 
     // очистить область
@@ -452,25 +452,25 @@ class GHcanvas {
         addCmd(20);
         _div();
         _params(4, x, y, w, h);
-        _quot();
+        _dquot();
     }
 
     // залить
     void fill() {
         addCmd(32);
-        _quot();
+        _dquot();
     }
 
     // обвести
     void stroke() {
         addCmd(33);
-        _quot();
+        _dquot();
     }
 
     // начать путь
     void beginPath() {
         addCmd(34);
-        _quot();
+        _dquot();
     }
 
     // переместить курсор
@@ -478,13 +478,13 @@ class GHcanvas {
         addCmd(21);
         _div();
         _params(2, x, y);
-        _quot();
+        _dquot();
     }
 
     // завершить путь (провести линию на начало)
     void closePath() {
         addCmd(35);
-        _quot();
+        _dquot();
     }
 
     // нарисовать линию от курсора
@@ -492,14 +492,14 @@ class GHcanvas {
         addCmd(22);
         _div();
         _params(2, x, y);
-        _quot();
+        _dquot();
     }
 
     // ограничить область рисования
     // https://www.w3schools.com/tags/canvas_clip.asp
     void clip() {
         addCmd(36);
-        _quot();
+        _dquot();
     }
 
     // провести кривую
@@ -508,7 +508,7 @@ class GHcanvas {
         addCmd(23);
         _div();
         _params(4, cpx, cpy, x, y);
-        _quot();
+        _dquot();
     }
 
     // провести кривую Безье
@@ -517,7 +517,7 @@ class GHcanvas {
         addCmd(24);
         _div();
         _params(6, cp1x, cp1y, cp2x, cp2y, x, y);
-        _quot();
+        _dquot();
     }
 
     // провести дугу (радианы)
@@ -531,7 +531,7 @@ class GHcanvas {
         _comma();
         _add(ea);
         _add(ccw);
-        _quot();
+        _dquot();
     }
 
     // скруглить
@@ -540,7 +540,7 @@ class GHcanvas {
         addCmd(26);
         _div();
         _params(5, x1, y1, x2, y2, r);
-        _quot();
+        _dquot();
     }
 
     // масштабировать область рисования
@@ -549,7 +549,7 @@ class GHcanvas {
         addCmd(15);
         _div();
         _params(2, sw, sh);
-        _quot();
+        _dquot();
     }
 
     // вращать область рисования (в радианах)
@@ -558,7 +558,7 @@ class GHcanvas {
         addCmd(16);
         _div();
         _add(v);
-        _quot();
+        _dquot();
     }
 
     // перемещать область рисования
@@ -567,7 +567,7 @@ class GHcanvas {
         addCmd(25);
         _div();
         _params(2, x, y);
-        _quot();
+        _dquot();
     }
 
     // вывести закрашенный текст, опционально макс. длина
@@ -575,11 +575,12 @@ class GHcanvas {
         addCmd(28);
         _div();
         _dquot();
-        _add(text);
+        //_add(text);
+        if (ps) GH_addEsc(ps, text.c_str());
         _dquot();
         _comma();
         _params(3, x, y, w);
-        _quot();
+        _dquot();
     }
 
     // вывести обведённый текст, опционально макс. длина
@@ -587,11 +588,12 @@ class GHcanvas {
         addCmd(29);
         _div();
         _dquot();
-        _add(text);
+        //_add(text);
+        if (ps) GH_addEsc(ps, text.c_str());
         _dquot();
         _comma();
         _params(3, x, y, w);
-        _quot();
+        _dquot();
     }
 
     // вывести картинку
@@ -602,7 +604,7 @@ class GHcanvas {
         _add(img);
         _comma();
         _params(2, x, y);
-        _quot();
+        _dquot();
     }
     void drawImage(const String& img, int x, int y, int w, int h) {
         addCmd(30);
@@ -610,7 +612,7 @@ class GHcanvas {
         _add(img);
         _comma();
         _params(4, x, y, w, h);
-        _quot();
+        _dquot();
     }
     void drawImage(const String& img, int sx, int sy, int sw, int sh, int x, int y, int w, int h) {
         addCmd(30);
@@ -618,19 +620,19 @@ class GHcanvas {
         _add(img);
         _comma();
         _params(8, sx, sy, sw, sh, x, y, w, h);
-        _quot();
+        _dquot();
     }
 
     // сохранить конфигурацию полотна
     void save() {
         addCmd(37);
-        _quot();
+        _dquot();
     }
 
     // восстановить конфигурацию полотна
     void restore() {
         addCmd(38);
-        _quot();
+        _dquot();
     }
 
    private:
@@ -644,7 +646,7 @@ class GHcanvas {
     }
     void addCmd(int cmd) {
         _checkFirst();
-        _quot();
+        _dquot();
         _add(cmd);
     }
     void _div() {
@@ -654,8 +656,7 @@ class GHcanvas {
         _add('\'');
     }
     void _dquot() {
-        _add("\\");
-        _add("\"");
+        _add('\"');
     }
     void _comma() {
         _add(',');
@@ -677,12 +678,12 @@ class GHcanvas {
     void _font() {
         addCmd(10);
         _div();
-        _dquot();
+        _quot();
         _add(fsize);
         _add(F("px "));
         _add(fname);
-        _dquot();
         _quot();
+        _dquot();
     }
 
     String* ps = nullptr;

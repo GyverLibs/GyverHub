@@ -150,6 +150,9 @@ function render_main(v) {
           <label><span class="icon cfg_icon"></span>Editor</label>
         </div>
         <div class="cfg_row">
+          <label id="edit_path"></label>
+        </div>
+        <div class="cfg_row">
           <label>Wrap text</label>
           <label class="switch"><input type="checkbox" id="editor_wrap" onchange="this.checked?editor_area.classList.remove('c_area_wrap'):editor_area.classList.add('c_area_wrap')"><span class="slider"></span></label>
         </div>
@@ -173,7 +176,7 @@ function render_main(v) {
           <div class="cfg_row">
             <div>
               <button id="fs_format" onclick="format_h()" class="c_btn btn_mini">Format</button>
-              <button id="fs_update" onclick="updatefs_h()" class="c_btn btn_mini">Update</button>
+              <button id="fs_update" onclick="updatefs_h()" class="c_btn btn_mini">Refresh</button>
             </div>
           </div>
         </div>

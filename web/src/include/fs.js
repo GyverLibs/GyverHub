@@ -150,6 +150,7 @@ function editFile(data, idx) {
 
   EL('editor_area').value = b64ToText(data.split('base64,')[1]);//window.atob(data.split('base64,')[1]);
   EL('editor_area').scrollTop = 0;
+  EL('edit_path').innerHTML = fs_arr[idx];
   EL('fsbr').style.display = 'none';
   EL('fsbr_edit').style.display = 'block';
   edit_idx = idx;

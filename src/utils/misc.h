@@ -53,11 +53,9 @@ struct GHparser {
 
 char* GH_splitter(char* list, char div = ',');
 String GH_listIdx(const String& li, int idx, char div = ',');
-
-bool GH_needsEscape(const String& str);
 void GH_escapeChar(String* s, char c);
-void GH_escapeStr(String* s, VSPTR v, bool fstr);
-void GH_escapeStr(String& tar, const String& src);
+void GH_addEsc(String* s, VSPTR str, bool fstr = 0, char sym = '\"');
+//void GH_addEsc(String* s, VSPTR str, bool fstr = 0, const char* sym = "\"");
 
 #ifdef GH_ESP_BUILD
 #ifndef GH_NO_FS

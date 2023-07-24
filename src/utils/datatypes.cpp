@@ -68,10 +68,12 @@ void GHtypeToStr(String* s, void* var, GHdata_t type) {
     }
     switch (type) {
         case GH_STR:
-            *s += *(String*)var;
+            //*s += *(String*)var;
+            GH_addEsc(s, ((String*)var)->c_str());
             break;
         case GH_CSTR:
-            *s += (char*)var;
+            //*s += (char*)var;
+            GH_addEsc(s, var);
             break;
 
         case GH_BOOL:

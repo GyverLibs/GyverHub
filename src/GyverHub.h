@@ -181,13 +181,11 @@ class GyverHub : public HubBuilder, public HubStream {
     // добавить поле в info
     void addInfo(const String& label, const String& text) {
         if (sptr) {
-            *sptr += '\'';
-            if (GH_needsEscape(label)) GH_escapeStr(sptr, label.c_str(), 0);
-            else *sptr += label;
-            *sptr += F("':'");
-            if (GH_needsEscape(text)) GH_escapeStr(sptr, text.c_str(), 0);
-            else *sptr += text;
-            *sptr += F("',");
+            *sptr += '\"';
+            GH_addEsc(sptr, label.c_str());//*sptr += label;
+            *sptr += F("\":\"");
+            GH_addEsc(sptr, text.c_str());//*sptr += text;
+            *sptr += F("\",");
         }
     }
 
@@ -201,15 +199,11 @@ class GyverHub : public HubBuilder, public HubStream {
     // отправить текст в веб-консоль. Опционально цвет
     void print(const String& str, uint32_t color = GH_DEFAULT) {
         if (!focused()) return;
-        String esc_str;
-        bool esc = GH_needsEscape(str);
-        if (esc) GH_escapeStr(esc_str, str);
-
         String answ;
         _jsBegin(answ);
         _jsID(answ);
         _jsStr(answ, F("type"), F("print"));
-        _jsStr(answ, F("text"), esc ? esc_str : str);
+        _jsStr(answ, F("text"), str);
         _jsVal(answ, F("color"), color, true);
         _jsEnd(answ);
         _send(answ);
@@ -270,7 +264,7 @@ class GyverHub : public HubBuilder, public HubStream {
 
     // true - если билдер вызван для запроса компонентов (при загрузке панели управления)
     bool buildUI() {
-        return (bptr && bptr->type == GH_BUILD_UI);
+        return (bptr && (bptr->type == GH_BUILD_UI || bptr->type == GH_BUILD_COUNT));
     }
 
     // получить текущее действие для ручной обработки значений
@@ -317,23 +311,15 @@ class GyverHub : public HubBuilder, public HubStream {
 
     // ответить клиенту. Вызывать в обработчике onData (см. GyverHub.js API)
     void answer(const String& data) {
-        String esc_str;
-        bool esc = GH_needsEscape(data);
-        if (esc) GH_escapeStr(esc_str, data);
-
         String answ;
-        _datasend(answ, esc ? data : esc_str);
+        _datasend(answ, data);
         _answer(answ);
     }
 
     // отправить сырые данные вручную (см. GyverHub.js API)
     void send(const String& data) {
-        String esc_str;
-        bool esc = GH_needsEscape(data);
-        if (esc) GH_escapeStr(esc_str, data);
-
         String answ;
-        _datasend(answ, esc ? data : esc_str);
+        _datasend(answ, data);
         _send(answ);
     }
 
@@ -342,15 +328,11 @@ class GyverHub : public HubBuilder, public HubStream {
     void sendPush(const String& text) {
         if (!running_f) return;
         upd_f = 1;
-        String esc_str;
-        bool esc = GH_needsEscape(text);
-        if (esc) GH_escapeStr(esc_str, text);
-
         String answ;
         _jsBegin(answ);
         _jsID(answ);
         _jsStr(answ, F("type"), F("push"));
-        _jsStr(answ, F("text"), esc ? esc_str : text, true);
+        _jsStr(answ, F("text"), text, true);
         _jsEnd(answ);
         _send(answ, true);
     }
@@ -359,15 +341,11 @@ class GyverHub : public HubBuilder, public HubStream {
     void sendNotice(const String& text, uint32_t color = GH_GREEN) {
         if (!running_f || !focused()) return;
         upd_f = 1;
-        String esc_str;
-        bool esc = GH_needsEscape(text);
-        if (esc) GH_escapeStr(esc_str, text);
-
         String answ;
         _jsBegin(answ);
         _jsID(answ);
         _jsStr(answ, F("type"), F("notice"));
-        _jsStr(answ, F("text"), esc ? esc_str : text);
+        _jsStr(answ, F("text"), text);
         _jsStr(answ, F("color"), color, true);
         _jsEnd(answ);
         _send(answ);
@@ -377,15 +355,11 @@ class GyverHub : public HubBuilder, public HubStream {
     void sendAlert(const String& text) {
         if (!running_f || !focused()) return;
         upd_f = 1;
-        String esc_str;
-        bool esc = GH_needsEscape(text);
-        if (esc) GH_escapeStr(esc_str, text);
-
         String answ;
         _jsBegin(answ);
         _jsID(answ);
         _jsStr(answ, F("type"), F("alert"));
-        _jsStr(answ, F("text"), esc ? esc_str : text, true);
+        _jsStr(answ, F("text"), text, true);
         _jsEnd(answ);
         _send(answ);
     }
@@ -394,11 +368,7 @@ class GyverHub : public HubBuilder, public HubStream {
 
     // отправить update вручную с указанием значения
     void sendUpdate(const String& name, const String& value) {
-        String esc_str;
-        bool esc = GH_needsEscape(value);
-        if (esc) GH_escapeStr(esc_str, value);
-
-        _sendUpdate(name.c_str(), esc ? esc_str.c_str() : value.c_str());
+        _sendUpdate(name.c_str(), value.c_str());
     }
 
     // отправить update по имени компонента (значение будет прочитано в build). Нельзя вызывать из build. Имена можно передать списком через запятую
@@ -418,12 +388,12 @@ class GyverHub : public HubBuilder, public HubStream {
             build.type = GH_BUILD_READ;
             build.action.name = p;
             build.action.count = 0;
-            answ += '\'';
+            answ += '\"';
             answ += p;
-            answ += F("':'");
+            answ += F("\":\"");
             answ.reserve(answ.length() + 64);
             build_cb();
-            answ += F("',");
+            answ += F("\",");
         }
         bptr = nullptr;
         sptr = nullptr;
@@ -442,17 +412,17 @@ class GyverHub : public HubBuilder, public HubStream {
         _jsBegin(answ);
         _jsID(answ);
         _jsStr(answ, F("type"), F("update"));
-        answ += F("'updates':{");
+        answ += F("\"updates\":{");
     }
     void _sendUpdate(const char* name, const char* value) {
         if (!running_f || !focused()) return;
         String answ;
         _updateBegin(answ);
-        answ += '\'';
+        answ += '\"';
         answ += name;
-        answ += F("':'");
-        answ += value;
-        answ += F("'}}\n");
+        answ += F("\":\"");
+        GH_addEsc(&answ, value);//answ += value;
+        answ += F("\"}}\n");
         _send(answ);
     }
 
@@ -462,9 +432,9 @@ class GyverHub : public HubBuilder, public HubStream {
         if (!running_f) return;
         String answ;
         _updateBegin(answ);
-        answ += '\'';
+        answ += '\"';
         answ += name;
-        answ += F("':[");
+        answ += F("\":[");
         answ += cv.buf;
         answ += F("]}}\n");
         _send(answ);
@@ -476,9 +446,9 @@ class GyverHub : public HubBuilder, public HubStream {
         if (!running_f) return;
         cv.buf = "";
         _updateBegin(cv.buf);
-        cv.buf += '\'';
+        cv.buf += '\"';
         cv.buf += name;
-        cv.buf += F("':[");
+        cv.buf += F("\":[");
     }
 
     // закончить отправку холста
@@ -502,16 +472,12 @@ class GyverHub : public HubBuilder, public HubStream {
         if (!running_f) return;
 #ifdef GH_ESP_BUILD
 #ifndef GH_NO_MQTT
-        String esc_str;
-        bool esc = GH_needsEscape(value);
-        if (esc) GH_escapeStr(esc_str, value);
-
         String topic(prefix);
         topic += F("/hub/");
         topic += id;
         topic += F("/get/");
         topic += name;
-        sendMQTT(topic, esc ? esc_str : value);
+        sendMQTT(topic, value);
 #endif
 #endif
     }
@@ -1150,12 +1116,12 @@ class GyverHub : public HubBuilder, public HubStream {
         _jsID(answ);
         _jsStr(answ, F("type"), F("info"));
 
-        answ += F("'info':{'version':{");
+        answ += F("\"info\":{\"version\":{");
         _jsStr(answ, F("Library"), GH_LIB_VERSION);
         if (version) _jsStr(answ, F("Firmware"), version);
 
         checkEndInfo(answ, GH_INFO_VERSION);
-        answ += (F(",'net':{"));
+        answ += (F(",\"net\":{"));
 #ifdef GH_ESP_BUILD
         _jsStr(answ, F("Mode"), WiFi.getMode() == WIFI_AP ? F("AP") : (WiFi.getMode() == WIFI_STA ? F("STA") : F("AP_STA")));
         _jsStr(answ, F("MAC"), WiFi.macAddress());
@@ -1165,7 +1131,7 @@ class GyverHub : public HubBuilder, public HubStream {
         _jsStr(answ, F("AP_IP"), WiFi.softAPIP().toString());
 #endif
         checkEndInfo(answ, GH_INFO_NETWORK);
-        answ += (F(",'memory':{"));
+        answ += (F(",\"memory\":{"));
 
 #ifdef GH_ESP_BUILD
         _jsVal(answ, F("RAM"), String("[") + ESP.getFreeHeap() + ",0]");
@@ -1184,7 +1150,7 @@ class GyverHub : public HubBuilder, public HubStream {
 #endif
 
         checkEndInfo(answ, GH_INFO_MEMORY);
-        answ += (F(",'system':{"));
+        answ += (F(",\"system\":{"));
         _jsVal(answ, F("Uptime"), millis() / 1000ul);
 #ifdef GH_ESP_BUILD
 #ifdef ESP8266
@@ -1241,7 +1207,7 @@ class GyverHub : public HubBuilder, public HubStream {
 
         String answ;
         answ.reserve((chunked ? buf_size : buf_count) + 100);
-        answ = F("\n{'controls':[");
+        answ = F("\n{\"controls\":[");
         buf_mode = chunked ? GH_CHUNKED : GH_NORMAL;
         build.type = GH_BUILD_UI;
         build.action.count = 0;
@@ -1294,7 +1260,7 @@ class GyverHub : public HubBuilder, public HubStream {
         answ.reserve(100);
         GH_showFiles(answ, "/", GH_FS_DEPTH, &count);
         answ.reserve(count + 50);
-        answ = F("\n{'fs':{'/':0,");
+        answ = F("\n{\"fs\":{\"/\":0,");
         GH_showFiles(answ, "/", GH_FS_DEPTH);
         answ[answ.length() - 1] = '}';  // ',' = '}'
         answ += ',';
@@ -1375,10 +1341,10 @@ class GyverHub : public HubBuilder, public HubStream {
         _jsStr(answ, F("type"), F("fetch_next_chunk"));
         _jsVal(answ, F("chunk"), dwn_chunk_count);
         _jsVal(answ, F("amount"), dwn_chunk_amount);
-        answ += F("'data':'");
+        answ += F("\"data\":\"");
         if (file_b) GH_bytesToB64(file_b, file_b_idx, file_b_size, answ);
         else GH_fileToB64(file_d, answ);
-        answ += '\'';
+        answ += '\"';
         _jsEnd(answ);
         _answer(answ);
 #endif
@@ -1454,25 +1420,33 @@ class GyverHub : public HubBuilder, public HubStream {
     // ========================== ADDER ==========================
     template <typename T>
     void _jsVal(String& s, FSTR key, T value, bool last = false) {
-        s += '\'';
+        s += '\"';
         s += key;
-        s += F("':");
+        s += F("\":");
         s += value;
         if (!last) s += ',';
     }
     template <typename T>
     void _jsStr(String& s, FSTR key, T value, bool last = false) {
-        s += '\'';
+        s += '\"';
         s += key;
-        s += F("':'");
+        s += F("\":\"");
         s += value;
-        s += '\'';
+        s += '\"';
+        if (!last) s += ',';
+    }
+    void _jsStr(String& s, FSTR key, const String& value, bool last = false) {
+        s += '\"';
+        s += key;
+        s += F("\":\"");
+        GH_addEsc(&s, value.c_str());
+        s += '\"';
         if (!last) s += ',';
     }
     void _jsID(String& s, bool last = false) {
-        s += F("'id':'");
+        s += F("\"id\":\"");
         s += id;
-        s += '\'';
+        s += '\"';
         if (!last) s += ',';
     }
     void _jsBegin(String& s) {

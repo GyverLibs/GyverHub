@@ -12,24 +12,33 @@
 #include "utils/misc.h"
 #include "utils/pos.h"
 
+#define GH_ROW(h) h.BeginRow();
+#define GH_ROW_END(h) h.EndRow();
+
 class HubBuilder {
    public:
     // ========================== WIDGET ==========================
-    void BeginWidgets(int height = 0) {
+    void BeginRow(int height = 0) {
         if (_isUI()) {
             tab_width = 100;
-            _add(F("{'type':'widget_b','height':"));
+            _add(F("{\"type\":\"row_b\",\"height\":"));
             *sptr += height;
             _end();
         }
     }
+    void BeginWidgets(int height = 0) {
+        BeginRow(height);
+    }
 
-    void EndWidgets() {
+    void EndRow() {
         tab_width = 0;
         if (_isUI()) {
-            _add(F("{'type':'widget_e'"));
+            _add(F("{\"type\":\"row_e\""));
             _end();
         }
+    }
+    void EndWidgets() {
+        EndRow();
     }
 
     void WidgetSize(int width) {
@@ -102,8 +111,10 @@ class HubBuilder {
             _end();
         } else if (bptr->type == GH_BUILD_ACTION) {
             bool act = bptr->parse(name, &(var->state), GH_BOOL, fstr);
-            if (var && act) var->_changed = 1;
-            return act && (bptr->action.value[0] == '1');
+            if (!act) return 0;
+            bool click = bptr->action.value[0] == '2';
+            if (var && !click) var->_changed = 1;
+            return click;
         }
         return 0;
     }
@@ -131,17 +142,14 @@ class HubBuilder {
         if (_isUI()) {
             _begin(F("label"));
             _name(name, fstr);
-            _value();
-            _quot();
-            GH_escapeStr(sptr, value.c_str(), 0);
-            _quot();
+            _value(value.c_str(), 0);
             _label(label, fstr);
             _color(color);
             _size(size);
             _tabw();
             _end();
         } else if (_isRead()) {
-            if (_checkName(name, fstr)) GH_escapeStr(sptr, value.c_str(), 0);
+            if (_checkName(name, fstr)) GH_addEsc(sptr, value.c_str(), 0);
         }
     }
 
@@ -192,7 +200,7 @@ class HubBuilder {
             _tabw();
             _end();
         } else if (_isRead()) {
-            if (_checkName(name, fstr)) GH_escapeStr(sptr, log->read().c_str(), false);
+            if (_checkName(name, fstr)) log->read(sptr);
         }
     }
 
@@ -219,19 +227,16 @@ class HubBuilder {
         if (_isUI()) {
             _begin(F("display"));
             _name(name, fstr);
-            _value();
-            _quot();
-            GH_escapeStr(sptr, value, fstr);
-            _quot();
+            _value(value, fstr);
             _label(label, fstr);
             _color(color);
-            _add(F(",'rows':"));
+            _add(F(",\"rows\":"));
             *sptr += rows;
             _size(size);
             _tabw();
             _end();
         } else if (_isRead()) {
-            if (_checkName(name, fstr)) GH_escapeStr(sptr, value, fstr);
+            if (_checkName(name, fstr)) GH_addEsc(sptr, value, fstr);
         }
     }
 
@@ -258,21 +263,18 @@ class HubBuilder {
         if (_isUI()) {
             _begin(F("table"));
             _name(name, fstr);
-            _value();
-            _quot();
-            GH_escapeStr(sptr, value, fstr);
-            _quot();
-            _add(F(",'align':'"));
+            _value(value, fstr);
+            _add(F(",\"align\":\""));
             _add(align, fstr);
             _quot();
-            _add(F(",'width':'"));
+            _add(F(",\"width\":\""));
             _add(width, fstr);
             _quot();
             _label(label, fstr);
             _tabw();
             _end();
         } else if (_isRead()) {
-            if (_checkName(name, fstr)) GH_escapeStr(sptr, value, fstr);
+            if (_checkName(name, fstr)) GH_addEsc(sptr, value, fstr);
         }
     }
 
@@ -299,15 +301,12 @@ class HubBuilder {
         if (_isUI()) {
             _begin(F("html"));
             _name(name, fstr);
-            _value();
-            _quot();
-            GH_escapeStr(sptr, value, fstr);
-            _quot();
+            _value(value, fstr);
             _label(label, fstr);
             _tabw();
             _end();
         } else if (_isRead()) {
-            if (_checkName(name, fstr)) GH_escapeStr(sptr, value, fstr);
+            if (_checkName(name, fstr)) GH_addEsc(sptr, value, fstr);
         }
     }
 
@@ -322,10 +321,7 @@ class HubBuilder {
     void _js(bool fstr, VSPTR value) {
         if (_isUI()) {
             _begin(F("js"));
-            _value();
-            _quot();
-            GH_escapeStr(sptr, value, fstr);
-            _quot();
+            _value(value, fstr);
             _end();
         }
     }
@@ -377,8 +373,8 @@ class HubBuilder {
             _quot();
             _label(label, fstr);
             if (maxv) _maxv((long)maxv);
-            _add(F(",'regex':'"));
-            GH_escapeStr(sptr, regex, fstr);
+            _add(F(",\"regex\":\""));
+            GH_addEsc(sptr, regex, fstr);
             _quot();
             _color(color);
             _tabw();
@@ -777,7 +773,7 @@ class HubBuilder {
     void Space(int height = 0) {
         if (_isUI()) {
             _begin(F("spacer"));
-            _add(F(",'height':"));
+            _add(F(",\"height\":"));
             *sptr += height;
             _tabw();
             _end();
@@ -868,12 +864,12 @@ class HubBuilder {
         if (_isUI()) {
             _begin(F("canvas"));
             _name(name, fstr);
-            _add(F(",'width':"));
+            _add(F(",\"width\":"));
             *sptr += width;
-            _add(F(",'height':"));
+            _add(F(",\"height\":"));
             *sptr += height;
             _label(label, fstr);
-            if (pos) _add(F(",'active':1"));
+            if (pos) _add(F(",\"active\":1"));
             _value();
             *sptr += '[';
             if (begin && cv) cv->extBuffer(sptr);
@@ -923,7 +919,7 @@ class HubBuilder {
     void Stream(uint16_t port = 82) {
         if (_isUI()) {
             _begin(F("stream"));
-            _add(F(",'port':"));
+            _add(F(",\"port\":"));
             *sptr += port;
             _tabw();
             _end();
@@ -932,10 +928,10 @@ class HubBuilder {
 
     // =========================== JOY ===========================
     bool Joystick_(FSTR name, GHpos* pos = nullptr, bool autoc = 1, bool exp = 0, FSTR label = nullptr, uint32_t color = GH_DEFAULT) {
-        return _joy(true, name, pos, autoc, exp, label, color);
+        return _joy(F("joy"), true, name, pos, autoc, exp, label, color);
     }
     bool Joystick_(CSREF name, GHpos* pos = nullptr, bool autoc = 1, bool exp = 0, CSREF label = "", uint32_t color = GH_DEFAULT) {
-        return _joy(false, name.c_str(), pos, autoc, exp, label.c_str(), color);
+        return _joy(F("joy"), false, name.c_str(), pos, autoc, exp, label.c_str(), color);
     }
 
     bool Joystick(GHpos* pos = nullptr, bool autoc = 1, bool exp = 0) {
@@ -948,15 +944,37 @@ class HubBuilder {
         return Joystick_("", pos, autoc, exp, label.c_str(), color);
     }
 
-    bool _joy(bool fstr, VSPTR name, GHpos* pos, bool autoc, bool exp, VSPTR label, uint32_t color) {
+    // =========================== DPAD ===========================
+    bool Dpad_(FSTR name, GHpos* pos = nullptr, FSTR label = nullptr, uint32_t color = GH_DEFAULT) {
+        return _joy(F("dpad"), true, name, pos, 0, 0, label, color);
+    }
+    bool Dpad_(CSREF name, GHpos* pos = nullptr, CSREF label = "", uint32_t color = GH_DEFAULT) {
+        return _joy(F("dpad"), false, name.c_str(), pos, 0, 0, label.c_str(), color);
+    }
+
+    bool Dpad(GHpos* pos = nullptr) {
+        return Dpad_(0, pos);
+    }
+    bool Dpad(GHpos* pos, FSTR label, uint32_t color = GH_DEFAULT) {
+        return Dpad_(0, pos, label, color);
+    }
+    bool Dpad(GHpos* pos, CSREF label, uint32_t color = GH_DEFAULT) {
+        return Dpad_("", pos, label.c_str(), color);
+    }
+
+    bool _joy(FSTR tag, bool fstr, VSPTR name, GHpos* pos, bool autoc, bool exp, VSPTR label, uint32_t color) {
         if (_nameAuto(name, fstr)) name = nullptr;
         if (_isUI()) {
-            _begin(F("joy"));
+            _begin(tag);
             _name(name, fstr);
-            _add(F(",'auto':"));
-            *sptr += autoc;
-            _add(F(",'exp':"));
-            *sptr += exp;
+            if (autoc) {
+                _add(F(",\"auto\":"));
+                *sptr += autoc;
+            }
+            if (exp) {
+                _add(F(",\"exp\":"));
+                *sptr += exp;
+            }
             _label(label, fstr);
             _color(color);
             _tabw();
@@ -1046,7 +1064,7 @@ class HubBuilder {
     GHbuild* bptr = nullptr;
     virtual void _afterComponent() = 0;
     virtual void refresh() = 0;
-    int tab_width = 0;
+    uint16_t tab_width = 0;
 
     // ========================= PRIVATE =========================
    private:
@@ -1087,7 +1105,7 @@ class HubBuilder {
         }
     }
     void _begin(FSTR type) {
-        _add(F("{'type':'"));
+        _add(F("{\"type\":\""));
         *sptr += type;
         _quot();
     }
@@ -1097,27 +1115,27 @@ class HubBuilder {
         *sptr += ',';
     }
     void _quot() {
-        *sptr += '\'';
+        *sptr += '\"';
     }
     void _tabw() {
         if (tab_width) {
-            _add(F(",'tab_w':"));
+            _add(F(",\"tab_w\":"));
             *sptr += tab_width;
         }
     }
 
     // ================
     void _value() {
-        *sptr += F(",'value':");
+        *sptr += F(",\"value\":");
     }
     void _value(VSPTR value, bool fstr) {
         _value();
         _quot();
-        _add(value, fstr);
+        GH_addEsc(sptr, value, fstr);  //_add(value, fstr);
         _quot();
     }
     void _name(VSPTR name, bool fstr) {
-        _add(F(",'name':'"));
+        _add(F(",\"name\":\""));
         if (name) _add(name, fstr);
         else {
             *sptr += F("_n");
@@ -1126,44 +1144,44 @@ class HubBuilder {
         _quot();
     }
     void _label(VSPTR label, bool fstr) {
-        _add(F(",'label':'"));
-        _add(label, fstr);
+        _add(F(",\"label\":\""));
+        GH_addEsc(sptr, label, fstr);  //_add(label, fstr);
         _quot();
     }
     void _text() {
-        _add(F(",'text':"));
+        _add(F(",\"text\":"));
     }
     void _text(VSPTR text, bool fstr) {
         _text();
         _quot();
-        _add(text, fstr);
+        GH_addEsc(sptr, text, fstr);  //_add(text, fstr);
         _quot();
     }
 
     // ================
     void _color(uint32_t& col) {
         if (col == GH_DEFAULT) return;
-        _add(F(",'color':"));
+        _add(F(",\"color\":"));
         *sptr += col;
     }
     void _size(int& val) {
-        _add(F(",'size':"));
+        _add(F(",\"size\":"));
         *sptr += val;
     }
 
     // ================
     void _minv(float val) {
-        _add(F(",'min':"));
+        _add(F(",\"min\":"));
         *sptr += val;
     }
 
     void _maxv(float val) {
-        _add(F(",'max':"));
+        _add(F(",\"max\":"));
         *sptr += val;
     }
 
     void _step(float val) {
-        _add(F(",'step':"));
+        _add(F(",\"step\":"));
         if (val < 0.01) *sptr += String(val, 4);
         else *sptr += val;
     }

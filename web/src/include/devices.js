@@ -62,7 +62,7 @@ function addDevice(id) {
       <div class="d_head">
         <span><span class="d_name" id="name#${id}">${devices[id].name}</span><sup class="conn_dev" id="Serial#${id}">S</sup><sup class="conn_dev" id="BT#${id}">B</sup><sup class="conn_dev" id="WS#${id}">W</sup><sup class="conn_dev" id="MQTT#${id}">M</sup></span>
       </div>
-      <div class="d_delete" onclick="delete_h('${id}')">x</div>
+      <div class="icon d_delete" onclick="delete_h('${id}')"></div>
     </div>
   </div>`;
 }
@@ -76,6 +76,7 @@ function addButton(ctrl) {
     let label = ctrl.wlabel, icon = '';
     if (ctrl.wlabel.charCodeAt(0) >= 0xF005) {
       icon = label[0];
+      if (isESP()) icon = "";
       label = label.slice(1).trim();
     }
     endButtons();
@@ -95,6 +96,7 @@ function addButton(ctrl) {
 function addButtonIcon(ctrl) {
   if (checkDup(ctrl)) return;
   checkWidget(ctrl);
+  if (isESP()) ctrl.label = "";
   if (wid_row_id) {
     endButtons();
     let inner = renderButton(ctrl.name, 'icon btn_icon', ctrl.name, ctrl.label, ctrl.size, ctrl.color, true);
@@ -119,7 +121,7 @@ function endButtons() {
 }
 function renderButton(title, className, name, label, size, color = null, is_icon = false) {
   let col = (color != null) ? ((is_icon ? ';color:' : ';background:') + intToCol(color)) : '';
-  return `<button id="#${name}" title='${title}' style="font-size:${size}px${col}" class="${className}" onmousedown="if(!touch)click_h('${name}',1)" onmouseup="if(!touch&&pressId)click_h('${name}',0)" onmouseleave="if(pressId&&!touch)click_h('${name}',0);" ontouchstart="touch=1;click_h('${name}',1)" ontouchend="click_h('${name}',0)">${label}</button>`;
+  return `<button id="#${name}" title='${title}' style="font-size:${size}px${col}" class="${className}" onclick="set_h('${name}',2)" onmousedown="if(!touch)click_h('${name}',1)" onmouseup="if(!touch&&pressId)click_h('${name}',0)" onmouseleave="if(pressId&&!touch)click_h('${name}',0);" ontouchstart="touch=1;click_h('${name}',1)" ontouchend="click_h('${name}',0)">${label}</button>`;
 }
 
 // tabs
@@ -220,7 +222,10 @@ function checkLen(arg, len) {
   if (len && arg.value.length > len) arg.value = arg.value.substring(0, len);
 }
 function checkEnter(arg) {
-  if (event.key == 'Enter') set_h(arg.name, arg.value);
+  if (event.key == 'Enter') {
+    if (arg.pattern) sendInput(arg.name);
+    else set_h(arg.name, arg.value);
+  }
 }
 
 // pass
@@ -509,7 +514,7 @@ function addSpinner(ctrl) {
     let inner = `
       <div class="spinner_row">
         <button class="icon cfg_btn btn_no_pad" onclick="spinSpinner(this, -1);set_h('${ctrl.name}',EL('#${ctrl.name}').value);"></button>
-        <input id="#${ctrl.name}" class="cfg_inp spinner input_t" type="number" oninput="resizeSpinner(this)" value="${formatted}" min="${ctrl.min}"
+        <input id="#${ctrl.name}" name="${ctrl.name}" class="cfg_inp spinner input_t" type="number" oninput="resizeSpinner(this)" onkeydown="checkEnter(this)" value="${formatted}" min="${ctrl.min}"
           max="${ctrl.max}" step="${ctrl.step}">
         <button class="icon cfg_btn btn_no_pad" onclick="spinSpinner(this, 1);set_h('${ctrl.name}',EL('#${ctrl.name}').value);"></button>
       </div>
@@ -521,7 +526,7 @@ function addSpinner(ctrl) {
       <label title='${ctrl.name}'>${ctrl.clabel}</label>
       <div class="spinner_row">
         <button class="icon cfg_btn btn_no_pad" onclick="spinSpinner(this, -1);set_h('${ctrl.name}',EL('#${ctrl.name}').value);"></button>
-        <input id="#${ctrl.name}" class="cfg_inp spinner input_t" type="number" oninput="resizeSpinner(this)" value="${formatted}" min="${ctrl.min}"
+        <input id="#${ctrl.name}" name="${ctrl.name}" class="cfg_inp spinner input_t" type="number" oninput="resizeSpinner(this)" onkeydown="checkEnter(this)" value="${formatted}" min="${ctrl.min}"
           max="${ctrl.max}" step="${ctrl.step}">
         <button class="icon cfg_btn btn_no_pad" onclick="spinSpinner(this, 1);set_h('${ctrl.name}',EL('#${ctrl.name}').value);"></button>
       </div>
@@ -824,21 +829,20 @@ function addJoy(ctrl) {
   checkWidget(ctrl);
   endButtons();
   let inner = `
-    <div id="joy#${ctrl.name}" class="joyCont"><canvas id="#${ctrl.name}"></canvas></div>
+    <div class="joyCont"><canvas id="#${ctrl.name}"></canvas></div>
   `;
 
   if (wid_row_id) {
     addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
   } else {
-    EL('controls').innerHTML += `
-    <div id="joy#${ctrl.name}" class="joyCont"><canvas id="#${ctrl.name}"></canvas></div>
-    `;
+    EL('controls').innerHTML += inner;
   }
   joys[ctrl.name] = ctrl;
 }
 function showJoys() {
   for (let joy in joys) {
     joys[joy].joy = new Joystick(joy,
+      joys[joy].type == 'dpad',
       intToCol(joys[joy].color == null ? colors[cfg.maincolor] : joys[joy].color),
       joys[joy].auto,
       joys[joy].exp,
@@ -881,7 +885,7 @@ function addLED(ctrl) {
   checkWidget(ctrl);
   endButtons();
   let ch = ctrl.value ? 'checked' : '';
-  if (ctrl.text) {
+  if (ctrl.text && !isESP()) {
     if (wid_row_id) {
       let inner = `
       <label id="swlabel_${ctrl.name}" class="led_i_cont led_i_cont_tab"><input type="checkbox" class="switch_t" id='#${ctrl.name}' ${ch} disabled><span class="switch_i led_i led_i_tab">${ctrl.text}</span></label>
@@ -915,7 +919,8 @@ function addIcon(ctrl) {
   if (checkDup(ctrl)) return;
   checkWidget(ctrl);
   endButtons();
-  let col = (ctrl.color != null) ? `color:${intToCol(ctrl.color)}` : '';
+  if (isESP()) ctrl.text = "";
+  let col = (ctrl.color != null) ? `color:${intToCol(ctrl.color)}` : '';
   if (wid_row_id) {
     let inner = `
     <span class="icon icon_t" id='#${ctrl.name}' style="${col}">${ctrl.text}</span>

@@ -547,9 +547,10 @@ body::-webkit-scrollbar-thumb {
 .d_delete {
   position: relative;
   padding: 0 2px;
-  top: -22px;
+  top: -17px;
   right: 6px;
   color: var(--tab);
+  font-size: 14px;
 }
 .device:hover .d_delete{
   color: rgba(255, 0, 0, 0.603);
@@ -921,6 +922,7 @@ img.colorpick-eyedropper-input-trigger {
   margin: 3px 7px;
   white-space: nowrap;
   text-decoration: none;
+  user-select: none;
 }
 
 .c_btn:hover {
@@ -1378,7 +1380,7 @@ input:checked+.chbutton_s {
 
 .widget_row {
   display: flex;
-  min-height: 80px;
+  min-height: 70px;
 }
 
 .widget {
@@ -1403,7 +1405,7 @@ input:checked+.chbutton_s {
 .widget_label {
   font-size: 11.5px;
   color: var(--font3);
-  margin: 7px 7px 0px 7px;
+  margin: 3px 7px 0px 7px;;
   text-transform: uppercase;
   white-space: nowrap;
   overflow-x: clip;

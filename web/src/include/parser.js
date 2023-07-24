@@ -1,5 +1,4 @@
 let push_timer = 0;
-let delay_tmr = null;
 let prev_set = null;
 
 function applyUpdate(name, value) {
@@ -92,8 +91,10 @@ function compareDevice(mem, dev) {
 }
 function parseDevice(fromID, text, conn, ip = 'unset') {
   let device;
+  text = text.trim().replaceAll(/\\([^\"])/ig, "\\\\$1").replaceAll("\n", "\\n").replaceAll("\r", "\\r").replaceAll("\t", "\\t");
+
   try {
-    device = JSON.parse(text.replaceAll("\'", "\""));
+    device = JSON.parse(text);
   } catch (e) {
     log('Wrong packet (JSON):' + text);
     return;
@@ -326,8 +327,6 @@ function parseDevice(fromID, text, conn, ip = 'unset') {
   }
 }
 function showControls(controls, from_buffer = false, conn = Conn.NONE, ip = 'unset') {
-  if (delay_tmr) clearTimeout(delay_tmr);
-  delay_tmr = null;
   EL('controls').style.visibility = 'hidden';
   EL('controls').innerHTML = '';
   if (!controls) return;
@@ -378,13 +377,13 @@ function showControls(controls, from_buffer = false, conn = Conn.NONE, ip = 'uns
       case 'html': addHTML(ctrl); break;
       case 'flags': addFlags(ctrl); break;
       case 'log': addLog(ctrl); break;
-      case 'widget_b': beginWidgets(ctrl); break;
-      case 'widget_e': endWidgets(); break;
+      case 'row_b': case 'widget_b': beginWidgets(ctrl); break;
+      case 'row_e': case 'widget_e': endWidgets(); break;
       case 'canvas': addCanvas(ctrl); break;
       case 'gauge': addGauge(ctrl); break;
       case 'image': addImage(ctrl); break;
       case 'stream': addStream(ctrl, conn, ip); break;
-      case 'joy': addJoy(ctrl); break;
+      case 'dpad': case 'joy': addJoy(ctrl); break;
       case 'js': eval(ctrl.value); break;
       case 'confirm': confirms[ctrl.name] = { label: ctrl.label }; break;
       case 'prompt': prompts[ctrl.name] = { label: ctrl.label, value: ctrl.value }; break;
@@ -401,20 +400,30 @@ function showControls(controls, from_buffer = false, conn = Conn.NONE, ip = 'uns
   moveSliders();
   scrollDown();
   resizeSpinners();
-
-  delay_tmr = setTimeout(() => {
-    if (dup_names.length) showPopupError('Duplicated names: ' + dup_names);
-    showCanvases();
-    showGauges();
-    showPickers();
-    showJoys();
-    if (!from_buffer) nextFile();
-    EL('controls').style.visibility = 'visible';
-    delay_tmr = null;
-  }, 10);
-
-  if (!gauges.length && !canvases.length && !pickers.length && !joys.length) EL('controls').style.visibility = 'visible';
+  if (!from_buffer) nextFile();
+  renderElms().then(r => { });
 }
+async function renderElms() {
+  while (1) {
+    await waitAnimationFrame();
+    let end = 1;
+    for (let i in gauges) if (EL('#' + i) == null) end = 0;
+    for (let i in canvases) if (EL('#' + i) == null) end = 0;
+    for (let i in joys) if (EL('#' + i) == null) end = 0;
+    for (let i in pickers) if (EL('#' + i) == null) end = 0;
+
+    if (end) {
+      if (dup_names.length) showPopupError('Duplicated names: ' + dup_names);
+      showCanvases();
+      showGauges();
+      showPickers();
+      showJoys();
+      EL('controls').style.visibility = 'visible';
+      break;
+    }
+  }
+}
+
 function showInfo(device) {
   function addInfo(el, label, value, title = '') {
     EL(el).innerHTML += `
