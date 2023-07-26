@@ -184,7 +184,7 @@ function render_main(v) {
 
       <div class="cfg_col">
         <div class="cfg_row cfg_head">
-          <label><span class="icon cfg_icon"></span>Upload</label>
+          <label><span class="icon cfg_icon"></span>Upload path</label>
         </div>
         <div id="fs_upload">
           <div class="upload_row">

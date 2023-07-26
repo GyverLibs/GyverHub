@@ -70,7 +70,12 @@ void GH_addEsc(String* s, VSPTR str, bool fstr, char sym) {
     PGM_P cstr = (PGM_P)str;
     if (fstr) {
         uint16_t len = strlen_P((PGM_P)str);
+
+#ifdef ESP32
+        if (memchr(cstr, '\"', len)) {
+#else
         if (memchr_P(cstr, '\"', len)) {
+#endif
             char c;
             for (uint16_t i = 0; i < len; i++) {
                 c = pgm_read_byte(cstr + i);

@@ -91,7 +91,7 @@ function compareDevice(mem, dev) {
 }
 function parseDevice(fromID, text, conn, ip = 'unset') {
   let device;
-  text = text.trim().replaceAll(/\\([^\"])/ig, "\\\\$1").replaceAll("\n", "\\n").replaceAll("\r", "\\r").replaceAll("\t", "\\t");
+  text = text.trim().replaceAll(/([^\\])\\([^\"\\nrt])/ig, "$1\\\\$2").replaceAll(/\t/ig, "\\t").replaceAll(/\n/ig, "\\n").replaceAll(/\r/ig, "\\r");
 
   try {
     device = JSON.parse(text);

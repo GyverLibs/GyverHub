@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>GyverHub v0.48b</title>
+  <title>GyverHub v0.49b</title>
   <meta name="description" content="Arduino/ESP8266/ESP32 Web Control Panel">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <style>
@@ -206,7 +206,7 @@ let hub=new GyverHub();function render_main(v){head_cont.innerHTML=`
 </div>
 <div class="cfg_col">
 <div class="cfg_row cfg_head">
-<label><span class="icon cfg_icon"></span>Upload</label>
+<label><span class="icon cfg_icon"></span>Upload path</label>
 </div>
 <div id="fs_upload">
 <div class="upload_row">
@@ -472,7 +472,7 @@ Contribution:
 </div>
 <div id="bottom_space"></div>
 `;}
-const app_title='GyverHub';const non_esp='__ESP__';const non_app='';const app_version='0.48b';const log_enable=true;const log_network=false;const colors={ORANGE:0xd55f30,YELLOW:0xd69d27,GREEN:0x37A93C,MINT:0x25b18f,AQUA:0x2ba1cd,BLUE:0x297bcd,VIOLET:0x825ae7,PINK:0xc8589a,};const fonts=['monospace','system-ui','cursive','Arial','Verdana','Tahoma','Trebuchet MS','Georgia','Garamond',];const themes={DARK:0,LIGHT:1};const baudrates=[4800,9600,19200,38400,57600,74880,115200,230400,250000,500000,1000000,2000000];const theme_cols=[['#1b1c20','#26272c','#eee','#ccc','#141516','#444','#0e0e0e','dark','#222','#000'],['#eee','#fff','#111','#333','#ddd','#999','#bdbdbd','light','#fff','#000000a3']];function isSSL(){return window.location.protocol=='https:';}
+const app_title='GyverHub';const non_esp='__ESP__';const non_app='';const app_version='0.49b';const log_enable=true;const log_network=false;const colors={ORANGE:0xd55f30,YELLOW:0xd69d27,GREEN:0x37A93C,MINT:0x25b18f,AQUA:0x2ba1cd,BLUE:0x297bcd,VIOLET:0x825ae7,PINK:0xc8589a,};const fonts=['monospace','system-ui','cursive','Arial','Verdana','Tahoma','Trebuchet MS','Georgia','Garamond',];const themes={DARK:0,LIGHT:1};const baudrates=[4800,9600,19200,38400,57600,74880,115200,230400,250000,500000,1000000,2000000];const theme_cols=[['#1b1c20','#26272c','#eee','#ccc','#141516','#444','#0e0e0e','dark','#222','#000'],['#eee','#fff','#111','#333','#ddd','#999','#bdbdbd','light','#fff','#000000a3']];function isSSL(){return window.location.protocol=='https:';}
 function isLocal(){return window.location.href.startsWith('file')||checkIP(window_ip())||window_ip()=='localhost';}
 function isApp(){return!non_app;}
 function isPWA(){return(window.matchMedia('(display-mode: standalone)').matches)||(window.navigator.standalone)||document.referrer.includes('android-app://');}
@@ -1007,7 +1007,7 @@ else if(cl.contains('gauge_t')){if(name in gauges){gauges[name].value=Number(val
 else if(cl.contains('flags_t')){let flags=document.getElementById('#'+name).getElementsByTagName('input');let val=value;for(let i=0;i<flags.length;i++){flags[i].checked=val&1;val>>=1;}}}
 function updateDevice(mem,dev){mem.id=dev.id;mem.name=dev.name;mem.icon=dev.icon;mem.PIN=dev.PIN;mem.version=dev.version;mem.max_upl=dev.max_upl;mem.modules=dev.modules;mem.ota_t=dev.ota_t;save_devices();}
 function compareDevice(mem,dev){return mem.id!=dev.id||mem.name!=dev.name||mem.icon!=dev.icon||mem.PIN!=dev.PIN||mem.version!=dev.version||mem.max_upl!=dev.max_upl||mem.modules!=dev.modules||mem.ota_t!=dev.ota_t;}
-function parseDevice(fromID,text,conn,ip='unset'){let device;text=text.trim().replaceAll(/\\([^\"])/ig,"\\\\$1").replaceAll("\n","\\n").replaceAll("\r","\\r").replaceAll("\t","\\t");try{device=JSON.parse(text);}catch(e){log('Wrong packet (JSON):'+text);return;}
+function parseDevice(fromID,text,conn,ip='unset'){let device;text=text.trim().replaceAll(/([^\\])\\([^\"\\nrt])/ig,"$1\\\\$2").replaceAll(/\t/ig,"\\t").replaceAll(/\n/ig,"\\n").replaceAll(/\r/ig,"\\r");try{device=JSON.parse(text);}catch(e){log('Wrong packet (JSON):'+text);return;}
 let id=device.id;if(!id)return log('Wrong packet (ID)');if(fromID!='broadcast'&&fromID!=id)return log('Wrong packet (Unknown ID)');if(fromID=='broadcast'&&device.type!='discover'&&device.type!='update'&&device.type!='push'&&device.type!='print'&&device.type!='data')return log('Wrong packet (error)');log('Got packet from #'+id+' '+device.type+' via '+ConnNames[conn]);if(id==focused){stop_tout();showErr(false);change_conn(devices_t[focused].conn);}
 switch(device.type){case'data':break;case'alert':release_all();alert(device.text);break;case'notice':showPopup(device.text,intToCol(device.color));break;case'OK':break;case'ERR':showPopupError(device.text);break;case'discover':if(focused)return;if(device.modules==undefined)device.modules=0;if(device.ota_t==undefined)device.ota_t='bin';if(id in devices){let upd=false;if(compareDevice(devices[id],device))upd=true;if(devices[id].ip=='unset'&&ip!='unset'){devices[id].ip=ip;upd=true;}
 if(upd){log('Update device #'+id);updateDevice(devices[id],device);if(device.icon.length)EL(`icon#${id}`).innerHTML=device.icon;EL(`name#${id}`).innerHTML=device.name?device.name:'Unknown';}}else{log('Add new device #'+id);devices[id]={prefix:hub.cfg.prefix,break_widgets:false,show_names:false,ip:ip};updateDevice(devices[id],device);if(mq_state()){mq_client.subscribe(devices[id].prefix+'/hub/'+id+'/get/#');mq_client.subscribe(devices[id].prefix+'/hub/'+hub.cfg.client_id+'/#');if(!mq_pref_list.includes(devices[id].prefix))mq_pref_list.push(devices[id].prefix);}
