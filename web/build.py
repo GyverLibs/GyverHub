@@ -1,7 +1,7 @@
 # GyverHub Web Builder
 
-version = '0.49b'
-notes = 'Many minor fixes'
+version = '0.50b'
+notes = 'Fix MQTT OTA'
 
 js_files = [
     'src/include/GyverHub.js',

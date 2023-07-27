@@ -41,7 +41,6 @@ function applyUpdate(name, value) {
   else if (cl.contains('select_t')) el.value = value;
   else if (cl.contains('image_t')) {
     files.push({ id: '#' + name, path: (value ? value : EL('#' + name).getAttribute("name")), type: 'img' });
-    //EL('#' + name).innerHTML = waiter;
     EL('wlabel#' + name).innerHTML = ' [0%]';
     if (files.length == 1) nextFile();
   }
@@ -400,10 +399,9 @@ function showControls(controls, from_buffer = false, conn = Conn.NONE, ip = 'uns
   moveSliders();
   scrollDown();
   resizeSpinners();
-  if (!from_buffer) nextFile();
-  renderElms().then(r => { });
+  renderElms(from_buffer);
 }
-async function renderElms() {
+async function renderElms(from_buffer) {
   while (1) {
     await waitAnimationFrame();
     let end = 1;
@@ -419,6 +417,7 @@ async function renderElms() {
       showPickers();
       showJoys();
       EL('controls').style.visibility = 'visible';
+      if (!from_buffer) nextFile();
       break;
     }
   }

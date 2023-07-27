@@ -22,7 +22,10 @@ let btn_row_id = null;
 let btn_row_count = 0;
 let dis_scroll_f = false;
 
-const waiter = '<div class="waiter"><span style="font-size:50px;color:var(--prim)" class="icon spinning"></span></div>';
+function waiter(size = 50, col = 'var(--prim)', block = true) {
+  return `<div class="waiter ${block ? 'waiter_b' : ''}"><span style="font-size:${size}px;color:${col}" class="icon spinning"></span></div>`;
+}
+
 
 const Modules = {
   INFO: (1 << 0),
@@ -1039,7 +1042,7 @@ function addImage(ctrl) {
   checkWidget(ctrl);
   endButtons();
   let inner = `
-    <div class="image_t" name="${ctrl.value}" id="#${ctrl.name}">${waiter}</div>
+    <div class="image_t" name="${ctrl.value}" id="#${ctrl.name}">${waiter()}</div>
     `;
   if (wid_row_id) {
     addWidget(ctrl.tab_w, ctrl.name, ctrl.wlabel, inner);
@@ -1192,31 +1195,35 @@ function nextFile() {
     post('fetch', fetch_path);
   }
 }
-async function downloadFile() {
+
+function downloadFile() {
   fetching = focused;
-  fetch('http://' + devices[focused].ip + ':' + http_port + files[0].path, { cache: "no-store" })
-    .then((response) => {
-      response.blob().then(blob => {
-        try {
-          const reader = new FileReader();
-          reader.readAsDataURL(blob);
-          reader.onload = function () {
-            downloadFileEnd(this.result.split('base64,')[1]);
-          };
-        } catch (e) {
-          errorFile();
-        }
-      });
-    })
-    .catch((e) => {
+  var xhr = new XMLHttpRequest();
+  xhr.responseType = 'blob';
+  xhr.open('GET', 'http://' + devices[focused].ip + ':' + http_port + files[0].path);
+  xhr.onprogress = function (e) {
+    processFile(Math.round(e.loaded * 100 / e.total));
+  };
+  xhr.onloadend = function (e) {
+    if (e.loaded && e.loaded == e.total) {
+      processFile(100);
+      var reader = new FileReader();
+      reader.readAsDataURL(xhr.response);
+      reader.onloadend = function () {
+        downloadFileEnd(this.result.split('base64,')[1]);
+      }
+    } else {
       errorFile();
-    });
+    }
+  }
+  xhr.send();
 }
+
 function downloadFileEnd(data) {
   switch (files[0].type) {
     case 'img':
       EL(files[0].id).innerHTML = `<img style="width:100%" src="data:${getMime(files[0].path)};base64,${data}">`;
-      EL('wlabel' + files[0].id).innerHTML = '';
+      if (EL('wlabel' + files[0].id)) EL('wlabel' + files[0].id).innerHTML = '';
       break;
   }
   files.shift();
@@ -1225,11 +1232,10 @@ function downloadFileEnd(data) {
   stopFS();
 }
 function processFile(perc) {
-  //EL(files[0].id).innerHTML = `<label>${perc}</label>`;
-  EL('wlabel' + files[0].id).innerHTML = ` [${perc}%]`;
+  if (EL('wlabel' + files[0].id)) EL('wlabel' + files[0].id).innerHTML = ` [${perc}%]`;
 }
 function errorFile() {
-  EL('wlabel' + files[0].id).innerHTML = ' [error]';
+  if (EL('wlabel' + files[0].id)) EL('wlabel' + files[0].id).innerHTML = ' [error]';
   files.shift();
   nextFile();
 }

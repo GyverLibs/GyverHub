@@ -1449,11 +1449,13 @@ input:checked+.chbutton_s {
 }
 
 .waiter {
-  width: 100%;
-  height: 65px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.waiter_b {
+  width: 100%;
+  height: 65px;
 }
 
 .fs_file {

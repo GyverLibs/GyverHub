@@ -403,7 +403,7 @@ function fsbr_h() {
   menu_show(0);
   if (readModule(Modules.FSBR)) {
     post('fsbr');
-    EL('fsbr_inner').innerHTML = waiter;
+    EL('fsbr_inner').innerHTML = waiter();
   }
   EL('fs_browser').style.display = readModule(Modules.FSBR) ? 'block' : 'none';
   EL('fs_upload').style.display = readModule(Modules.UPLOAD) ? 'block' : 'none';

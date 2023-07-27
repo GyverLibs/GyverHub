@@ -67,7 +67,7 @@ function showFsbr(device) {
   let inner = '';
   for (let i in fs_arr) {
     if (fs_arr[i].endsWith('/')) {
-      inner += `<div class="fs_file fs_folder drop_area" onclick="file_upload_path.value='${fs_arr[i]}'/*;file_upload_btn.click()*/" ondrop="uploadFile(event.dataTransfer.files[0],'${fs_arr[i]}')">${fs_arr[i]}</div>`;
+      inner += `<div class="fs_file fs_folder drop_area" onclick="file_upload_path.value='${fs_arr[i]}'/*;file_upload_btn.click()*/" ondrop="file_upload_path.value='${fs_arr[i]}';uploadFile(event.dataTransfer.files[0],'${fs_arr[i]}')">${fs_arr[i]}</div>`;
     } else {
       let none = "style='display:none'";
       inner += `<div class="fs_file" onclick="openFSctrl(${i})">${fs_arr[i]}<div class="fs_weight">${(device.fs[fs_arr[i]] / 1000).toFixed(2)} kB</div></div>
@@ -168,44 +168,32 @@ function editor_cancel() {
   EL('fsbr_edit').style.display = 'none';
 }
 
-/*
 function fetchHTTP(path, name, index) {
-  EL('process#' + index).innerHTML = 'Fetching...';
+  fetching = focused;
+  EL('process#' + index).innerHTML = '0%';
   var xhr = new XMLHttpRequest();
-  xhr.onload = function () {
-    var reader = new FileReader();
-    reader.onloadend = function () {
-      fetchEnd(name, index, reader.result);
-    }
-    reader.readAsDataURL(xhr.response);
-  };
-  xhr.open('GET', 'http://' + devices[focused].ip + ':' + http_port + path);
   xhr.responseType = 'blob';
+  xhr.open('GET', 'http://' + devices[focused].ip + ':' + http_port + path);
+
+  xhr.onprogress = function (e) {
+    EL('process#' + index).innerHTML = Math.round(e.loaded * 100 / e.total) + '%';
+  };
+  xhr.onloadend = function (e) {
+    if (e.loaded && e.loaded == e.total) {
+      EL('process#' + index).innerHTML = '100%';
+      var reader = new FileReader();
+      reader.readAsDataURL(xhr.response);
+      reader.onloadend = function () {
+        fetchEnd(name, index, this.result.split('base64,')[1]);
+      }
+    } else {
+      EL('process#' + index).innerHTML = 'Error';
+      showPopupError('Error fetch ' + path);
+    }
+  }
   xhr.send();
 }
-*/
-async function fetchHTTP(path, name, index) {
-  EL('process#' + index).innerHTML = 'Fetching...';
-  fetching = focused;
 
-  fetch('http://' + devices[focused].ip + ':' + http_port + path, { cache: "no-store" })
-    .then((response) => {
-      response.blob().then(blob => {
-        try {
-          const reader = new FileReader();
-          reader.readAsDataURL(blob);
-          reader.onload = function () {
-            fetchEnd(name, index, this.result.split('base64,')[1]);
-          };
-        } catch (e) {
-          showPopupError('Error fetch ' + path);
-        }
-      });
-    })
-    .catch((e) => {
-      showPopupError('Error fetch ' + path);
-    });
-}
 function fetchEnd(name, index, data) {
   if (!fetching) return;
   EL('download#' + index).style.display = 'inline-block';
@@ -237,22 +225,22 @@ function uploadFile(file, path) {
     if (!confirm('Upload ' + path + ' (' + buffer.length + ' bytes)?')) return clearFiles();
 
     if (devices_t[focused].conn == Conn.WS && devices_t[focused].http_cfg.upload) {
-      EL('file_upload_btn').innerHTML = 'Wait...';
-      let xhr = new XMLHttpRequest();
+      EL('file_upload_btn').innerHTML = waiter(22, 'var(--font_inv)', false);
       let formData = new FormData();
       formData.append('upload', file, path);
+      let xhr = new XMLHttpRequest();
+      xhr.open("POST", 'http://' + devices[focused].ip + ':' + http_port + '/upload');
       xhr.onreadystatechange = function () {
         if (this.responseText == 'OK') showPopup('Done');
         if (this.responseText == 'FAIL') showPopupError('Error');
       }
-      xhr.onload = () => {
+      xhr.onload = function () {
         setLabelTout('file_upload_btn', 'Done', 'Upload');
         post('fsbr');
       }
-      xhr.onerror = () => {
+      xhr.onerror = function () {
         setLabelTout('file_upload_btn', 'Error!', 'Upload');
       }
-      xhr.open("POST", 'http://' + devices[focused].ip + ':' + http_port + '/upload');
       xhr.send(formData);
 
     } else {
@@ -300,23 +288,22 @@ function uploadOta(file, type) {
   reader.onload = function (e) {
     if (!e.target.result) return clearFiles();
 
-    if (devices_t[focused].http_cfg.ota) {
-      EL('ota_label').innerHTML = 'WAIT...';
-      let xhr = new XMLHttpRequest();
+    if (devices_t[focused].conn == Conn.WS && devices_t[focused].http_cfg.ota) {
+      EL('ota_label').innerHTML = waiter(25, 'var(--font)', false);
       let formData = new FormData();
       formData.append(type, file, file.name);
+      let xhr = new XMLHttpRequest();
+      xhr.open("POST", 'http://' + devices[focused].ip + ':' + http_port + '/ota?type=' + type);
       xhr.onreadystatechange = function () {
         if (this.responseText == 'OK') showPopup('Done');
         if (this.responseText == 'FAIL') showPopupError('Error');
       }
-      xhr.onload = () => {
+      xhr.onload = function () {
         setLabelTout('ota_label', 'DONE', 'IDLE');
       }
-      xhr.onerror = () => {
+      xhr.onerror = function () {
         setLabelTout('ota_label', 'ERROR', 'IDLE');
       }
-
-      xhr.open("POST", 'http://' + devices[focused].ip + ':' + http_port + '/ota?type=' + type);
       xhr.send(formData);
 
     } else {

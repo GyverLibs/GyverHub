@@ -97,7 +97,7 @@ class Serial {
     this.lock = false;
   }
 
-  close() {
+  async close() {
     if (this.reader) this.reader.cancel();
     this.lock = false;
   }
@@ -114,6 +114,7 @@ class Serial {
     }
   }
 }
+
 class Bluetooth {
   // based on https://github.com/loginov-rocks/Web-Bluetooth-Terminal
   constructor() {
@@ -132,19 +133,16 @@ class Bluetooth {
   }
   onclose() {
   }
-  onerror(text) {
+  onerror(e) {
   }
   state() {
     return (this._device);
   }
 
   open() {
-    return this._connectToDevice(this._device).
-      then(() => {
-        this.onopen();
-      }).catch(e => {
-        this.onerror('[BT] ' + e);
-      });
+    return this._connectToDevice(this._device)
+      .then(() => this.onopen())
+      .catch(e => this._onerror(e));
   }
 
   close() {
@@ -158,7 +156,8 @@ class Bluetooth {
   }
 
   send(data) {
-    if (!this._characteristic) return this.onerror('[BT] No device');
+    if (!this._characteristic) return this._onerror('No device');
+
     data += '\0';
     const chunks = this.constructor._splitByLength(data, this._maxCharacteristicValueLength);
     let promise = this._writeToCharacteristic(this._characteristic, chunks[0]);
@@ -166,7 +165,8 @@ class Bluetooth {
     for (let i = 1; i < chunks.length; i++) {
       promise = promise.then(() => new Promise((resolve, reject) => {
         if (!this._characteristic) {
-          reject(new Error('Device has been disconnected'));
+          this._onerror('Device has been disconnected');
+          reject();
         }
         this._writeToCharacteristic(this._characteristic, chunks[i]).
           then(resolve).
@@ -181,12 +181,16 @@ class Bluetooth {
   }
 
   // private
+  _onerror(e) {
+    this.onerror('[BT] ' + e);
+  }
+  
   _connectToDevice(device) {
     return (device ? Promise.resolve(device) : this._requestBluetoothDevice()).
       then((device) => this._connectDeviceAndCacheCharacteristic(device)).
       then((characteristic) => this._startNotifications(characteristic)).
       catch((error) => {
-        this.onerror('[BT] ' + error);
+        this._onerror(error);
         return Promise.reject(error);
       });
   }
@@ -247,7 +251,7 @@ class Bluetooth {
       then((characteristic) => this._startNotifications(characteristic)).
       then(() => {
         this.onopen();
-      }).catch((error) => this.onerror('[BT] ' + error));
+      }).catch((e) => this._onerror(e));
   }
 
   _handleCharacteristicValueChanged(event) {
