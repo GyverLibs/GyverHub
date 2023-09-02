@@ -502,6 +502,7 @@ class GyverHub : public HubBuilder, public HubStream {
             build.action.count = 0;
             build_cb();
             if (build.type == GH_BUILD_NONE) sendGet(p, value);
+            value = "";
         }
         bptr = nullptr;
         sptr = nullptr;
@@ -571,13 +572,40 @@ class GyverHub : public HubBuilder, public HubStream {
 
         if (p.size == 3) return sendEvent(GH_UNKNOWN, from);
         // p.size >= 4
+        
+#ifdef GH_ESP_BUILD
+#ifndef GH_NO_MQTT
+        // MQTT HOOK
+        if (from == GH_MQTT && build_cb) {
+            const char* name = p.str[3];
+            const char* cmd = p.str[2];
+            if (!strcmp_P(cmd, PSTR("read"))) {
+                if (modules.read(GH_MOD_READ)) sendGet(name);
+                client_ptr = nullptr;
+                return sendEvent(GH_READ_HOOK, from);
+            } else if (!strcmp_P(cmd, PSTR("set"))) {
+                if (modules.read(GH_MOD_SET)) {
+                    GHclient client(from, "", source);
+                    GHbuild build(GH_BUILD_ACTION, name, value, client);
+                    bptr = &build;
+                    build_cb();
+                    bptr = nullptr;
+                    client_ptr = nullptr;
+                    if (autoGet_f) sendGet(name, value);
+                    if (autoUpd_f) _sendUpdate(name, value);
+                }
+                return sendEvent(GH_SET_HOOK, from);
+            }
+        }
+#endif
+#endif
 
         const char* cmd = p.str[3];
         int cmdn = GH_getCmd(cmd);
         if (cmdn < 0) return sendEvent(GH_UNKNOWN, from);
-
         const char* client_id = p.str[2];
         const char* name = p.str[4];
+        
         GHclient client(from, client_id, source);
         client_ptr = &client;
 
@@ -589,29 +617,6 @@ class GyverHub : public HubBuilder, public HubStream {
         }
 
         if (p.size == 4) {
-#ifdef GH_ESP_BUILD
-#ifndef GH_NO_MQTT
-            // MQTT HOOK
-            if (from == GH_MQTT && build_cb) {
-                if (!strcmp_P(cmd, PSTR("read"))) {
-                    if (modules.read(GH_MOD_READ)) sendGet(name);
-                    client_ptr = nullptr;
-                    return sendEvent(GH_READ_HOOK, from);
-                } else if (!strcmp_P(cmd, PSTR("set"))) {
-                    if (modules.read(GH_MOD_SET)) {
-                        GHbuild build(GH_BUILD_ACTION, name, value, client);
-                        bptr = &build;
-                        build_cb();
-                        bptr = nullptr;
-                        client_ptr = nullptr;
-                        if (autoGet_f) sendGet(name, value);
-                        if (autoUpd_f) _sendUpdate(name, value);
-                    }
-                    return sendEvent(GH_SET_HOOK, from);
-                }
-            }
-#endif
-#endif
             setFocus(from);
 
             switch (cmdn) {
