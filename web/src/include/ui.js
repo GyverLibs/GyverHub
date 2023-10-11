@@ -152,7 +152,10 @@ async function checkUpdates(id) {
   let ver = devices[id].version;
   if (!ver.includes('@')) return;
   let namever = ver.split('@');
-  const resp = await fetch(`https://raw.githubusercontent.com/${namever[0]}/master/project.json`, { cache: "no-store" });
+  let ver_arr = namever[0].split("/");
+  ver_arr.splice(2, 0, "master");
+  let url_start = "https://raw.githubusercontent.com/" + ver_arr.join("/");
+  const resp = await fetch(url_start + "/project.json", { cache: "no-store" });
   let proj = await resp.text();
   try {
     proj = JSON.parse(proj);
@@ -164,7 +167,7 @@ async function checkUpdates(id) {
   updates.push(id);
   if (confirm('Available new version v' + proj.version + ' for device [' + namever[0] + ']. Notes:\n' + proj.notes + '\n\nUpdate firmware?')) {
     if ('ota_url' in proj) otaUrl(proj.ota_url, 'flash');
-    else otaUrl(`https://raw.githubusercontent.com/${namever[0]}/master/bin/firmware.bin${devices[id].ota_t == 'bin' ? '' : ('.' + devices[id].ota_t)}`, 'flash');
+    else otaUrl(url_start + `/bin/firmware.bin${devices[id].ota_t == 'bin' ? '' : ('.' + devices[id].ota_t)}`, 'flash');
   }
 }
 async function pwa_install(ssl) {
