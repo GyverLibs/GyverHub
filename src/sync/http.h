@@ -86,10 +86,34 @@ class HubHTTP {
 #endif
 
 #ifndef GH_NO_HTTP_UPLOAD
+
+				//4tr begin //lite file upload 
+				server.on(
+            "/upload", 
+            HTTP_GET, 
+            [this]() 
+            	{ 
+            		server.send(
+            		200, 
+            		F("text/html"),
+            		F("<body><form method=\"POST\" action=\"/upload\" enctype=\"multipart/form-data\">\n\<h3>Lite Http uploader</h3>\n \<p>\n<input type=\"text\" value=\"/hub\" name=\"dir\"> <input type=\"file\" name=\"filename\"><input type=\"submit\" name=\"lfu\"></form></body>")
+            		); 
+            	}
+            
+            );
+				// 4tr end
         server.on(
             "/upload", HTTP_POST, [this]() { server.send(200, F("text/plain"), F("OK")); }, [this]() {
                 HTTPUpload& upload = server.upload();
                 if (upload.status == UPLOAD_FILE_START) {
+                //4tr begin //lite file upload 
+                if (server.arg("lfu"))
+                { 
+                	if (server.arg("dir")) {
+                		upload.filename = server.arg("dir") + "/" + upload.filename;
+                	}
+                }
+                // 4tr end		
                     _fsmakedir(upload.filename.c_str());
                     file = GH_FS.open(upload.filename, "w");
                     if (!file) server.send(500, F("text/plain"), F("FAIL"));
@@ -189,7 +213,14 @@ class HubHTTP {
 #ifndef GH_NO_FS
         server.on("/", [this]() {
             File f = GH_FS.open("/hub/index.html.gz", "r");
-            if (f) server.streamFile(f, "text/html");
+            if (f) {server.streamFile(f, "text/html");} 
+            //4tr begin //lite file upload 
+            #ifndef GH_NO_HTTP_UPLOAD
+            else {
+            	server.send(200, F("text/html"), F("<META http-equiv=\"refresh\" content=\"2;URL=/upload\">Not found index.html. Redirect upload page"));
+		        }
+		        #endif
+		        //4tr end
         });
         server.on("/script.js", [this]() {
             cache_h();
