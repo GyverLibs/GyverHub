@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>GyverHub v__VER__</title>
+  <!--ICON-->
+  <link rel="icon" href="favicon.svg">
+  <link rel="apple-touch-icon" href="favicon.svg">
+  <!--/ICON-->
+  <meta name="description" content="Arduino/ESP8266/ESP32 Web Control Panel">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <!--PWA-->
+  <link rel="manifest" href="manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="GyverHub">
+  <meta name="apple-mobile-web-app-title" content="GyverHub">
+  <meta name="theme-color" content="#37a93c">
+  <meta name="msapplication-navbutton-color" content="#37a93c">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="msapplication-starturl" content="/">
+  <!--/PWA-->
+
+  <!--INC-->
+  <link href="include/nano.min.css" rel="stylesheet">
+  <link href="include/style.css?__VER__=" rel="stylesheet">
+
+  <script src="include/sort-paths.min.js"></script>
+  <script src="include/mqtt.min.js"></script>
+  <script src="include/pickr.min.js"></script>
+  <script src="include/joy.js"></script>
+  <script src="include/GyverHub.js"></script>
+
+  <script src="include/main.js?__VER__="></script>
+  <script src="include/utils.js?__VER__="></script>
+  <script src="include/devices.js?__VER__="></script>
+  <script src="include/connection.js?__VER__="></script>
+  <script src="include/fs.js?__VER__="></script>
+  <script src="include/parser.js?__VER__="></script>
+  <script src="include/ui.js?__VER__="></script>
+  <script src="include/test.js?__VER__="></script>
+  <!--/INC-->
+
+  <!--METRIKA-->
+</head>
+
+<body onresize="resize_h()">
+  <div id="notice" class="notice"></div>
+  <div class="head" id="head_cont"></div>
+  <div class="test" id="test_cont"></div>
+  <div class="projects" id="projects_cont"></div>
+  <div class="main" id="main_cont"></div>
+  <div class="cli" id="cli_cont"></div>
+  <div class="footer" id="footer_cont"></div>
+</body>
+
+</html>
