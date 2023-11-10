@@ -192,7 +192,7 @@ class HubBuilder {
         if (_isUI()) {
             _begin(F("log"));
             _name(name, fstr);
-            _text();
+            _value();
             _quot();
             log->read(sptr);
             _quot();
