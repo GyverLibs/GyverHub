@@ -194,13 +194,13 @@ class HubBuilder {
             _name(name, fstr);
             _value();
             _quot();
-            log->read(sptr);
+            log->read(sptr, true);
             _quot();
             _label(label, fstr);
             _tabw();
             _end();
         } else if (_isRead()) {
-            if (_checkName(name, fstr)) log->read(sptr);
+            if (_checkName(name, fstr)) log->read(sptr, true);
         }
     }
 
