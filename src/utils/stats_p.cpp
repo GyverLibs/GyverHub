@@ -1,0 +1,93 @@
+#include "stats_p.h"
+
+GH_PGM(_GH_RES0, "NONE");
+GH_PGM(_GH_RES1, "BUTTON");
+GH_PGM(_GH_RES2, "OTA");
+GH_PGM(_GH_RES3, "OTA_URL");
+GH_PGM_LIST(_GH_res_list, _GH_RES0, _GH_RES1, _GH_RES2, _GH_RES3);
+FSTR GHreadReason(GHreason_t n) {
+#ifdef GH_ESP_BUILD
+        return (FSTR)_GH_res_list[n];
+#else
+        return (FSTR)pgm_read_word(_GH_res_list + n);
+#endif
+}
+
+GH_PGM(_GH_BLD0, "NONE");
+GH_PGM(_GH_BLD1, "ACTION");
+GH_PGM(_GH_BLD2, "COUNT");
+GH_PGM(_GH_BLD3, "READ");
+GH_PGM(_GH_BLD4, "UI");
+GH_PGM(_GH_BLD5, "TG");
+GH_PGM(_GH_BLD6, "INFO");
+GH_PGM_LIST(_GH_bld_list, _GH_BLD0, _GH_BLD1, _GH_BLD2, _GH_BLD3, _GH_BLD4, _GH_BLD5, _GH_BLD6);
+FSTR GHreadBuild(GHbuild_t n) {
+#ifdef GH_ESP_BUILD
+        return (FSTR)_GH_bld_list[n];
+#else
+        return (FSTR)pgm_read_word(_GH_bld_list + n);
+#endif
+}
+
+GH_PGM(_GH_CON0, "SERIAL");
+GH_PGM(_GH_CON1, "BT");
+GH_PGM(_GH_CON2, "WS");
+GH_PGM(_GH_CON3, "MQTT");
+GH_PGM(_GH_CON4, "SYSTEM");
+GH_PGM_LIST(_GH_con_list, _GH_CON0, _GH_CON1, _GH_CON2, _GH_CON3, _GH_CON4);
+FSTR GHreadConn(GHconn_t n) {
+#ifdef GH_ESP_BUILD
+        return (FSTR)_GH_con_list[n];
+#else
+        return (FSTR)pgm_read_word(_GH_con_list + n);
+#endif
+}
+
+GH_PGM(_GH_STA0, "FOCUS");
+GH_PGM(_GH_STA1, "PING");
+GH_PGM(_GH_STA2, "UNFOCUS");
+GH_PGM(_GH_STA3, "INFO");
+GH_PGM(_GH_STA4, "FSBR");
+GH_PGM(_GH_STA5, "FORMAT");
+GH_PGM(_GH_STA6, "REBOOT");
+GH_PGM(_GH_STA7, "DOWNLOAD_CHUNK");
+GH_PGM(_GH_STA8, "DOWNLOAD_ABORTED");
+GH_PGM(_GH_STA9, "DATA");
+GH_PGM(_GH_STA10, "SET");
+GH_PGM(_GH_STA11, "CLI");
+GH_PGM(_GH_STA12, "DELETE");
+GH_PGM(_GH_STA13, "RENAME");
+GH_PGM(_GH_STA14, "DOWNLOAD");
+GH_PGM(_GH_STA15, "UPLOAD");
+GH_PGM(_GH_STA16, "UPLOAD_CHUNK");
+GH_PGM(_GH_STA17, "OTA");
+GH_PGM(_GH_STA18, "OTA_CHUNK");
+GH_PGM(_GH_STA19, "OTA_URL");
+GH_PGM(_GH_STA20, "IDLE");
+GH_PGM(_GH_STA21, "START");
+GH_PGM(_GH_STA22, "STOP");
+GH_PGM(_GH_STA23, "CONNECTING");
+GH_PGM(_GH_STA24, "CONNECTED");
+GH_PGM(_GH_STA25, "DISCONNECTED");
+GH_PGM(_GH_STA26, "ERROR");
+GH_PGM(_GH_STA27, "UNKNOWN");
+GH_PGM(_GH_STA28, "DISCOVER_ALL");
+GH_PGM(_GH_STA29, "DISCOVER");
+GH_PGM(_GH_STA30, "READ_HOOK");
+GH_PGM(_GH_STA31, "SET_HOOK");
+GH_PGM(_GH_STA32, "DOWNLOAD_ERROR");
+GH_PGM(_GH_STA33, "DOWNLOAD_FINISH");
+GH_PGM(_GH_STA34, "UPLOAD_ERROR");
+GH_PGM(_GH_STA35, "UPLOAD_ABORTED");
+GH_PGM(_GH_STA36, "UPLOAD_FINISH");
+GH_PGM(_GH_STA37, "OTA_ERROR");
+GH_PGM(_GH_STA38, "OTA_ABORTED");
+GH_PGM(_GH_STA39, "OTA_FINISH");
+GH_PGM_LIST(_GH_sta_list, _GH_STA0, _GH_STA1, _GH_STA2, _GH_STA3, _GH_STA4, _GH_STA5, _GH_STA6, _GH_STA7, _GH_STA8, _GH_STA9, _GH_STA10, _GH_STA11, _GH_STA12, _GH_STA13, _GH_STA14, _GH_STA15, _GH_STA16, _GH_STA17, _GH_STA18, _GH_STA19, _GH_STA20, _GH_STA21, _GH_STA22, _GH_STA23, _GH_STA24, _GH_STA25, _GH_STA26, _GH_STA27, _GH_STA28, _GH_STA29, _GH_STA30, _GH_STA31, _GH_STA32, _GH_STA33, _GH_STA34, _GH_STA35, _GH_STA36, _GH_STA37, _GH_STA38, _GH_STA39);
+FSTR GHreadEvent(GHevent_t n) {
+#ifdef GH_ESP_BUILD
+        return (FSTR)_GH_sta_list[n];
+#else
+        return (FSTR)pgm_read_word(_GH_sta_list + n);
+#endif
+}
