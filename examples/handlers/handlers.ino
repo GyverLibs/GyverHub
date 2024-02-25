@@ -30,8 +30,8 @@ void setup() {
     hub.begin();
 
     // обработчик времени из клиента
-    hub.onUnix([](uint32_t unix) {
-        Serial.println(unix);
+    hub.onUnix([](uint32_t stamp) {
+        Serial.println(stamp);
     });
 
     // обработчик текста из консоли

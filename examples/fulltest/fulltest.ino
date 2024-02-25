@@ -121,7 +121,7 @@ void build_common(gh::Builder& b) {
         b.Switch(&nolbl).label("nolabel");
         b.Switch(&notab).label("notab");
     }
-    if (b.click()) b.refresh();
+    if (b.changed()) b.refresh();
 }
 void build_widget(gh::Builder& b) {
     static bool nolabel, notab, square;
@@ -140,7 +140,7 @@ void build_widget(gh::Builder& b) {
         b.Input(&hint).label("hint");
         b.Input(&suffix).label("suffix");
     }
-    if (b.click()) b.refresh();
+    if (b.changed()) b.refresh();
 }
 void build_layout(gh::Builder& b) {
     b.Title("Layout test");
@@ -173,7 +173,7 @@ void build_pairs(gh::Builder& b) {
         b.Switch_("switch", &data).size(1);
     }
     b.Text(data);
-    if (b.click()) b.refresh();
+    if (b.changed()) b.refresh();
 }
 void build_passive(gh::Builder& b) {
     build_common(b);
