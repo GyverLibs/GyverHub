@@ -10,21 +10,23 @@
 
 > <br>**Документация находится в [Wiki репозитория](https://github.com/GyverLibs/GyverHub/wiki). English docs - [translate](https://github-com.translate.goog/GyverLibs/GyverHub/wiki?_x_tr_sl=ru&_x_tr_tl=en)**<br><br>
 
-> <br>**Внимание! Перед началом работы обязательны к прочтению главы по [установке библиотеки](https://github.com/GyverLibs/GyverHub/wiki/2.-%D0%9D%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B) и [настройке приложения](https://github.com/GyverLibs/GyverHub/wiki/3.-%D0%9F%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)**<br><br>
+> <br>**Внимание! Перед началом работы обязательны к прочтению главы по [установке библиотеки](https://github.com/GyverLibs/GyverHub/blob/main/docs/2.start.md) и [настройке приложения](https://github.com/GyverLibs/GyverHub/blob/main/docs/3.app.md)**<br><br>
 
-|⚠️⚠️⚠️<br>**Бета-версия, ветка DEV! Проект пока что тестируется, следите за коммитами. [Обсуждение тут](https://github.com/GyverLibs/GyverHub/issues/43)**<br>⚠️⚠️⚠️|
+|⚠️⚠️⚠️<br>**Бета-версия! Проект пока что тестируется, следите за коммитами. [Обсуждение тут](https://github.com/GyverLibs/GyverHub/issues/44)**<br>⚠️⚠️⚠️|
 | --- |
 
 ## О проекте
 ![promo](/docs/promo.png)
 
 GyverHub - это платформа, состоящая из библиотеки для *устройства* (Arduino-совместимого микроконтроллера) и *приложения* для управления. Приложение написано на JavaScript и может работать:
-- С официального сайта http://hub.gyver.ru/, https://hub.gyver.ru/, а также зеркала на [GitHub Pages](https://gyverlibs.github.io/GyverHub) (только HTTPS)
-- Как мобильное приложение: [Google Play](https://play.google.com/store/apps/details?id=ru.alexgyver.GyverHub), [скачать APK](https://github.com/GyverLibs/GyverHub/raw/main/app/GyverHub.apk) - [особенности](https://github.com/GyverLibs/GyverHub/wiki/3.-%D0%9F%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5#android-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
-- Как десктопное приложение (Windows, Mac, Linux): [актуальный релиз](https://github.com/neko-neko-nyan/gyverhub-desktop/releases/latest)
-- Как веб-приложение: сайт можно [установить](https://github.com/GyverLibs/GyverHub/wiki/3.-%D0%9F%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5#%D0%B2%D0%B5%D0%B1-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5-pwa) на любое устройство (Android/iOS/Windows...)
-- Автономно [из памяти ESP8266/32](https://github.com/GyverLibs/GyverHub/wiki/3.-%D0%9F%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D0%B8%D0%B7-esp)
-- Из [Телеграм-бота](https://t.me/GyverHUB_bot)
+- Как онлайн версия на официальном сайте **hub.gyver.ru**: [HTTP](http://hub.gyver.ru/) и [HTTPS](https://hub.gyver.ru/) версия, есть [HTTPS](https://gyverlibs.github.io/GyverHub) зеркало на GitHub Pages
+- Как веб-приложение (оффлайн PWA): официальный сайт можно установить на любое устройство (Android/iOS/Linux/Windows/Mac...) - [инструкция](https://github.com/GyverLibs/GyverHub/blob/main/docs/3.app.md#pwa-http)
+- Как [телеграм-приложение](https://t.me/GyverHUB_bot)
+- Как нативное приложение:
+  - Android: [Google Play](https://play.google.com/store/apps/details?id=ru.alexgyver.GyverHub), [скачать APK](https://github.com/GyverLibs/GyverHub-app/releases/latest), [исходник](https://github.com/GyverLibs/GyverHub-app)
+  - iOS: [App Store](), [исходник](https://github.com/GyverLibs/GyverHub-app)
+  - Desktop (Windows/Linux/Mac): [скачать](https://github.com/neko-neko-nyan/gyverhub-desktop/releases/latest), [исходник](https://github.com/neko-neko-nyan/gyverhub-desktop)
+- Как автономная вебморда из Flash памяти ESP8266/ESP32 - [инструкция](https://github.com/GyverLibs/GyverHub/blob/main/docs/3.app.md#%D0%B2%D0%B5%D0%B1%D0%BC%D0%BE%D1%80%D0%B4%D0%B0-esp)
 
 Устройством может быть:
 - ESP8266 и ESP32 - библиотека нативно поддерживает их WiFi функции для работы по HTTP/WS/MQTT
