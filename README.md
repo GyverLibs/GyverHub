@@ -20,17 +20,17 @@
 
 GyverHub - это платформа, состоящая из библиотеки для *устройства* (Arduino-совместимого микроконтроллера) и *приложения* для управления. Приложение написано на JavaScript и может работать:
 - Как онлайн версия на официальном сайте **hub.gyver.ru**: [HTTP](http://hub.gyver.ru/) и [HTTPS](https://hub.gyver.ru/) версия, есть [HTTPS](https://gyverlibs.github.io/GyverHub) зеркало на GitHub Pages
-- Как веб-приложение (оффлайн PWA): официальный сайт можно установить на любое устройство (Android/iOS/Linux/Windows/Mac...) - [инструкция](https://github.com/GyverLibs/GyverHub/blob/main/docs/3.app.md#pwa-http)
+- Как веб-приложение (оффлайн PWA): официальный сайт можно установить на любое устройство (Android/iOS/Linux/Windows/Mac...)
 - Как [телеграм-приложение](https://t.me/GyverHUB_bot)
 - Как нативное приложение:
-  - Android: [Google Play](https://play.google.com/store/apps/details?id=ru.alexgyver.GyverHub), [скачать APK](https://github.com/GyverLibs/GyverHub-app/releases/latest), [исходник](https://github.com/GyverLibs/GyverHub-app)
-  - iOS: [App Store](), [исходник](https://github.com/GyverLibs/GyverHub-app)
-  - Desktop (Windows/Linux/Mac): [скачать](https://github.com/neko-neko-nyan/gyverhub-desktop/releases/latest), [исходник](https://github.com/neko-neko-nyan/gyverhub-desktop)
+  - Android: [Google Play](https://play.google.com/store/apps/details?id=ru.alexgyver.GyverHub), [скачать APK](https://github.com/GyverLibs/GyverHub-app/releases/latest)
+  - iOS: [App Store]()
+  - Desktop (Windows/Linux/Mac): [скачать](https://github.com/neko-neko-nyan/gyverhub-desktop/releases/latest)
 - Как автономная вебморда из Flash памяти ESP8266/ESP32 - [инструкция](https://github.com/GyverLibs/GyverHub/blob/main/docs/3.app.md#%D0%B2%D0%B5%D0%B1%D0%BC%D0%BE%D1%80%D0%B4%D0%B0-esp)
 
 Устройством может быть:
 - ESP8266 и ESP32 - библиотека нативно поддерживает их WiFi функции для работы по HTTP/WS/MQTT
-- Любые Arduino - работают в [ручном режиме](https://github.com/GyverLibs/GyverHub/wiki/8.-%D0%A0%D1%83%D1%87%D0%BD%D0%BE%D0%B9-%D1%80%D0%B5%D0%B6%D0%B8%D0%BC) по любому способу связи
+- Любые Arduino - работают в [ручном режиме](https://github.com/GyverLibs/GyverHub/blob/main/docs/9.bridge.md) по любому способу связи
 - Компьютер (персональный, одноплатный) - [библиотека сервера](https://github.com/neko-neko-nyan/pygyverhubd) на Python (в разработке)
 
 Устройство и приложение обмениваются данными по своему протоколу через различные интерфейсы связи: 
