@@ -27,7 +27,7 @@ GyverHub - это платформа, состоящая из библиотек
 - Как [телеграм-приложение](https://t.me/GyverHUB_bot)
 - Как нативное приложение:
   - Android: [Google Play](https://play.google.com/store/apps/details?id=ru.alexgyver.GyverHub), [скачать APK](https://github.com/GyverLibs/GyverHub-app/releases/latest)
-  - iOS: [App Store]()
+  - iOS: [App Store](https://apps.apple.com/kz/app/gyverhub/id6474273925)
   - Desktop (Windows/Linux/Mac): [скачать](https://github.com/neko-neko-nyan/gyverhub-desktop/releases/latest)
 - Как автономная вебморда из Flash памяти ESP8266/ESP32 - [инструкция](https://github.com/GyverLibs/GyverHub/blob/main/docs/3.app.md#%D0%B2%D0%B5%D0%B1%D0%BC%D0%BE%D1%80%D0%B4%D0%B0-esp)
 
