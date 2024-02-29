@@ -85,6 +85,10 @@ class Packet : public gson::string {
         addFloat(value, dec);
     }
 
+    void addIntRaw(const sutil::AnyValue& value) {
+        value.addString(s);
+    }
+
     // send
     void send() {
         if (_client) {

@@ -115,11 +115,21 @@ class Info {
         // ================ MEMORY ================
         p.s += (F("\"memory\":{"));
 #ifdef GH_ESP_BUILD
-        p.addInt(F("RAM"), String("[") + ESP.getFreeHeap() + ",0]");
-
+        p.beginArr(F("RAM"));
+        p.addIntRaw(ESP.getFreeHeap());
+        p.s += ",0],";
 #ifndef GH_NO_FS
-        p.addInt(F("Flash"), String("[") + FS.usedSpace() + ',' + FS.totalSpace() + "]");
-        p.addInt(F("Sketch"), String("[") + ESP.getSketchSize() + ',' + ESP.getFreeSketchSpace() + "]");
+        p.beginArr(F("Flash"));
+        p.addIntRaw(FS.usedSpace());
+        p.comma();
+        p.addIntRaw(FS.totalSpace());
+        p.endArr();
+
+        p.beginArr(F("Sketch"));
+        p.addIntRaw(ESP.getSketchSize());
+        p.comma();
+        p.addIntRaw(ESP.getFreeSketchSpace());
+        p.endArr();
 #endif
 #endif
         _buildGroup(cb, p, Type::Memory, client);
@@ -132,7 +142,10 @@ class Info {
 
 #ifdef GH_ESP_BUILD
         p.addInt(F("CPU_MHz"), ESP.getCpuFreqMHz());
-        p.addString(F("Flash_chip"), String(ESP.getFlashChipSize() / 1000.0, 1) + " kB");
+        p.addKey(F("Flash_chip"));
+        p.quotes();
+        p.addIntRaw(sutil::AnyValue(ESP.getFlashChipSize() / 1000.0, 1));
+        p.s += " kB\",";
 #endif
         _buildGroup(cb, p, Type::System, client);
         p.endObj();

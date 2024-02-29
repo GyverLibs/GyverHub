@@ -112,52 +112,52 @@ void __attribute__((weak)) varToStr(Packet& p, const AnyPtr& data) {
             break;
 
         case gh::Type::BOOL_T:
-            p.s += (*(bool*)data.ptr);
+            p.addIntRaw(*(bool*)data.ptr);
             break;
 
         case gh::Type::INT8_T:
-            p.s += (*(int8_t*)data.ptr);
+            p.addIntRaw(*(int8_t*)data.ptr);
             break;
 
         case gh::Type::UINT8_T:
-            p.s += (*(uint8_t*)data.ptr);
+            p.addIntRaw(*(uint8_t*)data.ptr);
             break;
 
         case gh::Type::INT16_T:
-            p.s += (*(int16_t*)data.ptr);
+            p.addIntRaw(*(int16_t*)data.ptr);
             break;
         case gh::Type::UINT16_T:
-            p.s += (*(uint16_t*)data.ptr);
+            p.addIntRaw(*(uint16_t*)data.ptr);
             break;
 
         case gh::Type::INT32_T:
-            p.s += (*(int32_t*)data.ptr);
+            p.addIntRaw(*(int32_t*)data.ptr);
             break;
         case gh::Type::UINT32_T:
-            p.s += (*(uint32_t*)data.ptr);
+            p.addIntRaw(*(uint32_t*)data.ptr);
             break;
 
 #ifdef GH_ESP_BUILD
         case gh::Type::INT64_T:
-            p.s += (*(int64_t*)data.ptr);
+            p.addIntRaw(*(int64_t*)data.ptr);
             break;
         case gh::Type::UINT64_T:
-            p.s += (*(uint64_t*)data.ptr);
+            p.addIntRaw(*(uint64_t*)data.ptr);
             break;
 #endif
 
         case gh::Type::FLOAT_T:
-            p.s += (*(float*)data.ptr);
+            p.addIntRaw(*(float*)data.ptr);
             break;
         case gh::Type::DOUBLE_T:
-            p.s += (*(double*)data.ptr);
+            p.addIntRaw(*(double*)data.ptr);
             break;
 
         case gh::Type::COLOR_T:
-            p.s += (((gh::Color*)data.ptr)->getHEX());
+            p.addIntRaw(((gh::Color*)data.ptr)->getHEX());
             break;
         case gh::Type::FLAGS_T:
-            p.s += (((gh::Flags*)data.ptr)->flags);
+            p.addIntRaw(((gh::Flags*)data.ptr)->flags);
             break;
 
         case gh::Type::LOG_T:
