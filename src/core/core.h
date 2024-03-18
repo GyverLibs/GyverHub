@@ -63,12 +63,22 @@
 #endif
 
 namespace ghc {
+#ifdef GH_ESP_BUILD
+typedef std::function<void(gh::Data data)> DataCallback;
+typedef std::function<void(String str)> CliCallback;
+typedef std::function<void(uint32_t stamp)> UnixCallback;
+typedef std::function<void(gh::Builder& builder)> BuildCallback;
+typedef std::function<bool(gh::Request& request)> RequestCallback;
+
+typedef std::function<void(gh::Reboot res)> RebootCallback;
+typedef std::function<void(gh::Fetcher& fetcher)> FetchCallback;
+typedef std::function<void(String& path)> UploadCallback;
+#else
+typedef void (*DataCallback)(gh::Data data);
 typedef void (*CliCallback)(String str);
 typedef void (*UnixCallback)(uint32_t stamp);
-#ifdef GH_ESP_BUILD
-typedef void (*RebootCallback)(gh::Reboot res);
-typedef void (*FetchCallback)(gh::Fetcher& fetcher);
-typedef void (*UploadCallback)(String& path);
+typedef void (*BuildCallback)(gh::Builder& builder);
+typedef bool (*RequestCallback)(gh::Request& request);
 #endif
 
 // ========================== CLASS ==========================

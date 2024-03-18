@@ -23,10 +23,6 @@
 #include "log.h"
 #include "widget.h"
 
-namespace ghc {
-typedef void (*BuildCallback)(gh::Builder& builder);
-}
-
 namespace gh {
 class Builder {
     friend class ghc::HubCore;

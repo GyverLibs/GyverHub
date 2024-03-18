@@ -6,9 +6,6 @@
 #include "request_class.h"
 #include "types.h"
 
-namespace ghc {
-typedef bool (*RequestCallback)(gh::Request& request);
-}
 
 namespace gh {
 

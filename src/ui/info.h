@@ -23,7 +23,11 @@ class Info;
 }
 
 namespace ghc {
+#ifdef GH_ESP_BUILD
+typedef std::function<void(gh::Info& info)> InfoCallback;
+#else
 typedef void (*InfoCallback)(gh::Info& info);
+#endif
 }
 
 namespace gh {
