@@ -102,29 +102,29 @@ class GyverHub : public ghc::HubCore {
 
     // подключить функцию-сборщик интерфейса вида f(gh::Builder& builder)
     void onBuild(ghc::BuildCallback callback) {
-        _build_cb = *callback;
+        _build_cb = callback;
     }
 
     // подключить обработчик запроса клиента вида f(gh::Request& request)
     void onRequest(ghc::RequestCallback callback) {
 #ifndef GH_NO_REQUEST
-        _req_cb = *callback;
+        _req_cb = callback;
 #endif
     }
 
     // подключить функцию-сборщик инфо вида f(gh::Info& info)
     void onInfo(ghc::InfoCallback callback) {
-        _info_cb = *callback;
+        _info_cb = callback;
     }
 
     // подключить обработчик входящих сообщений с веб-консоли вида f(String str)
     void onCLI(ghc::CliCallback callback) {
-        _cli_cb = *callback;
+        _cli_cb = callback;
     }
 
     // подключить обработчик получения Unix времени с клиента вида f(uint32_t stamp)
     void onUnix(ghc::UnixCallback callback) {
-        _unix_cb = *callback;
+        _unix_cb = callback;
     }
 
 #ifdef GH_ESP_BUILD
@@ -135,7 +135,7 @@ class GyverHub : public ghc::HubCore {
 
     // подключить функцию-обработчик перезагрузки вида f(gh::Reboot res). Будет вызвана перед перезагрузкой
     void onReboot(ghc::RebootCallback callback) {
-        _reboot_cb = *callback;
+        _reboot_cb = callback;
     }
 
     // подключить обработчик загрузки файлов вида f(String& path). Будет вызван при сохранении файла
