@@ -109,7 +109,9 @@ class HubHTTP : public gh::Bridge {
 #ifndef GH_NO_HTTP_DNS
 #if defined(GH_INCLUDE_PORTAL)
             gzip_h();
-            cache_h();
+            server.sendHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
+            server.sendHeader(F("Pragma"), F("no-cache"));
+            server.sendHeader(F("Expires"), F("0"));
             server.send_P(200, "text/html", (PGM_P)hub_index_h, (size_t)hub_index_h_len);
 #elif defined(GH_FILE_PORTAL)
             File f = gh::FS.openRead(F("/hub/index.html.gz"));
