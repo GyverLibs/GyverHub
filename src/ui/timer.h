@@ -19,14 +19,23 @@ class Timer {
     Timer() {}
 
     // указать время. Таймер сам запустится в режиме интервала!
-    Timer(uint32_t ms, uint32_t seconds = 0, uint32_t minutes = 0, uint32_t hours = 0, uint32_t days = 0) {
+    Timer(uint32_t ms) {
+        setTime(ms);
+        startInterval();
+    }
+
+    // указать время. Таймер сам запустится в режиме интервала!
+    Timer(uint32_t ms, uint32_t seconds, uint32_t minutes = 0, uint32_t hours = 0, uint32_t days = 0) {
         setTime(ms, seconds, minutes, hours, days);
         startInterval();
     }
 
     // =========== MANUAL ===========
-    // установить период
-    void setTime(uint32_t ms, uint32_t seconds = 0, uint32_t minutes = 0, uint32_t hours = 0, uint32_t days = 0) {
+    // установить время
+    void setTime(uint32_t time) {
+        prd = time;
+    }
+    void setTime(uint32_t ms, uint32_t seconds, uint32_t minutes = 0, uint32_t hours = 0, uint32_t days = 0) {
         prd = seconds;
         if (minutes) prd += minutes * 60ul;
         if (hours) prd += hours * 3600ul;
@@ -45,20 +54,39 @@ class Timer {
         uptime = source;
     }
 
+    // удерживать фазу (умолч. false) [false: tmr = uptime, true: tmr += prd]
+    void keepPhase(bool keep) {
+        phaseF = keep;
+    }
+
     // запустить в режиме интервала (передать true для режима таймаута)
-    void start(bool timeout = false) {
-        mode = timeout ? GHC_TMR_TIMEOUT : GHC_TMR_INTERVAL;
+    // void start(bool timeout = false) {
+    //     mode = timeout ? GHC_TMR_TIMEOUT : GHC_TMR_INTERVAL;
+    //     restart();
+    // }
+
+    // запустить в режиме таймаута
+    void startTimeout() {
+        mode = GHC_TMR_TIMEOUT;
         restart();
     }
 
     // запустить в режиме таймаута
-    void startTimeout() {
-        start(GHC_TMR_TIMEOUT);
+    void startTimeout(uint32_t time) {
+        prd = time;
+        startTimeout();
     }
 
     // запустить в режиме интервала
     void startInterval() {
-        start(GHC_TMR_INTERVAL);
+        mode = GHC_TMR_INTERVAL;
+        restart();
+    }
+
+    // запустить в режиме интервала
+    void startInterval(uint32_t time) {
+        prd = time;
+        startInterval();
     }
 
     // перезапустить в текущем режиме
@@ -93,7 +121,7 @@ class Timer {
     bool tick() {
         if (state() && uptime() - tmr >= prd) {
             if (callback) callback();
-            if (mode == GHC_TMR_INTERVAL) restart();
+            if (mode == GHC_TMR_INTERVAL) _reset();
             else stop();
             return 1;
         }
@@ -130,10 +158,16 @@ class Timer {
     // }
 
    private:
-    uint8_t mode = GHC_TMR_INTERVAL;
+    uint8_t mode = GHC_TMR_INTERVAL_OFF;
     uint32_t tmr = 0, prd = 0;
     TimerCallback callback = nullptr;
     Uptime uptime = millis;
+    bool phaseF = false;
+
+    void _reset() {
+        if (phaseF) tmr += prd;
+        else tmr = uptime();
+    }
 };
 
 }  // namespace gh
