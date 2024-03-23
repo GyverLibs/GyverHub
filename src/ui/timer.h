@@ -8,9 +8,10 @@
 
 namespace gh {
 
-typedef void (*TimerCallback)();
-
 class Timer {
+    typedef void (*TimerCallback)();
+    typedef unsigned long (*Uptime)();
+
    public:
     // конструктор
 
@@ -39,6 +40,11 @@ class Timer {
         return prd;
     }
 
+    // установить функцию опроса времени millis/micros/свою unsigned long
+    void setSource(Uptime source) {
+        uptime = source;
+    }
+
     // запустить в режиме интервала (передать true для режима таймаута)
     void start(bool timeout = false) {
         mode = timeout ? GHC_TMR_TIMEOUT : GHC_TMR_INTERVAL;
@@ -47,18 +53,18 @@ class Timer {
 
     // запустить в режиме таймаута
     void startTimeout() {
-        start(1);
+        start(GHC_TMR_TIMEOUT);
     }
 
     // запустить в режиме интервала
     void startInterval() {
-        start(0);
+        start(GHC_TMR_INTERVAL);
     }
 
     // перезапустить в текущем режиме
     void restart() {
         if (prd) {
-            tmr = millis();
+            tmr = uptime();
             if (mode > 1) mode -= 2;
         }
     }
@@ -85,7 +91,7 @@ class Timer {
 
     // тикер, вызывать в loop. Вернёт true, если сработал
     bool tick() {
-        if (state() && millis() - tmr >= prd) {
+        if (state() && uptime() - tmr >= prd) {
             if (callback) callback();
             if (mode == GHC_TMR_INTERVAL) restart();
             else stop();
@@ -127,6 +133,7 @@ class Timer {
     uint8_t mode = GHC_TMR_INTERVAL;
     uint32_t tmr = 0, prd = 0;
     TimerCallback callback = nullptr;
+    Uptime uptime = millis;
 };
 
 }  // namespace gh
