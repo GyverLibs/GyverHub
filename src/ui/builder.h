@@ -60,6 +60,10 @@ class Builder {
         return _changed;
     }
 
+    bool click() {
+        return widget.click();
+    }
+
     // добавить виджеты из JSON строки
     void addJSON(GHTREF text) {
         if (p && build.action == Action::UI) {
