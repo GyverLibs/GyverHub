@@ -12,9 +12,6 @@
 
 > <br>**Внимание! Перед началом работы обязательны к прочтению главы по [установке библиотеки](https://github.com/GyverLibs/GyverHub/blob/main/docs/2.start.md) и [настройке приложения](https://github.com/GyverLibs/GyverHub/blob/main/docs/3.app.md)**<br><br>
 
-|⚠️⚠️⚠️<br>**Это новая версия библиотеки! Если вам нужна старая, то она находится в [dev-ветке](https://github.com/GyverLibs/GyverHub/tree/old)**<br>⚠️⚠️⚠️|
-| --- |
-
 |⚠️⚠️⚠️<br>**Бета-версия! Проект пока что тестируется, следите за коммитами. [Обсуждение тут](https://github.com/GyverLibs/GyverHub/issues/44) и в [Телеграм чате](https://t.me/AlexGyverChat/441438)**<br>⚠️⚠️⚠️|
 | --- |
 
@@ -39,7 +36,7 @@ GyverHub - это платформа, состоящая из библиотек
 Устройство и приложение обмениваются данными по своему протоколу через различные интерфейсы связи: 
 - **MQTT** - через Интернет (свой или сторонний MQTT брокер)
 - **HTTP + WebSocket** - в локальной WiFi сети
-- **Serial** - по USB или Bluetooth UART
+- **Serial** - по USB или Bluetooth Serial
 - **Bluetooth** - через Bluetooth BLE
 - **Telegram** - через телеграм-ботов
 
