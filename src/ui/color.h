@@ -60,6 +60,9 @@ struct Color {
         col.set565(rgb565);
         return col;
     }
+    static Color fromColors(Colors color) {
+        return Color(color);
+    }
 
     // установить RGB цвет
     void setRGB(uint8_t nr, uint8_t ng, uint8_t nb) {
@@ -148,7 +151,7 @@ struct Color {
     }
 
     // получить 24-бит RGB цвет
-    uint32_t getHEX() {
+    uint32_t getHEX() const {
         // uint8_t rgb[] = {b, g, r, 0};
         // return *((uint32_t*)&rgb[0]);
         union RGB {
@@ -159,15 +162,15 @@ struct Color {
     }
 
     // получить 16-бит RGB цвет
-    uint16_t get565() {
+    uint16_t get565() const {
         return ((r & 0b11111000) << 8) | ((g & 0b11111100) << 3) | ((b & 0b11111000) >> 3);
     }
 
-    operator uint32_t() {
+    operator uint32_t() const {
         return getHEX();
     }
 
-    bool isDefault() {
+    bool isDefault() const {
         return _default;
     }
 

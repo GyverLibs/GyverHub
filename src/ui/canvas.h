@@ -104,6 +104,9 @@ class Canvas {
     }
 
     // залить полотно указанным цветом, умолч. 0xddd
+    void background(const Color& color, uint8_t a = 255) {
+        _color(api::background, color, a);
+    }
     void background(uint32_t hex, uint8_t a = 255) {
         _color(api::background, hex, a);
     }
@@ -114,6 +117,9 @@ class Canvas {
     // =================== FILL ===================
 
     // выбрать цвет заливки (цвет, прозрачность), умолч. 0xfff
+    void fill(const Color& color, uint8_t a = 255) {
+        _color(api::fill, color, a);
+    }
     void fill(uint32_t hex, uint8_t a = 255) {
         _color(api::fill, hex, a);
     }
@@ -129,6 +135,9 @@ class Canvas {
     // =================== STROKE ===================
 
     // выбрать цвет обводки (цвет, прозрачность), умолч. 0x000
+    void stroke(const Color& color, uint8_t a = 255) {
+        _color(api::stroke, color, a);
+    }
     void stroke(uint32_t hex, uint8_t a = 255) {
         _color(api::stroke, hex, a);
     }

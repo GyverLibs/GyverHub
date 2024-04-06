@@ -66,7 +66,7 @@ class Widget {
 
     // Geo значение
     Widget& value(const gh::Geo& geo) {
-        p.beginArr(Tag::latlon);
+        p.beginArr(Tag::value);
         p.addFloat(geo.lat, 6);
         p.addFloat(geo.lon, 6);
         p.endArr();

@@ -629,6 +629,10 @@ void build_canvas(gh::Builder& b) {
 
         cv.arc(300, 400, 75, 50, 0, HALF_PI);
 
+        // for update
+        cv.fill(0, 255, 0);
+        cv.strokeWeight(2);
+
         if (pos.changed()) {
             Serial.println(String("canvas 1: ") + pos.x + ',' + pos.y);
 
@@ -643,6 +647,8 @@ void build_canvas(gh::Builder& b) {
         b.Canvas_("cv2", 400, 300).size(4);
         gh::Canvas cv(b);
         cv.image("/image.jpg", 0, 0, 400);
+        // cv.image("/errorimage.jpg", 0, 0, 400);
+        // cv.image("http://errorimage.jpg", 0, 0, 400);
         {
             gh::Col c(b);
             if (b.Button().label("from web").click()) {
@@ -683,14 +689,22 @@ void build_update(gh::Builder& b) {
 void build_location(gh::Builder& b) {
     {
         gh::Row r(b, 3);
-        static gh::Geo geo("55.754994;37.623288");
+        gh::Geo moscow("55.754994;37.623288");
+        static gh::Geo geo = moscow;
 
         b.Map_("map", &geo).size(3);
         gh::Canvas map(b);
-        gh::Geo moscow("55.754994;37.623288");
+        map.fill(0x0000ff);
         map.circle(moscow, 200);  // круг 200 метров радиуса
 
-        if (geo.changed()) Serial.println(String("geo: ") + geo.lat + ',' + geo.lon);
+        if (geo.changed()) {
+            Serial.println(String("geo: ") + geo.lat + ',' + geo.lon);
+
+            gh::CanvasUpdate cv("map", &hub);
+            cv.fill(gh::Colors::Red);
+            cv.circle(geo, 50);
+            cv.send();
+        }
         {
             gh::Col c(b);
             if (b.Button().label("moscow").click()) hub.update("map").value(moscow);
@@ -799,7 +813,7 @@ void setup() {
         }
     });
 
-    hub.onPing([](gh::Client& client){
+    hub.onPing([](gh::Client& client) {
         hub.sendCLI("hello!");
     });
 
@@ -821,6 +835,7 @@ void setup() {
 
     hub.onLocation([](gh::Location loc) {
         Serial.println(String("Location: ") + loc.lat + ',' + loc.lon);
+        // поставить маркер и подвинуть сюда карту
         hub.update("map").value(loc);
     });
 
