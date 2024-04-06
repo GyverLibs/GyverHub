@@ -56,6 +56,12 @@ class HubMQTT : public gh::Bridge {
             if (!topic_buf) return;
             memcpy(topic_buf, topic, tlen);
 
+            if (!len) {
+                parse(GHTXT(topic_buf, tlen));
+                delete[] topic_buf;
+                return;
+            }
+
             char* data_buf = new char[len];
             if (!data_buf) {
                 delete[] topic_buf;
