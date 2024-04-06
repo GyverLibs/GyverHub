@@ -117,6 +117,11 @@ class Timer {
         callback = nullptr;
     }
 
+    // осталось времени
+    uint32_t timeLeft() {
+        return state() ? (uptime() - tmr) : 0;
+    }
+
     // тикер, вызывать в loop. Вернёт true, если сработал
     bool tick() {
         if (state() && uptime() - tmr >= prd) {

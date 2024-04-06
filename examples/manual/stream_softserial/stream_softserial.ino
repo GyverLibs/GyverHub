@@ -14,6 +14,10 @@ GyverHub hub;
 #include <SoftwareSerial.h>
 SoftwareSerial bt(2, 3);
 
+#include <bridges/stream.h>
+// подключить экземпляр любого Stream-класса
+gh::BridgeStream stream(&hub, &bt, gh::Connection::Bluetooth);
+
 void build(gh::Builder& b) {
     static int val;
     b.Title(F("Hello!"));
@@ -23,8 +27,8 @@ void build(gh::Builder& b) {
 void setup() {
     bt.begin(9600);
 
-    // подключить экземпляр любого Stream-класса
-    hub.stream.config(&bt, gh::Connection::Bluetooth);
+    // и подключить его в хаб
+    hub.addBridge(&stream);
 
     hub.config(F("MyDevices"), F("AVR"), F(""));
     hub.onBuild(build);

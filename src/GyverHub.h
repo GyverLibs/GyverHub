@@ -2,7 +2,7 @@
 #define _GyverHub_h
 
 #define GH_LIB_VERSION "v0.1b"  // версия библиотеки
-#define GH_API_VERSION "1"      // версия API
+#define GH_API_VERSION "2"      // версия API
 
 // =================================
 // задержка перед перезагрузкой после OTA

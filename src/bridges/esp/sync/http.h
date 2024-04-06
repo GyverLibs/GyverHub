@@ -13,22 +13,22 @@
 #include "core/modules.h"
 #include "core/request.h"
 #include "core/types.h"
-#include "utils/crc32.h"
-#include "utils/mime.h"
+#include "core/utils/crc32.h"
+#include "core/utils/mime.h"
 
 #ifndef GH_NO_HTTP_TRANSFER
 #ifndef GH_NO_HTTP_OTA
-#include "esp/transfer/updater.h"
+#include "core/transfer/updater.h"
 #endif
 
 #ifndef GH_NO_FS
 
 #ifndef GH_NO_HTTP_FETCH
-#include "esp/transfer/fetcher.h"
+#include "core/transfer/fetcher.h"
 #endif
 
 #ifndef GH_NO_HTTP_UPLOAD
-#include "esp/transfer/uploader.h"
+#include "core/transfer/uploader.h"
 #endif
 
 #endif  // GH_NO_FS
@@ -47,9 +47,9 @@
 #endif
 
 #ifdef GH_INCLUDE_PORTAL
-#include "esp/esp_h/index.h"
-#include "esp/esp_h/script.h"
-#include "esp/esp_h/style.h"
+#include "esp_h/index.h"
+#include "esp_h/script.h"
+#include "esp_h/style.h"
 #endif
 
 namespace ghc {
@@ -63,7 +63,14 @@ class HubHTTP : public gh::Bridge {
 
     // ======================= PRIVATE =======================
    private:
-    HubHTTP() : server(GH_HTTP_PORT) {}
+    HubHTTP(uint16_t port = GH_HTTP_PORT) : server(port) {
+        setPort(port);
+#ifndef GH_NO_HTTP_TRANSFER
+        setTransfer(1);
+#endif
+    }
+
+    using Bridge::setPort;
 
     void setup(void* hub, ParseHook prh, FetchHook fh, RequestHook rh, UploadHook uh, bool* safe_upl, void* mod, gh::Reboot* reason) {
         gh::Bridge::config(hub, gh::Connection::HTTP, prh);
@@ -76,13 +83,13 @@ class HubHTTP : public gh::Bridge {
     }
 
     void send(gh::BridgeData& data) {
+        if (!isAnswer()) return;
         if (!handled) {
             handled = 1;
             server.setContentLength(CONTENT_LENGTH_UNKNOWN);
             server.send(200, "text/plain");
         }
-        if (data.text.pgm()) server.sendContent_P(data.text.str(), data.text.length());
-        else server.sendContent(data.text.str(), data.text.length());
+        server.sendContent(data.text.str(), data.text.length());
     }
 
     void begin() {
@@ -108,15 +115,21 @@ class HubHTTP : public gh::Bridge {
 // captive portal
 #ifndef GH_NO_HTTP_DNS
 #if defined(GH_INCLUDE_PORTAL)
-            gzip_h();
-            server.sendHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
-            server.sendHeader(F("Pragma"), F("no-cache"));
-            server.sendHeader(F("Expires"), F("0"));
-            server.send_P(200, "text/html", (PGM_P)hub_index_h, (size_t)hub_index_h_len);
+            {
+                gzip_h();
+                no_cache_h();
+                server.send_P(200, "text/html", (PGM_P)hub_index_h, (size_t)hub_index_h_len);
+                return;
+            }
 #elif defined(GH_FILE_PORTAL)
-            File f = gh::FS.openRead(F("/hub/index.html.gz"));
-            if (f) server.streamFile(f, "text/html");
-            else _upload_portal();
+            {
+                File f = gh::FS.openRead(F("/hub/index.html.gz"));
+                if (f) {
+                    no_cache_h();
+                    server.streamFile(f, "text/html");
+                } else _upload_portal();
+                return;
+            }
 #endif
 #endif  // GH_NO_HTTP_DNS
         });
@@ -175,8 +188,7 @@ GHDELPTR(_upl_p);
                 if (!((Modules*)modules)->read(gh::Module::ModUpload)) return _err(gh::Error::Disabled);
 #endif
                 HTTPUpload& upload = server.upload();
-                String client_id = server.arg(F("client_id"));
-                gh::Client client(_hub, nullptr, this, client_id);
+                gh::Client client(_hub, nullptr, this, _client_id());
 
                 switch (upload.status) {
                     case UPLOAD_FILE_START:
@@ -185,10 +197,10 @@ GHDELPTR(_upl_p);
                             String crc = server.arg(F("crc32"));
                             String size = server.arg(F("size"));
 #ifndef GH_NO_REQUEST
-                            gh::Request req(client, gh::CMD::Upload, path);
+                            gh::Request req(client, false, gh::CMD::Upload, path);
                             if (!request_h(_hub, &req)) return _err(gh::Error::Forbidden);
 #endif
-                            _upl_p = new Uploader(client, nullptr, *safe_upl);
+                            _upl_p = new Uploader(client, 0, *safe_upl);
                             if (_upl_p) {
                                 _upl_p->setCRC(crc);
                                 if (!_upl_p->begin(path, size)) {
@@ -232,18 +244,17 @@ GHDELPTR(_upl_p);
                 if (!((Modules*)modules)->read(gh::Module::ModOta)) return _err(gh::Error::Disabled);
 #endif
                 HTTPUpload& upload = server.upload();
-                String client_id = server.arg(F("client_id"));
-                gh::Client client(_hub, nullptr, this, client_id);
+                gh::Client client(_hub, nullptr, this, _client_id());
 
                 switch (upload.status) {
                     case UPLOAD_FILE_START:
                         if (!_ota_p) {
                             String type = server.arg(F("type"));
 #ifndef GH_NO_REQUEST
-                            gh::Request req(client, gh::CMD::Upload, type);
+                            gh::Request req(client, false, gh::CMD::Upload, type);
                             if (!request_h(_hub, &req)) _err(gh::Error::Forbidden);
 #endif
-                            _ota_p = new Updater(client, reason, nullptr);
+                            _ota_p = new Updater(client, reason, 0);
                             if (_ota_p) {
                                 if (!_ota_p->begin(type)) {
                                     _err(_ota_p->error);
@@ -359,19 +370,23 @@ GHDELPTR(_upl_p);
     void cache_h() {
         server.sendHeader(F("Cache-Control"), F(GH_CACHE_PRD));
     }
+    void no_cache_h() {
+        server.sendHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
+        server.sendHeader(F("Pragma"), F("no-cache"));
+        server.sendHeader(F("Expires"), F("0"));
+    }
 
 #if !defined(GH_NO_HTTP_FETCH) && !defined(GH_NO_HTTP_TRANSFER) && !defined(GH_NO_FS)
     void _handleFetch(String& path) {
 #ifndef GH_NO_MODULES
         if (!((Modules*)modules)->read(gh::Module::ModFetch)) return _err(gh::Error::Disabled);
 #endif
-        String client_id = server.arg(F("client_id"));
-        gh::Client client(_hub, nullptr, this, client_id);
+        gh::Client client(_hub, nullptr, this, _client_id());
 #ifndef GH_NO_REQUEST
-        gh::Request req(client, gh::CMD::Fetch, path);
+        gh::Request req(client, false, gh::CMD::Fetch, path);
         if (!request_h(_hub, &req)) return _err(gh::Error::Forbidden);
 #endif
-        gh::Fetcher fetch(client, fetch_h, path, nullptr);
+        gh::Fetcher fetch(client, fetch_h, path, 0);
 
         if (fetch.begin()) {
             String mime = getMime(path);
@@ -400,6 +415,10 @@ GHDELPTR(_upl_p);
     }
     void _upload_portal() {
         server.send(200, F("text/html"), F(R"raw(<form method='POST' action='/hub/upload_portal' enctype='multipart/form-data'><input type='file' name='update' multiple><input type='submit' value='Upload'></form><br><a href='/'>Home</a>)raw"));
+    }
+    uint32_t _client_id() {
+        String client_id = server.arg(F("client_id"));
+        return su::strToIntHex(client_id.c_str());
     }
 
 #if !defined(GH_NO_HTTP_OTA) && !defined(GH_NO_HTTP_TRANSFER)

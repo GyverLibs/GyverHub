@@ -7,7 +7,6 @@
 #define AP_PASS "alexpass"
 
 // отключаем встроенную реализацию HTTP+WS
-// #define GH_NO_STREAM
 #define GH_NO_HTTP
 #define GH_NO_WS
 // #define GH_NO_MQTT

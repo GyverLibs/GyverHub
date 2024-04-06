@@ -22,7 +22,7 @@ class CSVFile {
     CSVFile(const char* path, uint8_t cols, uint16_t rows = 0) : _path(path), _cols(cols), _rows(rows) {}
 
     // добавить int/string/bool
-    CSVFile& add(const sutil::AnyValue& value) {
+    CSVFile& add(const su::Value& value) {
         if (_col < _cols && _opened()) {
             _checkFirst();
             _file.print(value);
@@ -33,7 +33,7 @@ class CSVFile {
 
     // добавить float
     CSVFile& add(double value, uint8_t dec) {
-        return add(sutil::AnyValue(value, dec));
+        return add(su::Value(value, dec));
     }
 
     // завершить строку

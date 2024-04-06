@@ -20,16 +20,16 @@ class Updater : public ghc::TransferBase {
    public:
     Updater(gh::Client& client,
             gh::Reboot* reason,
-            const char* id) : ghc::TransferBase(client, id, ghc::Tag::ota_err),
-                              reason(reason) {}
+            uint32_t id) : ghc::TransferBase(client, id, ghc::Tag::ota_err),
+                           reason(reason) {}
 
     bool begin(GHTREF type) {
         bool ota_flash = 0;
         switch (type.hash()) {
-            case sutil::SH("flash"):
+            case su::SH("flash"):
                 ota_flash = 1;
                 break;
-            case sutil::SH("fs"):
+            case su::SH("fs"):
                 ota_flash = 0;
                 break;
             default:
@@ -71,11 +71,11 @@ class Updater : public ghc::TransferBase {
 
     void process(size_t typeHash, GHTREF data) {
         switch (typeHash) {
-            case sutil::SH("next"):
+            case su::SH("next"):
                 write64(data);
                 if (!hasError()) answerCMD(Tag::ota_next);
                 break;
-            case sutil::SH("last"):
+            case su::SH("last"):
                 lastChunk = 1;
                 write64(data);
                 end();
@@ -94,15 +94,22 @@ class Updater : public ghc::TransferBase {
     bool write64(GHTREF data) {
         if (hasError()) return 0;
         uint16_t declen = data.sizeB64();
-        uint8_t buf[declen];
-        if (!data.decodeB64(buf, declen)) {
-            setError(gh::Error::PacketDamage);
+        uint8_t* buf = new uint8_t[declen];
+        if (!buf) {
+            setError(gh::Error::CantAlloc);
             return 0;
         }
-        return write(buf, declen);
+        if (!data.decodeB64(buf, declen)) {
+            setError(gh::Error::PacketDamage);
+            delete[] buf;
+            return 0;
+        }
+        bool ok = write(buf, declen);
+        delete[] buf;
+        return ok;
     }
 
-    bool write(uint8_t* data, uint32_t len) {
+    bool write(uint8_t* data, size_t len) {
         if (!hasError()) {
             tmr.restart();
             if (::Update.write(data, len) != len) setError(gh::Error::Write);
@@ -127,7 +134,7 @@ class Updater : public ghc::TransferBase {
         setError(gh::Error::Abort);
     }
 
-    static void sendError(gh::Client& client, const char* id, gh::Error err) {
+    static void sendError(gh::Client& client, uint32_t id, gh::Error err) {
         ghc::TransferBase::sendError(client, id, err, ghc::Tag::ota_err);
     }
 

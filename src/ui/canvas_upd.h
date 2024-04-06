@@ -17,13 +17,12 @@ class CanvasUpdate : public Canvas {
         p.beginPacket();
         p.s += F("\"updates\":{");
         p.addKey(name);
-        p.s += F("{\"data\":[");
+        p.beginObj();
     }
 
     // отправить
     void send() {
         if (!_hub->canSend()) return;
-        p.endArr();
         p.endObj();
         p.endObj();
         p.addID(_hub->id);

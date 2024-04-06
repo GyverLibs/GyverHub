@@ -23,7 +23,7 @@ void build(gh::Builder& b) {
         b.Input_("inp").size(3).value("hello").color(gh::Colors::Blue);
 
         // обновлять будем например по нажатию на кнопку. Кнопки для значения и цвета
-        if (b.Button().size(1).label("value").click()) hub.update("inp").value(random(1000));
+        if (b.Button().label("value").click()) hub.update("inp").value(random(1000));
         if (b.Button().label("color").click()) hub.update("inp").color(gh::Colors::Red);
 
         // если вызвать обновление вот тут (не по действию) - оно не будет отправлено!
@@ -49,7 +49,7 @@ void build(gh::Builder& b) {
         b.Label_("lbl").size(3);
 
         // отправка всем клиентам и только текущему
-        if (b.Button().label("all").size(1).click()) hub.update("lbl").value("all");
+        if (b.Button().label("all").click()) hub.update("lbl").value("all");
         if (b.Button().label("client").click()) hub.update("lbl", &b.build.client).value("client");
         b.endRow();
     }

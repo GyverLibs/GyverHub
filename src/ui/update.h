@@ -17,12 +17,11 @@ class Update {
     }
 
     // начать обновление по имени виджета (или список) + имя функции
-    ghc::Widget& update(GHTREF name, GHTREF func = GHTXT()) {
+    ghc::Widget& update(GHTREF name) {
         if (widget._allowed) {
             if (_first) _first = false;
             else p.endObj();
             p.beginObj(name);
-            if (func.valid()) p.addString(ghc::Tag::func, func);
         }
         return widget;
     }

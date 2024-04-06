@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <StringUtils.h>
 
+#include "bridges/esp/sync/http_class.h"
 #include "core/client.h"
 #include "core/core_class.h"
 #include "core/fs.h"
@@ -9,11 +10,10 @@
 #include "core/hub_class.h"
 #include "core/packet.h"
 #include "core/types.h"
-#include "esp/sync/http_class.h"
+#include "core/utils/crc32.h"
 #include "hub_macro.hpp"
 #include "transfer.h"
 #include "ui/timer.h"
-#include "utils/crc32.h"
 
 namespace gh {
 class Fetcher;
@@ -37,7 +37,7 @@ class Fetcher : private ghc::TransferBase {
     Fetcher(Client& client,
             ghc::FetchHook hook,
             GHTREF path,
-            const char* id = nullptr) : ghc::TransferBase(client, id, ghc::Tag::fetch_err), fetch_h(hook) {
+            uint32_t id = 0) : ghc::TransferBase(client, id, ghc::Tag::fetch_err), fetch_h(hook) {
         path.toString(pathStr);
         this->path = GHTXT(pathStr);
     }
@@ -58,7 +58,7 @@ class Fetcher : private ghc::TransferBase {
     }
 
     // отправить сырые данные
-    void fetchBytes(uint8_t* bytes, uint32_t len) {
+    void fetchBytes(uint8_t* bytes, size_t len) {
         cleanup();
         this->bytes = bytes;
         this->len = len;
@@ -66,7 +66,7 @@ class Fetcher : private ghc::TransferBase {
     }
 
     // отправить сырые данные из PGM
-    void fetchBytes_P(const uint8_t* bytes, uint32_t len) {
+    void fetchBytes_P(const uint8_t* bytes, size_t len) {
         cleanup();
         this->bytes = bytes;
         this->len = len;
@@ -141,11 +141,17 @@ class Fetcher : private ghc::TransferBase {
         bool lastChunk = 0;
         tmr.restart();
         if (file) {
-            uint8_t buf[GH_FETCH_CHUNK_SIZE * 3 / 4];
+            uint8_t* buf = new uint8_t[GH_FETCH_CHUNK_SIZE * 3 / 4];
+            if (!buf) {
+                setError(gh::Error::CantAlloc);
+                end();
+                return 1;
+            }
             size_t rlen = file.readBytes((char*)buf, sizeof(buf));
             if (sizeof(buf) != rlen) lastChunk = 1;
-            sutil::b64::encode(&p.s, buf, rlen);
+            su::b64::encode(&p.s, buf, rlen);
             crc32 = ghc::crc32(crc32, buf, rlen);
+            delete[] buf;
         } else if (bytes) {
             size_t rlen = GH_FETCH_CHUNK_SIZE * 3 / 4;
             if (len >= rlen) {
@@ -155,7 +161,7 @@ class Fetcher : private ghc::TransferBase {
                 rlen = len;
                 lastChunk = 1;
             }
-            sutil::b64::encode(&p.s, (uint8_t*)bytes + b_index, rlen, pgm);
+            su::b64::encode(&p.s, (uint8_t*)bytes + b_index, rlen, pgm);
             crc32 = ghc::crc32(crc32, (uint8_t*)bytes + b_index, rlen, pgm);
             b_index += rlen;
         }
@@ -165,21 +171,17 @@ class Fetcher : private ghc::TransferBase {
     bool timeout() {
         if (tmr) {
             setError(Error::Timeout);
-            start = 0;
-            hook();
-            cleanup();
+            end();
         }
         return hasError();
     }
 
     void abort() {
         setError(Error::Abort);
-        start = 0;
-        hook();
-        cleanup();
+        end();
     }
 
-    static void sendError(gh::Client& client, const char* id, gh::Error err) {
+    static void sendError(gh::Client& client, uint32_t id, gh::Error err) {
         ghc::TransferBase::sendError(client, id, err, ghc::Tag::fetch_err);
     }
 
@@ -191,7 +193,7 @@ class Fetcher : private ghc::TransferBase {
     File file;
     bool pgm = false;
     const uint8_t* bytes = nullptr;
-    uint32_t len = 0;
+    size_t len = 0;
     uint32_t b_index = 0;
     uint32_t crc32 = 0;
 

@@ -5,17 +5,17 @@
 #include "core/client.h"
 #include "core/fs.h"
 #include "core/types.h"
+#include "core/utils/crc32.h"
 #include "hub_macro.hpp"
 #include "transfer.h"
 #include "ui/timer.h"
-#include "utils/crc32.h"
 
 namespace ghc {
 
 class Uploader : public ghc::TransferBase {
    public:
     Uploader(gh::Client& client,
-             const char* id,
+             uint32_t id,
              bool safe = 0) : ghc::TransferBase(client, id, ghc::Tag::ota_err),
                               safe(safe) {}
 
@@ -28,9 +28,9 @@ class Uploader : public ghc::TransferBase {
         uint32_t size = sizetxt.toInt32();
         tmr.setTime(GH_CONN_TOUT * 1000);
         tmr.startTimeout();
-        uint32_t space = gh::FS.freeSpace();
+        uint64_t space = gh::FS.freeSpace();
         if (!safe) {
-            File f = gh::FS.openRead(fpath.str());
+            File f = gh::FS.openRead(fpath.toString());
             if (f) {
                 space += f.size();  // overwrite
                 f.close();
@@ -53,15 +53,15 @@ class Uploader : public ghc::TransferBase {
 
     void process(size_t typeHash, GHTREF data) {
         switch (typeHash) {
-            case sutil::SH("crc"):
+            case su::SH("crc"):
                 setCRC(data);
                 answerCMD(Tag::upload_next);
                 break;
-            case sutil::SH("next"):
+            case su::SH("next"):
                 write64(data);
                 if (!hasError()) answerCMD(Tag::upload_next);
                 break;
-            case sutil::SH("last"):
+            case su::SH("last"):
                 lastChunk = 1;
                 write64(data);
                 end();
@@ -80,15 +80,22 @@ class Uploader : public ghc::TransferBase {
     bool write64(GHTREF data) {
         if (!file) return 0;
         uint16_t declen = data.sizeB64();
-        uint8_t buf[declen];
-        if (!data.decodeB64(buf, declen)) {
-            setError(gh::Error::PacketDamage);
+        uint8_t* buf = new uint8_t[declen];
+        if (!buf) {
+            setError(gh::Error::CantAlloc);
             return 0;
         }
-        return write(buf, declen);
+        if (!data.decodeB64(buf, declen)) {
+            setError(gh::Error::PacketDamage);
+            delete[] buf;
+            return 0;
+        }
+        bool ok = write(buf, declen);
+        delete[] buf;
+        return ok;
     }
 
-    bool write(uint8_t* data, uint32_t len) {
+    bool write(uint8_t* data, size_t len) {
         if (file) {
             tmr.restart();
             crc32 = ghc::crc32(crc32, data, len);
@@ -130,7 +137,7 @@ class Uploader : public ghc::TransferBase {
         cleanup();
     }
 
-    static void sendError(gh::Client& client, const char* id, gh::Error err) {
+    static void sendError(gh::Client& client, uint32_t id, gh::Error err) {
         ghc::TransferBase::sendError(client, id, err, ghc::Tag::upload_err);
     }
 
@@ -139,7 +146,7 @@ class Uploader : public ghc::TransferBase {
 
    private:
     bool safe;
-    uint32_t upl_size;
+    size_t upl_size;
     gh::Timer tmr;
     File file;
     bool lastChunk = 0;

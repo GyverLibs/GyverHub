@@ -19,23 +19,21 @@ class GyverHub : public ghc::HubCore {
 
     // настроить префикс, название и иконку. Опционально задать свой ID устройства вида 0xXXXXXX (для esp он генерируется автоматически)
     void config(const String& net, const String& name = "", const String& icon = "", uint32_t id = 0) {
-        this->prefix = net;
+        this->net = net;
         this->name = name;
         this->icon = icon;
 
+        if (!id) {
 #ifdef GH_ESP_BUILD
-        if (id) {
-            if (id <= 0xfffff) id += 0xfffff;
-            ultoa(id, this->_id, HEX);
-        } else {
             uint8_t mac[6];
             WiFi.macAddress(mac);
-            ultoa(*((uint32_t*)(mac + 2)), this->_id, HEX);
-        }
+            this->id = *((uint32_t*)(mac + 2));
 #else
-        if (id <= 0x100000) id += 0x100000;
-        ultoa(id, this->_id, HEX);
+            this->id = 1;
 #endif
+        } else {
+            this->id = id;
+        }
     }
 
     // установить версию прошивки для отображения в Info
@@ -48,6 +46,11 @@ class GyverHub : public ghc::HubCore {
         _bufsize = size;
     }
 
+    // разрешить принимать широковещательные запросы (умолч. true)
+    void allowBroadcast(bool allow) {
+        _broadcast = allow;
+    }
+
     // установить пин-код для открытия устройства (значение больше 1000, не может начинаться с 000..)
     void setPIN(uint32_t pin) {
         _pin = pin;
@@ -58,14 +61,14 @@ class GyverHub : public ghc::HubCore {
         return _pin;
     }
 
-    // запустить
-    void begin() {
+    // запустить систему и fs
+    void begin(bool startFS = true) {
         for (uint8_t i = 0; i < GH_BRIDGE_AMOUNT; i++) {
             if (bridges[i]) bridges[i]->begin();
         }
 
 #ifndef GH_NO_FS
-        gh::FS.begin();  // TODO
+        if (startFS) gh::FS.begin();
 #endif
         _running_f = true;
     }
@@ -99,7 +102,7 @@ class GyverHub : public ghc::HubCore {
     }
 
     // ========================= ATTACH =========================
-
+    void attach(void (*h)()) {}
     // подключить функцию-сборщик интерфейса вида f(gh::Builder& builder)
     void onBuild(ghc::BuildCallback callback) {
         _build_cb = callback;
@@ -127,6 +130,21 @@ class GyverHub : public ghc::HubCore {
         _unix_cb = callback;
     }
 
+    // подключить обработчик получения геолокации с клиента вида f(gh::Location location)
+    void onLocation(ghc::LocationCallback callback) {
+        _loc_cb = callback;
+    }
+
+    // подключить обработчик получения данных вида f(gh::Data data)
+    void onData(ghc::DataCallback callback) {
+        _data_cb = callback;
+    }
+
+    // подключить обработчик пинга вида f(gh::Client& client)
+    void onPing(ghc::PingCallback callback) {
+        _ping_cb = callback;
+    }
+
 #ifdef GH_ESP_BUILD
     // подключить обработчик скачивания файлов вида f(gh::Fetcher& fetcher)
     void onFetch(ghc::FetchCallback callback) {
@@ -151,6 +169,17 @@ class GyverHub : public ghc::HubCore {
 
     // ========================= SEND =========================
 
+    // запросить геолокацию (придёт в onLocation)
+    void requestLocation(gh::Client* client, bool highAccuracy = false) {
+        if (!focused() || !_allow_send || !client->bridge) return;
+        ghc::Packet p(50);
+        p.beginPacket(id, client);
+        p.addString(ghc::Tag::type, ghc::Tag::location);
+        if (highAccuracy) p.addBool(ghc::Tag::high_accuracy, 1);
+        p.endPacket();
+        _send(p, client);
+    }
+
     // отправить текст в веб-консоль. Опционально цвет
     void sendCLI(GHTREF str, gh::Colors col = gh::Colors::Default, gh::Client* client = nullptr) {
         if (!focused() || !_allow_send) return;
@@ -158,7 +187,7 @@ class GyverHub : public ghc::HubCore {
         p.beginPacket(id, client);
         p.addString(ghc::Tag::type, ghc::Tag::print);
         p.addStringEsc(ghc::Tag::text, str);
-        p.addInt(ghc::Tag::color, (uint32_t)col);
+        p.addString(ghc::Tag::color, su::Value((uint32_t)col, HEX));
         p.endPacket();
         _send(p, client);
     }
@@ -201,50 +230,75 @@ class GyverHub : public ghc::HubCore {
 
     // ======================= UPDATE INL ========================
 
-    // обновить виджет. Указать имя виджета (или список), имя функции, клиента (опционально)
-    gh::UpdateInline update(GHTREF name, GHTREF func, gh::Client* client = nullptr) {
-        return gh::UpdateInline(canSend(), _id, name, func, client ? *client : gh::Client(this, sendHook));
-    }
-
     // обновить виджет. Указать имя виджета (или список), клиента (опционально)
     gh::UpdateInline update(GHTREF name, gh::Client* client = nullptr) {
-        return update(name, GHTXT(), client);
+        return gh::UpdateInline(canSend(), id, name, client ? *client : gh::Client(this, sendHook));
     }
 
     // ========================= UPDATE =========================
 
     // отправить value update на имя виджета int/string/bool
-    void sendUpdate(GHTREF name, const sutil::AnyValue& value, gh::Client* client = nullptr) {
+    void sendUpdate(GHTREF name, const su::Value& value, gh::Client* client = nullptr) {
         if (!focused() || !canSend()) return;
         _sendUpdate(name, value, client);
     }
 
     // отправить value update на имя виджета float
     void sendUpdate(GHTREF name, double value, uint8_t dec, gh::Client* client = nullptr) {
-        sendUpdate(sutil::AnyValue(value, dec));
+        sendUpdate(su::Value(value, dec));
     }
 
     // отправить value update по имени компонента (значение будет прочитано в build). Нельзя вызывать из build. Имена можно передать списком через ;
-    void sendUpdate(String name, gh::Client* client = nullptr) {
+    void sendUpdate(GHTREF name, gh::Client* client = nullptr) {
         if (!_build_cb || !focused() || _build_busy) return;
         gh::Client read_client;
         ghc::Packet p(50);
         p.beginPacket(id, client);
         p.addString(ghc::Tag::type, ghc::Tag::update);
         p.beginObj(ghc::Tag::updates);
-
-        // TODO parser len
-        for (sutil::Parser pr(name); pr.next();) {
-            p.addKey(pr.str());
+        for (su::TextParser n(name, ';'); n.parse();) {
+            p.addKey(n);
             p.s += F("{\"value\":\"");
             p.reserve(p.length() + 30);
-            _readBuild(p, read_client, pr.str());
+            _readBuild(p, read_client, n);
             p.s += F("\"},");
         }
-
         p.endObj();
         p.endPacket();
         _send(p, client);
+    }
+
+    // ========================= DATA =========================
+
+    // отправить устройству device_id данные с именем name и значением value
+    void sendData(uint32_t device_id, gh::Bridge* bridge, GHTREF name, const su::Value& value) {
+        if (!name.valid() || !value.valid() || !bridge->canSend()) return;
+        if (bridge->connection == gh::Connection::MQTT) {
+            gh::BridgeData data(value);
+            data.topic = _topicData(device_id, name);
+            bridge->send(data);
+        } else {
+            String url(_topicData(device_id, name));
+            url += '=';
+            value.addString(url);
+            gh::BridgeData data(url);
+            bridge->send(data);
+        }
+    }
+
+    // отправить всем устройствам данные с именем name и значением value
+    void sendDataAll(gh::Bridge* bridge, GHTREF name, const su::Value& value) {
+        sendData(GH_BROAD_ID, bridge, name, value);
+    }
+
+    // отправить устройству device_id данные с именем name и значением value
+    void sendData(uint32_t device_id, gh::Bridge* bridge, GHTREF name, double value, uint8_t dec) {
+        sendData(device_id, bridge, name, su::Value(value, dec));
+    }
+
+    // отправить всем устройствам данные с именем name и значением value
+    void sendDataAll(gh::Bridge* bridge, GHTREF name, double value, uint8_t dec) {
+        sendData(GH_BROAD_ID, bridge, name, value, dec);
     }
 
     // ========================= MQTT =========================
@@ -255,26 +309,24 @@ class GyverHub : public ghc::HubCore {
     }
 
     // отправить имя-значение на get-топик (MQTT) int/string/bool
-    void sendGet(GHTREF name, const sutil::AnyValue& value) {
+    void sendGet(GHTREF name, const su::Value& value) {
         _sendGet(name, value);
     }
 
     // отправить имя-значение на get-топик (MQTT) float
     void sendGet(GHTREF name, double value, uint8_t dec) {
-        sendGet(name, sutil::AnyValue(value, dec));
+        sendGet(name, su::Value(value, dec));
     }
 
     // отправить значение по имени компонента на get-топик (MQTT) (значение будет прочитано в build). Имена можно передать списком через ;
-    void sendGet(String name) {
+    void sendGet(GHTREF name) {
         if (!_running_f || !_build_cb || _build_busy) return;
         gh::Client client;
         ghc::Packet p(30);
-
-        for (sutil::Parser pr(name); pr.next();) {
-            bool ok = _readBuild(p, client, pr.str());
-            if (ok) _sendGet(pr.str(), p.s);
+        for (su::TextParser n(name, ';'); n.parse();) {
+            bool found = _readBuild(p, client, n);
+            if (found) _sendGet(n, p);
         }
-        // TODO parser len
     }
 
     // отправить MQTT LWT команду на включение/выключение
@@ -285,23 +337,23 @@ class GyverHub : public ghc::HubCore {
 
     // топик статуса для отправки
     String topicStatus() {
-        String t(prefix);
+        String t(net);
         t += F("/hub/");
-        t += id;
+        _addID(t, id);
         t += F("/status");
         return t;
     }
 
     // общий топик для подписки
     String topicDiscover() {
-        return prefix;
+        return net;
     }
 
     // топик устройства для подписки
     String topicHub() {
-        String t(prefix);
+        String t(net);
         t += '/';
-        t += id;
+        _addID(t, id);
         t += "/#";
         return t;
     }
@@ -320,13 +372,13 @@ class GyverHub : public ghc::HubCore {
     }
 
     // отправить всплывающее уведомление
-    void sendNotice(GHTREF text, gh::Colors col = gh::Colors::Green, gh::Client* client = nullptr) {
+    void sendNotice(GHTREF text, gh::Colors col = gh::Colors::Default, gh::Client* client = nullptr) {
         if (!_running_f || !_allow_send) return;
         ghc::Packet p(50);
         p.beginPacket(id, client);
         p.addString(ghc::Tag::type, ghc::Tag::notice);
         p.addStringEsc(ghc::Tag::text, text);
-        p.addInt(ghc::Tag::color, (uint32_t)col);
+        p.addString(ghc::Tag::color, su::Value((uint32_t)col, HEX));
         p.endPacket();
         _send(p, client);
     }
@@ -422,7 +474,7 @@ class GyverHub : public ghc::HubCore {
 
         if (_running_f) {
             for (uint8_t i = 0; i < GH_BRIDGE_AMOUNT; i++) {
-                if (bridges[i] && bridges[i]->state()) bridges[i]->tick();
+                if (bridges[i] && bridges[i]->canParse()) bridges[i]->tick();
             }
             return 1;
         }

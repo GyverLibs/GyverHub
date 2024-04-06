@@ -3,7 +3,6 @@
 #include <Arduino.h>
 
 // можно выключить остальную связь
-#define GH_NO_STREAM
 #define GH_NO_HTTP
 #define GH_NO_WS
 #define GH_NO_MQTT
@@ -13,7 +12,7 @@ GyverHub hub;
 
 class HubSerial : public gh::Bridge {
    public:
-    using gh::Bridge::Bridge;
+    HubSerial(void* hub, gh::Connection conn) : gh::Bridge(hub, conn, GyverHub::parseHook) {}
 
     void tick() {
         if (Serial.available()) {
@@ -26,7 +25,7 @@ class HubSerial : public gh::Bridge {
     }
 };
 
-HubSerial serial(&hub, gh::Connection::Serial, GyverHub::parseHook);
+HubSerial serial(&hub, gh::Connection::Serial);
 
 // билдер
 void build(gh::Builder& b) {

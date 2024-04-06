@@ -9,15 +9,25 @@ class Flag {
     friend class ghc::Widget;
 
    public:
+    Flag(bool change = false) : _changed(change) {}
+
     bool changed() {
         return _changed ? (_changed = 0, 1) : 0;
+    }
+
+    void clear() {
+        _changed = 0;
     }
 
     operator bool() {
         return changed();
     }
 
-   private:
+    void _change() {
+        _changed = 1;
+    }
+
+   protected:
     bool _changed = 0;
 };
 

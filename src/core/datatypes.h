@@ -75,22 +75,6 @@ void __attribute__((weak)) strToVar(GHTREF str, const AnyPtr& data) {
         case gh::Type::FLAGS_T:
             ((gh::Flags*)data.ptr)->flags = str.toInt16();
             break;
-        case gh::Type::POS_T: {
-            uint32_t xy = str.toInt32();
-            ((gh::Pos*)data.ptr)->_changed = true;
-            ((gh::Pos*)data.ptr)->x = xy >> 16;
-            ((gh::Pos*)data.ptr)->y = xy & 0xffff;
-        } break;
-        case gh::Type::BTN_T:
-            if (str[0] == '2') {
-                ((gh::Button*)data.ptr)->_changed = 0;
-                ((gh::Button*)data.ptr)->_clicked = 1;
-            } else {
-                ((gh::Button*)data.ptr)->_changed = 1;
-                ((gh::Button*)data.ptr)->_clicked = 0;
-                ((gh::Button*)data.ptr)->_state = str[0] & 0xF;
-            }
-            break;
 
         default:
             break;

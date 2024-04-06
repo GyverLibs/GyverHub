@@ -14,7 +14,6 @@
 #include "ui/color.h"
 #include "ui/flags.h"
 #include "ui/log.h"
-#include "ui/pos.h"
 
 namespace ghc {
 
@@ -54,10 +53,8 @@ class AnyPtr {
     AnyPtr(String* ptr) : ptr(ptr), type(gh::Type::STR_T) {}
 
     AnyPtr(gh::Color* ptr) : ptr(ptr), type(gh::Type::COLOR_T) {}
-    AnyPtr(gh::Pos* ptr) : ptr(ptr), type(gh::Type::POS_T) {}
     AnyPtr(gh::Flags* ptr) : ptr(ptr), type(gh::Type::FLAGS_T) {}
     AnyPtr(gh::Log* ptr) : ptr(ptr), type(gh::Type::LOG_T) {}
-    AnyPtr(gh::Button* ptr) : ptr(ptr), type(gh::Type::BTN_T) {}
     AnyPtr(const GHTXT* ptr) {
         if (ptr && ptr->valid()) {
             this->ptr = ptr;

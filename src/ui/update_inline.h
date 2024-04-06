@@ -13,9 +13,8 @@ namespace gh {
 class UpdateInline : public ghc::Widget {
    public:
     UpdateInline(bool allowed,
-                 const char* id,
+                 uint32_t id,
                  GHTREF name,
-                 GHTREF func,
                  Client client) : ghc::Widget(p),
                                   p(50, &_client),
                                   _client(client) {
@@ -25,7 +24,6 @@ class UpdateInline : public ghc::Widget {
         p.addString(ghc::Tag::type, ghc::Tag::update);
         p.beginObj(ghc::Tag::updates);
         p.beginObj(name);
-        if (func.valid()) p.addString(ghc::Tag::func, func);
     }
 
     ~UpdateInline() {

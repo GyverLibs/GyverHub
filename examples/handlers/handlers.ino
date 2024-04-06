@@ -62,7 +62,7 @@ void setup() {
     // обработчик запроса клиента
     hub.onRequest([](gh::Request& req) -> bool {
         Serial.print("Request: ");
-        Serial.print(gh::readConnection(req.client.connection()));
+        Serial.print(gh::readConnection(req.client.connection));
         Serial.print(',');
         Serial.print(req.client.id);
         Serial.print(',');

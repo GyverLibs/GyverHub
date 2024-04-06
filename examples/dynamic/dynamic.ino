@@ -22,7 +22,7 @@ void build(gh::Builder& b) {
         b.Tabs(&tab).text(F("Sliders;Switches;Inputs;Char input")).size(4);
 
         // спиннер с количеством, перезагрузка по клику
-        b.Spinner(&spin_am).label(F("Amount")).range(0, DYN_MAX, 1).size(1);
+        b.Spinner(&spin_am).label(F("Amount")).range(0, DYN_MAX, 1);
 
         // перезагрузим если были действия
         if (b.changed()) b.refresh();

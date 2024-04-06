@@ -1,18 +1,22 @@
 #pragma once
 #include <Arduino.h>
+#include <StringUtils.h>
 
+#include "flag.h"
 #include "pos_func.h"
 
 namespace gh {
 
-class Pos {
+class Pos : public Flag {
    public:
     Pos() {}
-    Pos(int16_t nx, int16_t ny, bool nc = 0) : x(nx), y(ny), _changed(nc) {}
-
-    bool changed() {
-        return _changed ? (_changed = 0, 1) : 0;
+    Pos(const su::Text& text, bool change = 0) : Flag(change) {
+        int16_t* xy[] = {&x, &y};
+        text.split(xy, 2, ';');
     }
+    Pos(int16_t nx, int16_t ny, bool change = 0) : Flag(change), x(nx), y(ny) {}
+
+    // bool changed();
 
     // расстояние до точки
     uint16_t dist(int16_t x1, int16_t y1) {
@@ -34,9 +38,6 @@ class Pos {
 
     // координата y
     int16_t y = 0;
-
-    //    private:
-    bool _changed = 0;
 };
 
 }  // namespace gh

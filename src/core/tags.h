@@ -6,6 +6,7 @@
 namespace ghc {
 
 enum class Tag : uint8_t {
+    none = 255,
     api_v = 0,
     id,
     client,
@@ -21,9 +22,9 @@ enum class Tag : uint8_t {
     icon,
     PIN,
     version,
-    max_upl,
-    http_t,
-    ota_t,
+    max_upload,
+    http_transfer,
+    ota_type,
     ws_port,
     modules,
     total,
@@ -66,7 +67,7 @@ enum class Tag : uint8_t {
     step,
     dec,
     unit,
-    fsize,
+    font_size,
     action,
     nolabel,
     suffix,
@@ -78,7 +79,7 @@ enum class Tag : uint8_t {
     wwidth,
     wheight,
     data,
-    func,
+    wtype,
     keep,
     exp,
 
@@ -131,6 +132,16 @@ enum class Tag : uint8_t {
     col,
     space,
     platform,
+    map,
+    latlon,
+    location,
+    high_accuracy,
+    layer,
+    udp_port,
+    container,
+    rowcol,
+    spoiler,
+    http_port,
 };
 
 }  // namespace ghc

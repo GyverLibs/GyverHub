@@ -24,18 +24,41 @@ struct Color {
 
     Color() {}
     Color(const Color& col) = default;
-    Color(uint8_t gray) {
-        setGray(gray);
-    }
     Color(Colors color) {
         setHEX((uint32_t)color);
+        if (color == Colors::Default) _default = 1;
     }
-    Color(uint32_t hex, bool f) {
-        if (f) setHEX(hex);
+    Color(uint32_t hex, bool gray = false) {
+        if (gray) setGray(gray);
+        else setHEX(hex);
     }
-    Color(uint8_t v1, uint8_t v2, uint8_t v3, bool hsv = 0) {
+    Color(uint8_t v1, uint8_t v2, uint8_t v3, bool hsv = false) {
         if (hsv) setHSV(v1, v2, v3);
         else setRGB(v1, v2, v3);
+    }
+
+    // static
+    static Color fromRGB(uint8_t r, uint8_t g, uint8_t b) {
+        return Color(r, g, b, false);
+    }
+    static Color fromHSV(uint8_t h, uint8_t s, uint8_t v) {
+        return Color(h, s, v, true);
+    }
+    static Color fromHEX(uint32_t hex) {
+        return Color(hex, false);
+    }
+    static Color fromGray(uint8_t gray) {
+        return Color(gray, true);
+    }
+    static Color fromHue(uint8_t hue) {
+        Color col;
+        col.setHue(hue);
+        return col;
+    }
+    static Color from565(uint16_t rgb565) {
+        Color col;
+        col.set565(rgb565);
+        return col;
     }
 
     // установить RGB цвет
@@ -126,11 +149,13 @@ struct Color {
 
     // получить 24-бит RGB цвет
     uint32_t getHEX() {
-        uint32_t hex = 0;
-        ((uint8_t*)&hex)[2] = r;
-        ((uint8_t*)&hex)[1] = g;
-        ((uint8_t*)&hex)[0] = b;
-        return hex;
+        // uint8_t rgb[] = {b, g, r, 0};
+        // return *((uint32_t*)&rgb[0]);
+        union RGB {
+            uint8_t bytes[4];
+            uint32_t hex;
+        };
+        return RGB{b, g, r, 0}.hex;
     }
 
     // получить 16-бит RGB цвет
@@ -141,6 +166,13 @@ struct Color {
     operator uint32_t() {
         return getHEX();
     }
+
+    bool isDefault() {
+        return _default;
+    }
+
+   private:
+    bool _default = 0;
 };
 
 }  // namespace gh

@@ -7,757 +7,464 @@
 #include <Arduino.h>
 #include <StringUtils.h>
 
-#include "hub_macro.hpp"
 #include "core/packet.h"
+#include "geo.h"
+#include "hub_macro.hpp"
+#include "location.h"
 
-enum class CV : uint8_t {
-    BUTT,
+enum class cv : uint8_t {
+    MITER,
     ROUND,
+    BEVEL,
     SQUARE,
     PROJECT,
-    BEVEL,
-    MITER,
-    START,
-    END,
-    CENTER,
-    LEFT,
-    RIGHT,
-    ALPHABETIC,
-    TOP,
-    HANGING,
-    MIDDLE,
-    IDEOGRAPHIC,
-    BOTTOM,
-    SRC_OVER,
-    SRC_ATOP,
-    SRC_IN,
-    SRC_OUT,
-    DST_OVER,
-    DST_ATOP,
-    DST_IN,
-    DST_OUT,
-    LIGHTER,
-    COPY,
-    XOR,
-    TXT_TOP,
-    TXT_BOTTOM,
-    TXT_CENTER,
-    TXT_BASELINE,
     CORNER,
     CORNERS,
+    CENTER,
     RADIUS,
+    LEFT,
+    RIGHT,
+    TOP,
+    BOTTOM,
+    BASELINE,
 };
 
 namespace gh {
 
 class Canvas {
+   private:
+    enum class api : uint8_t {
+        clear,
+        background,
+        fill,
+        noFill,
+        stroke,
+        noStroke,
+        strokeWeight,
+        strokeJoin,
+        strokeCap,
+        rectMode,
+        ellipseMode,
+
+        imageMode,
+        image,
+
+        textFont,
+        textSize,
+        textAlign,
+        text,
+
+        point,
+        line,
+        rect,
+        arc,
+        ellipse,
+        circle,
+        bezier,
+
+        beginShape,
+        endShape,
+        vertex,
+        bezierVertex,
+
+        pixelScale,
+        rotate,
+        translate,
+        push,
+        pop,
+    };
+
    public:
+    Canvas() {}
+    Canvas(ghc::Packet* packet) : p(packet) {}
+
+    // =================== SYSTEM ===================
     // подключить внешний буфер
-    void setBuffer(ghc::Packet* pp) {
-        p = pp;
+    void setBuffer(ghc::Packet* packet) {
+        p = packet;
     }
 
     // добавить строку кода на js
-    Canvas& custom(GHTREF text) {
-        if (!p) return *this;
+    void custom(GHTREF text) {
+        if (!p) return;
         _checkFirst();
-        p->quotes();
-        p->addText(text);
-        p->quotes();
-        return *this;
+        p->addStringEsc(text);
     }
 
-    // =====================================================
-    // =============== PROCESSING-LIKE API =================
-    // =====================================================
-
-    // =================== BACKGROUND ======================
-    // очистить полотно
-    Canvas& clear() {
-        clearRect(0, 0, -1, -1);
-        beginPath();
-        return *this;
+    // true - координаты в пикселях, false (умолч.) - приведённые координаты для Canvas, метры для карты Map
+    void pixelScale(bool pix) {
+        _cmd(api::pixelScale, 1, pix);
     }
 
-    // залить полотно установленным в fill() цветом
-    Canvas& background() {
-        fillRect(0, 0, -1, -1);
-        return *this;
+    // =================== BACK ===================
+
+    // очистить
+    void clear() {
+        _cmd(api::clear);
     }
 
-    // залить полотно указанным цветом (цвет, прозрачность)
-    Canvas& background(uint32_t hex, uint8_t a = 255) {
-        fillStyle(hex, a);
-        background();
-        return *this;
+    // залить полотно указанным цветом, умолч. 0xddd
+    void background(uint32_t hex, uint8_t a = 255) {
+        _color(api::background, hex, a);
+    }
+    void background(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) {
+        _color(api::background, r, g, b, a);
     }
 
-    // ======================== FILL =======================
-    // выбрать цвет заливки (цвет, прозрачность)
-    Canvas& fill(uint32_t hex, uint8_t a = 255) {
-        fillStyle(hex, a);
-        _fillF = 1;
-        return *this;
+    // =================== FILL ===================
+
+    // выбрать цвет заливки (цвет, прозрачность), умолч. 0xfff
+    void fill(uint32_t hex, uint8_t a = 255) {
+        _color(api::fill, hex, a);
+    }
+    void fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) {
+        _color(api::fill, r, g, b, a);
     }
 
     // отключить заливку
-    Canvas& noFill() {
-        _fillF = 0;
-        return *this;
+    void noFill() {
+        _cmd(api::noFill);
     }
 
-    // ===================== STROKE ====================
-    // выбрать цвет обводки (цвет, прозрачность)
-    Canvas& stroke(uint32_t hex, uint8_t a = 255) {
-        strokeStyle(hex, a);
-        _strokeF = 1;
-        return *this;
+    // =================== STROKE ===================
+
+    // выбрать цвет обводки (цвет, прозрачность), умолч. 0x000
+    void stroke(uint32_t hex, uint8_t a = 255) {
+        _color(api::stroke, hex, a);
+    }
+    void stroke(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) {
+        _color(api::stroke, r, g, b, a);
     }
 
     // отключить обводку
-    Canvas& noStroke() {
-        _strokeF = 0;
-        return *this;
+    void noStroke() {
+        _cmd(api::noStroke);
     }
 
-    // толщина обводки, px
-    Canvas& strokeWeight(int v) {
-        lineWidth(v);
-        return *this;
+    // толщина обводки
+    void strokeWeight(int v) {
+        _cmd(api::strokeWeight, 1, v);
     }
 
-    // соединение линий: CV::MITER (умолч), CV::BEVEL, CV::ROUND
-    Canvas& strokeJoin(CV v) {
-        lineJoin(v);
-        return *this;
+    // соединение линий: MITER (умолч.), ROUND, BEVEL
+    // https://processing.org/reference/strokeJoin_.html
+    void strokeJoin(cv mode) {
+        _cmd(api::strokeJoin, mode);
     }
 
-    // края линий: CV::PROJECT (умолч), CV::ROUND, CV::SQUARE
-    Canvas& strokeCap(CV v) {
-        lineCap(v);
-        return *this;
+    // края линий: ROUND (умолч.), SQUARE, PROJECT
+    // https://processing.org/reference/strokeCap_.html
+    void strokeCap(cv mode) {
+        _cmd(api::strokeCap, mode);
     }
 
-    // ===================== PRIMITIVES ====================
-    // окружность (x, y, радиус), px
-    Canvas& circle(int x, int y, int r) {
-        beginPath();
-        switch (_eMode) {
-            case CV::CORNER:
-                arc(x + r, y + r, r);
-                break;
-            default:
-                arc(x, y, r);
-                break;
-        }
-        if (_strokeF) stroke();
-        if (_fillF) fill();
-        return *this;
+    // =================== MODE ===================
+
+    // режим прямоугольника: CORNER (умолч.), CORNERS, CENTER, RADIUS
+    // https://processing.org/reference/rectMode_.html
+    void rectMode(cv mode) {
+        _cmd(api::rectMode, mode);
     }
 
-    // линия (координаты начала и конца)
-    Canvas& line(int x1, int y1, int x2, int y2) {
-        beginPath();
-        moveTo(x1, y1);
-        lineTo(x2, y2);
-        stroke();
-        return *this;
+    // режим окружности: CENTER (умолч.), RADIUS, CORNER, CORNERS
+    // https://processing.org/reference/ellipseMode_.html
+    void ellipseMode(cv mode) {
+        _cmd(api::ellipseMode, mode);
     }
 
+    // =================== IMAGE ===================
+
+    // режим изображения: CORNER (умолч.), CORNERS, CENTER
+    // https://processing.org/reference/imageMode_.html
+    void imageMode(cv mode) {
+        _cmd(api::imageMode, mode);
+    }
+
+    // вывести изображение по пути (из файла или из Интернета)
+    // https://processing.org/reference/image_.html
+    void image(GHTREF path, long x, long y) {
+        _cmdText(api::image, path, 2, x, y);
+    }
+    void image(GHTREF path, long x, long y, long w) {
+        _cmdText(api::image, path, 3, x, y, w);
+    }
+    void image(GHTREF path, long x, long y, long w, long h) {
+        _cmdText(api::image, path, 4, x, y, w, h);
+    }
+
+    void image(GHTREF path, Geo xy) {
+        image(path, xy._latE6(), xy._lonE6());
+    }
+    void image(GHTREF path, Geo xy, long w) {
+        image(path, xy._latE6(), xy._lonE6(), w);
+    }
+    void image(GHTREF path, Geo xy, long w, long h) {
+        image(path, xy._latE6(), xy._lonE6(), w, h);
+    }
+
+    // =================== TEXT ===================
+
+    // шрифт (умолч. "sans-serif")
+    void textFont(GHTREF font) {
+        _cmdText(api::textFont, font, 0);
+    }
+
+    // размер шрифта (умолч. 10px)
+    void textSize(int size) {
+        _cmd(api::textSize, 1, size);
+    }
+
+    // выравнивание текста (LEFT (умолч.), CENTER, RIGHT), (BASELINE (умолч.), TOP, BOTTOM, CENTER)
+    // https://processing.org/reference/textAlign_.html
+    void textAlign(cv x, cv y = cv::BASELINE) {
+        _cmd(api::textAlign, 2, (int)x, (int)y);
+    }
+
+    // вывести текст
+    void text(GHTREF txt, long x, long y) {
+        _cmdText(api::text, txt, 2, x, y);
+    }
+    void text(GHTREF txt, Geo xy) {
+        text(txt, xy._latE6(), xy._lonE6());
+    }
+
+    // =================== PRIMITIVES ===================
     // точка
-    Canvas& point(int x, int y) {
-        beginPath();
-        fillRect(x, y, 1, 1);
-        return *this;
+    // https://processing.org/reference/point_.html
+    void point(long x, long y) {
+        _cmd(api::point, 2, x, y);
+    }
+    void point(Geo xy) {
+        point(xy._latE6(), xy._lonE6());
     }
 
-    // четырёхугольник (координаты углов)
-    Canvas& quadrangle(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4) {
-        beginPath();
-        moveTo(x1, y1);
-        lineTo(x2, y2);
-        lineTo(x3, y3);
-        lineTo(x4, y4);
-        closePath();
-        if (_strokeF) stroke();
-        if (_fillF) fill();
-        return *this;
+    // линия
+    // https://processing.org/reference/line_.html
+    void line(long x1, long y1, long x2, long y2) {
+        _cmd(api::line, 4, x1, y1, x2, y2);
     }
-
-    // треугольник (координаты углов)
-    Canvas& triangle(int x1, int y1, int x2, int y2, int x3, int y3) {
-        beginPath();
-        moveTo(x1, y1);
-        lineTo(x2, y2);
-        lineTo(x3, y3);
-        closePath();
-        if (_strokeF) stroke();
-        if (_fillF) fill();
-        return *this;
+    void line(Geo xy1, Geo xy2) {
+        line(xy1._latE6(), xy1._lonE6(), xy2._latE6(), xy2._lonE6());
     }
 
     // прямоугольник
-    Canvas& rect(int x, int y, int w, int h, int tl = -1, int tr = -1, int br = 0, int bl = 0) {
-        beginPath();
-        int X = x, Y = y, W = w, H = h;
-        switch (_rMode) {
-            case CV::CORNER:
-                break;
-            case CV::CORNERS:
-                W = w - x;
-                H = h - y;
-                break;
-            case CV::CENTER:
-                X = x - w / 2;
-                Y = y - h / 2;
-                break;
-            case CV::RADIUS:
-                X = x - w;
-                Y = y - h;
-                W = w * 2;
-                H = h * 2;
-                break;
-            default:
-                break;
-        }
-        if (tl < 0) drawRect(X, Y, W, H);
-        else if (tr < 0) roundRect(X, Y, W, H, tl);
-        else roundRect(X, Y, W, H, tl, tr, br, bl);
-        if (_strokeF) stroke();
-        if (_fillF) fill();
-        return *this;
+    // https://processing.org/reference/rect_.html
+    void rect(long x, long y, long w, long h) {
+        _cmd(api::rect, 4, x, y, w, h);
+    }
+    void rect(long x, long y, long w, long h, long r) {
+        _cmd(api::rect, 5, x, y, w, h, r);
+    }
+    void rect(long x, long y, long w, long h, long tl, long tr, long br, long bl) {
+        _cmd(api::rect, 8, x, y, w, h, tl, tr, br, bl);
+    }
+
+    void rect(Geo xy, long w, long h) {
+        rect(xy._latE6(), xy._lonE6(), w, h);
+    }
+    void rect(Geo xy1, Geo xy2) {
+        rect(xy1._latE6(), xy1._lonE6(), xy2._latE6(), xy2._lonE6());
+    }
+    void rect(Geo xy, long w, long h, long r) {
+        rect(xy._latE6(), xy._lonE6(), w, h, r);
+    }
+    void rect(Geo xy1, Geo xy2, long r) {
+        rect(xy1._latE6(), xy1._lonE6(), xy2._latE6(), xy2._lonE6(), r);
+    }
+    void rect(Geo xy, long w, long h, long tl, long tr, long br, long bl) {
+        rect(xy._latE6(), xy._lonE6(), w, h, tl, tr, br, bl);
+    }
+    void rect(Geo xy1, Geo xy2, long tl, long tr, long br, long bl) {
+        rect(xy1._latE6(), xy1._lonE6(), xy2._latE6(), xy2._lonE6(), tl, tr, br, bl);
     }
 
     // квадрат
-    Canvas& square(int x, int y, int w) {
-        rect(x, y, w, w);
-        return *this;
+    // https://processing.org/reference/square_.html
+    void square(long x, long y, long size) {
+        rect(x, y, size, size);
+    }
+    void square(Geo xy, long size) {
+        square(xy._latE6(), xy._lonE6(), size);
     }
 
-    // режим окружности: CV::CENTER (умолч), CV::CORNER
-    Canvas& ellipseMode(CV mode) {
-        _eMode = mode;
-        return *this;
+    // дуга
+    // https://processing.org/reference/arc_.html
+    void arc(long x, long y, long w, long h, float start, float stop) {
+        _cmd(api::arc, 6, x, y, w, h, (long)degrees(start), (long)degrees(stop));
+    }
+    void arc(Geo xy, long w, long h, float start, float stop) {
+        arc(xy._latE6(), xy._lonE6(), w, h, start, stop);
     }
 
-    // режим прямоугольника: CV::CORNER (умолч), CV::CORNERS, CV::CENTER, CV::RADIUS
-    Canvas& rectMode(CV mode) {
-        _rMode = mode;
-        return *this;
+    // эллипс
+    // https://processing.org/reference/ellipse_.html
+    void ellipse(long x, long y, long w, long h) {
+        _cmd(api::ellipse, 4, x, y, w, h);
+    }
+    void ellipse(Geo xy, long w, long h) {
+        ellipse(xy._latE6(), xy._lonE6(), w, h);
     }
 
-    // ======================= TEXT ========================
-    // шрифт
-    Canvas& textFont(const char* name) {
-        _fname = name;
-        _font();
-        return *this;
+    // окружность
+    // https://processing.org/reference/circle_.html
+    void circle(long x, long y, long r) {
+        _cmd(api::circle, 3, x, y, r);
+    }
+    void circle(Geo xy, long r) {
+        circle(xy._latE6(), xy._lonE6(), r);
     }
 
-    // размер шрифта, px
-    Canvas& textSize(int size) {
-        _fsize = size;
-        _font();
-        return *this;
+    // кривая Безье
+    // https://processing.org/reference/bezier_.html
+    void bezier(long x1, long y1, long x2, long y2, long x3, long y3, long x4, long y4) {
+        _cmd(api::bezier, 8, x1, y1, x2, y2, x3, y3, x4, y4);
+    }
+    void bezier(Geo xy1, Geo xy2, Geo xy3, Geo xy4) {
+        bezier(xy1._latE6(), xy1._lonE6(), xy2._latE6(), xy2._lonE6(), xy3._latE6(), xy3._lonE6(), xy4._latE6(), xy4._lonE6());
     }
 
-    // вывести текст, опционально макс длина
-    Canvas& text(const String& text, int x, int y, int w = 0) {
-        if (_strokeF) strokeText(text, x, y, w);
-        if (_fillF) fillText(text, x, y, w);
-        return *this;
+    // =================== SHAPE ===================
+    // начать фигуру
+    void beginShape() {
+        _cmd(api::beginShape);
     }
 
-    // выравнивание текста
-    // CV::LEFT, CV::CENTER, CV::RIGHT
-    // TXT_TOP, TXT_BOTTOM, TXT_CENTER, TXT_BASELINE
-    Canvas& textAlign(CV h, CV v) {
-        textAlign(h);
-        textBaseline(v);
-        return *this;
+    // закончить фигуру
+    void endShape(bool close = 0) {
+        _cmd(api::endShape, 1, close);
     }
 
-    // сохранить конфигурацию полотна
-    Canvas& push() {
-        save();
-        return *this;
+    // следующая точка фигуры
+    void vertex(long x, long y) {
+        _cmd(api::vertex, 2, x, y);
+    }
+    void vertex(Geo xy) {
+        vertex(xy._latE6(), xy._lonE6());
     }
 
-    // восстановить конфигурацию полотна
-    Canvas& pop() {
-        restore();
-        return *this;
+    // следующая точка фигуры безье
+    void bezierVertex(long xa1, long ya1, long xa2, long ya2, long xe, long ye) {
+        _cmd(api::bezierVertex, 6, xa1, ya1, xa2, ya2, xe, ye);
+    }
+    void bezierVertex(Geo anch1, Geo anch2, Geo endp) {
+        bezierVertex(anch1._latE6(), anch1._lonE6(), anch2._latE6(), anch2._lonE6(), endp._latE6(), endp._lonE6());
     }
 
-    // ======================================================
-    // ================== HTML CANVAS API ===================
-    // ======================================================
-
-    // цвет заполнения
-    Canvas& fillStyle(uint32_t hex, uint8_t a = 255) {
-        if (!p) return *this;
-        _cmd(0);
-        p->colon();
-        _color(hex, a);
-        p->quotes();
-        return *this;
-    }
-
-    // цвет обводки
-    Canvas& strokeStyle(uint32_t hex, uint8_t a = 255) {
-        if (!p) return *this;
-        _cmd(1);
-        p->colon();
-        _color(hex, a);
-        p->quotes();
-        return *this;
-    }
-
-    // цвет тени
-    Canvas& shadowColor(uint32_t hex, uint8_t a = 255) {
-        if (!p) return *this;
-        _cmd(2);
-        p->colon();
-        _color(hex, a);
-        p->quotes();
-        return *this;
-    }
-
-    // размытость тени, px
-    Canvas& shadowBlur(int v) {
-        if (!p) return *this;
-        _cmd(3);
-        _addP(v);
-        return *this;
-    }
-
-    // отступ тени, px
-    Canvas& shadowOffsetX(int v) {
-        if (!p) return *this;
-        _cmd(4);
-        _addP(v);
-        return *this;
-    }
-
-    // отступ тени, px
-    Canvas& shadowOffsetY(int v) {
-        if (!p) return *this;
-        _cmd(5);
-        _addP(v);
-        return *this;
-    }
-
-    // края линий: CV::BUTT (умолч), CV::ROUND, CV::SQUARE
-    // https://www.w3schools.com/tags/canvas_linecap.asp
-    Canvas& lineCap(CV v) {
-        if (!p) return *this;
-        _cmd(11);
-        _addP((uint8_t)v);
-        return *this;
-    }
-
-    // соединение линий: CV::MITER (умолч), CV::BEVEL, CV::ROUND
-    // https://www.w3schools.com/tags/canvas_linejoin.asp
-    Canvas& lineJoin(CV v) {
-        if (!p) return *this;
-        _cmd(12);
-        _addP((uint8_t)v);
-        return *this;
-    }
-
-    // ширина линий, px
-    Canvas& lineWidth(int v) {
-        if (!p) return *this;
-        _cmd(6);
-        _addP(v);
-        return *this;
-    }
-
-    // длина соединения CV::MITER, px
-    // https://www.w3schools.com/tags/canvas_miterlimit.asp
-    Canvas& miterLimit(int v) {
-        if (!p) return *this;
-        _cmd(7);
-        _addP(v);
-        return *this;
-    }
-
-    // шрифт: "30px Arial"
-    // https://www.w3schools.com/tags/canvas_font.asp
-    Canvas& font(GHTREF v) {
-        if (!p) return *this;
-        _cmd(8);
-        p->colon();
-        p->addText(v);
-        p->quotes();
-        return *this;
-    }
-
-    // выравнивание текста: CV::START (умолч), CV::END, CV::CENTER, CV::LEFT, CV::RIGHT
-    // https://www.w3schools.com/tags/canvas_textalign.asp
-    Canvas& textAlign(CV v) {
-        if (!p) return *this;
-        _cmd(9);
-        _addP((uint8_t)v);
-        return *this;
-    }
-
-    // позиция текста: CV::ALPHABETIC (умолч), CV::TOP, CV::HANGING, CV::MIDDLE, CV::IDEOGRAPHIC, CV::BOTTOM
-    // https://www.w3schools.com/tags/canvas_textbaseline.asp
-    Canvas& textBaseline(CV v) {
-        if (!p) return *this;
-        _cmd(10);
-        _addP((uint8_t)v);
-        return *this;
-    }
-
-    // прозрачность рисовки, 0.0-1.0
-    Canvas& globalAlpha(float v) {
-        if (!p) return *this;
-        _cmd(14);
-        _addP(v);
-        return *this;
-    }
-
-    // тип наложения графики: CV::SRC_OVER (умолч), CV::SRC_ATOP, CV::SRC_IN, CV::SRC_OUT, CV::DST_OVER, CV::DST_ATOP, CV::DST_IN, CV::DST_OUT, CV::LIGHTER, CV::COPY, CV::XOR
-    // https://www.w3schools.com/tags/canvas_globalcompositeoperation.asp
-    Canvas& globalCompositeOperation(CV v) {
-        if (!p) return *this;
-        _cmd(13);
-        _addP((uint8_t)v);
-        return *this;
-    }
-
-    // прямоугольник
-    Canvas& drawRect(int x, int y, int w, int h) {
-        if (!p) return *this;
-        _cmd(17);
-        p->colon();
-        _params(4, x, y, w, h);
-        p->quotes();
-        return *this;
-    }
-
-    // скруглённый прямоугольник
-    Canvas& roundRect(int x, int y, int w, int h, int tl = 0, int tr = -1, int br = -1, int bl = -1) {
-        if (!p) return *this;
-        _cmd(31);
-        p->colon();
-        if (tr < 0) _params(5, x, y, w, h, tl);
-        else if (br < 0) _params(6, x, y, w, h, tl, tr);
-        else _params(8, x, y, w, h, tl, tr, br, bl);
-        p->quotes();
-        return *this;
-    }
-
-    // закрашенный прямоугольник
-    Canvas& fillRect(int x, int y, int w, int h) {
-        if (!p) return *this;
-        _cmd(18);
-        p->colon();
-        _params(4, x, y, w, h);
-        p->quotes();
-        return *this;
-    }
-
-    // обведённый прямоугольник
-    Canvas& strokeRect(int x, int y, int w, int h) {
-        if (!p) return *this;
-        _cmd(19);
-        p->colon();
-        _params(4, x, y, w, h);
-        p->quotes();
-        return *this;
-    }
-
-    // очистить область
-    Canvas& clearRect(int x, int y, int w, int h) {
-        if (!p) return *this;
-        _cmd(20);
-        p->colon();
-        _params(4, x, y, w, h);
-        p->quotes();
-        return *this;
-    }
-
-    // залить
-    Canvas& fill() {
-        if (!p) return *this;
-        _cmd(32);
-        p->quotes();
-        return *this;
-    }
-
-    // обвести
-    Canvas& stroke() {
-        if (!p) return *this;
-        _cmd(33);
-        p->quotes();
-        return *this;
-    }
-
-    // начать путь
-    Canvas& beginPath() {
-        if (!p) return *this;
-        _cmd(34);
-        p->quotes();
-        return *this;
-    }
-
-    // переместить курсор
-    Canvas& moveTo(int x, int y) {
-        if (!p) return *this;
-        _cmd(21);
-        p->colon();
-        _params(2, x, y);
-        p->quotes();
-        return *this;
-    }
-
-    // завершить путь (провести линию на начало)
-    Canvas& closePath() {
-        if (!p) return *this;
-        _cmd(35);
-        p->quotes();
-        return *this;
-    }
-
-    // нарисовать линию от курсора
-    Canvas& lineTo(int x, int y) {
-        if (!p) return *this;
-        _cmd(22);
-        p->colon();
-        _params(2, x, y);
-        p->quotes();
-        return *this;
-    }
-
-    // ограничить область рисования
-    // https://www.w3schools.com/tags/canvas_clip.asp
-    Canvas& clip() {
-        if (!p) return *this;
-        _cmd(36);
-        p->quotes();
-        return *this;
-    }
-
-    // провести кривую
-    // https://www.w3schools.com/tags/canvas_quadraticcurveto.asp
-    Canvas& quadraticCurveTo(int cpx, int cpy, int x, int y) {
-        if (!p) return *this;
-        _cmd(23);
-        p->colon();
-        _params(4, cpx, cpy, x, y);
-        p->quotes();
-        return *this;
-    }
-
-    // провести кривую Безье
-    // https://www.w3schools.com/tags/canvas_beziercurveto.asp
-    Canvas& bezierCurveTo(int cp1x, int cp1y, int cp2x, int cp2y, int x, int y) {
-        if (!p) return *this;
-        _cmd(24);
-        p->colon();
-        _params(6, cp1x, cp1y, cp2x, cp2y, x, y);
-        p->quotes();
-        return *this;
-    }
-
-    // провести дугу (радианы)
-    // https://www.w3schools.com/tags/canvas_arc.asp
-    Canvas& arc(int x, int y, int r, float sa = 0, float ea = TWO_PI, bool ccw = 0) {
-        if (!p) return *this;
-        _cmd(27);
-        p->colon();
-        _params(3, x, y, r);
-        p->comma();
-        p->s += sa;
-        p->comma();
-        p->s += ea;
-        p->s += ccw;
-        p->quotes();
-        return *this;
-    }
-
-    // скруглить
-    // https://www.w3schools.com/tags/canvas_arcto.asp
-    Canvas& arcTo(int x1, int y1, int x2, int y2, int r) {
-        if (!p) return *this;
-        _cmd(26);
-        p->colon();
-        _params(5, x1, y1, x2, y2, r);
-        p->quotes();
-    }
-
-    // масштабировать область рисования
-    // https://www.w3schools.com/tags/canvas_scale.asp
-    Canvas& scale(int sw, int sh) {
-        if (!p) return *this;
-        _cmd(15);
-        p->colon();
-        _params(2, sw, sh);
-        p->quotes();
-        return *this;
-    }
-
+    // =================== CANVAS ===================
     // вращать область рисования (в радианах)
-    // https://www.w3schools.com/tags/canvas_rotate.asp
-    Canvas& rotate(float v) {
-        if (!p) return *this;
-        _cmd(16);
-        _addP(v);
-        return *this;
+    // https://processing.org/reference/rotate_.html
+    void rotate(float rad) {
+        _cmd(api::rotate, 1, (long)degrees(rad));
     }
 
     // перемещать область рисования
-    // https://www.w3schools.com/tags/canvas_translate.asp
-    Canvas& translate(int x, int y) {
-        if (!p) return *this;
-        _cmd(25);
-        p->colon();
-        _params(2, x, y);
-        p->quotes();
-        return *this;
+    // https://processing.org/reference/translate_.html
+    void translate(long x, long y) {
+        _cmd(api::translate, 2, x, y);
+    }
+    void translate(Geo xy) {
+        translate(xy._latE6(), xy._lonE6());
     }
 
-    // вывести закрашенный текст, опционально макс. длина
-    Canvas& fillText(GHTREF text, int x, int y, int w = 0) {
-        if (!p) return *this;
-        _cmd(28);
-        p->colon();
-        p->quotes();
-        p->addStringEsc(text);
-        p->quotes();
-        p->comma();
-        _params(3, x, y, w);
-        p->quotes();
-        return *this;
+    // сохранить настройки рисования
+    // https://processing.org/reference/push_.html
+    void push() {
+        _cmd(api::push);
     }
 
-    // вывести обведённый текст, опционально макс. длина
-    Canvas& strokeText(GHTREF text, int x, int y, int w = 0) {
-        if (!p) return *this;
-        _cmd(29);
-        p->colon();
-        p->quotes();
-        p->addStringEsc(text);
-        p->quotes();
-        p->comma();
-        _params(3, x, y, w);
-        p->quotes();
-        return *this;
+    // восстановить настройки рисования
+    // https://processing.org/reference/pop_.html
+    void pop() {
+        _cmd(api::pop);
     }
 
-    // вывести картинку
-    // https://www.w3schools.com/tags/canvas_drawimage.asp
-    Canvas& drawImage(GHTREF img, int x, int y) {
-        if (!p) return *this;
-        _cmd(30);
-        p->colon();
-        p->addText(img);
-        p->comma();
-        _params(2, x, y);
-        p->quotes();
-        return *this;
-    }
-    Canvas& drawImage(GHTREF img, int x, int y, int w) {
-        if (!p) return *this;
-        _cmd(30);
-        p->colon();
-        p->addText(img);
-        p->comma();
-        _params(3, x, y, w);
-        p->quotes();
-        return *this;
-    }
-    Canvas& drawImage(GHTREF img, int x, int y, int w, int h) {
-        if (!p) return *this;
-        _cmd(30);
-        p->colon();
-        p->addText(img);
-        p->comma();
-        _params(4, x, y, w, h);
-        p->quotes();
-        return *this;
-    }
-    Canvas& drawImage(GHTREF img, int sx, int sy, int sw, int sh, int x, int y, int w, int h) {
-        if (!p) return *this;
-        _cmd(30);
-        p->colon();
-        p->addText(img);
-        p->comma();
-        _params(8, sx, sy, sw, sh, x, y, w, h);
-        p->quotes();
-        return *this;
-    }
-
-    // сохранить конфигурацию полотна
-    Canvas& save() {
-        if (!p) return *this;
-        _cmd(37);
-        p->quotes();
-        return *this;
-    }
-
-    // восстановить конфигурацию полотна
-    Canvas& restore() {
-        if (!p) return *this;
-        _cmd(38);
-        p->quotes();
-        return *this;
-    }
-
+    // =================== PRIVATE ===================
    private:
-    void _checkFirst() {
-        if (!p) return;
-        if (_first) _first = 0;
-        else p->comma();
-    }
-    void _cmd(int cmd) {
-        if (!p) return;
+    void _api(api cmd) {
         _checkFirst();
         p->quotes();
-        p->s += cmd;
+        p->s += (uint8_t)cmd;
     }
-    void _params(int num, ...) {
-        va_list valist;
-        va_start(valist, num);
-        for (int i = 0; i < num; i++) {
-            p->s += va_arg(valist, int);
-            if (i < num - 1) p->comma();
-        }
-        va_end(valist);
-    }
-
-    void _color(uint32_t hex, uint8_t a = 255) {
-        p->s += ((uint32_t)hex << 8) | a;
-    }
-    void _font() {
+    void _cmd(api cmd) {
         if (!p) return;
-        _cmd(10);
-        p->colon();
-        p->s += '\'';
-        p->s += _fsize;
-        p->s += F("px ");
-        p->s += _fname;
-        p->s += '\'';
+        _api(cmd);
         p->quotes();
+        // p->comma();
+        p->addChar(']');
+    }
+    void _cmd(api cmd, cv v) {
+        _cmd(cmd, 1, (int)v);
+    }
+    void _cmd(api cmd, long n, ...) {
+        if (!p) return;
+        _api(cmd);
+        p->colon();
+
+        va_list args;
+        va_start(args, n);
+        _params(n, args);
+        va_end(args);
+        p->end();
+        p->quotes();
+        // p->comma();
+        p->addChar(']');
+    }
+    void _cmdText(api cmd, GHTREF text, long n, ...) {
+        if (!p) return;
+        _api(cmd);
+        p->colon();
+
+        p->addText(text);
+        p->comma();
+
+        va_list args;
+        va_start(args, n);
+        _params(n, args);
+        va_end(args);
+        p->end();
+        p->quotes();
+        // p->comma();
+        p->addChar(']');
     }
 
-    void _addP(int val) {
+    void _color(api cmd, const uint32_t& hex) {
+        if (!p) return;
+        _api(cmd);
         p->colon();
-        p->s += val;
+        p->s += '#';
+        p->addIntRaw(su::Value(hex, HEX));
         p->quotes();
+        // p->comma();
+        p->addChar(']');
+    }
+    void _color(api cmd, const uint32_t& hex, const uint8_t& a) {
+        _color(cmd, (hex << 8) | a);
+    }
+    void _color(api cmd, const uint8_t& r, const uint8_t& g, const uint8_t& b, const uint8_t& a) {
+        union RGBA {
+            uint8_t bytes[4];
+            uint32_t hex;
+        };
+        _color(cmd, RGBA{a, b, g, r}.hex);
+    }
+
+    void _params(long n, va_list args) {
+        for (int i = 0; i < n; i++) {
+            p->addInt(su::Value(va_arg(args, long), HEX));
+        }
+    }
+    void _checkFirst() {
+        if (!p) return;
+        if (_first) {
+            _first = 0;
+            p->beginArr(ghc::Tag::data);
+        } else {
+            p->replaceLast(',');
+        }
     }
 
     ghc::Packet* p = nullptr;
     bool _first = 1;
-    bool _strokeF = 1;
-    bool _fillF = 1;
-    const char* _fname = "Arial";
-    uint16_t _fsize = 20;
-    CV _eMode = CV::RADIUS;
-    CV _rMode = CV::CORNER;
 };
 
 }  // namespace gh

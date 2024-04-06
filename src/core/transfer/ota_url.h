@@ -23,7 +23,7 @@ class OtaUrl : public ghc::TransferBase {
     OtaUrl(size_t typeHash,
            GHTREF url,
            gh::Client& client,
-           const char* id) : ghc::TransferBase(client, id, ghc::Tag::ota_url_err),
+           uint32_t id) : ghc::TransferBase(client, id, ghc::Tag::ota_url_err),
                              url(url.toString()),
                              typeHash(typeHash) {}
 
@@ -34,10 +34,10 @@ class OtaUrl : public ghc::TransferBase {
         BearSSL::WiFiClientSecure wclient;
         if (url.startsWith(F("https"))) wclient.setInsecure();
         switch (typeHash) {
-            case sutil::SH("flash"):
+            case su::SH("flash"):
                 ok = ESPhttpUpdate.update(wclient, url);
                 break;
-            case sutil::SH("fs"):
+            case su::SH("fs"):
                 ok = ESPhttpUpdate.updateFS(wclient, url);
                 break;
             default:
@@ -50,10 +50,10 @@ class OtaUrl : public ghc::TransferBase {
         WiFiClientSecure wclient;
         if (url.startsWith(F("https"))) wclient.setInsecure();
         switch (typeHash) {
-            case sutil::SH("flash"):
+            case su::SH("flash"):
                 ok = httpUpdate.update(wclient, url);
                 break;
-            case sutil::SH("fs"):
+            case su::SH("fs"):
                 ok = httpUpdate.updateSpiffs(wclient, url);
                 break;
             default:
@@ -67,7 +67,7 @@ class OtaUrl : public ghc::TransferBase {
         return ok;
     }
 
-    static void sendError(gh::Client& client, const char* id, gh::Error err) {
+    static void sendError(gh::Client& client, uint32_t id, gh::Error err) {
         ghc::TransferBase::sendError(client, id, err, ghc::Tag::ota_url_err);
     }
 

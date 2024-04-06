@@ -10,6 +10,10 @@
 #include <GyverHub.h>
 GyverHub hub;
 
+#include <bridges/stream.h>
+// подключить экземпляр любого Stream-класса
+gh::BridgeStream stream(&hub, &Serial, gh::Connection::Serial);
+
 // билдер
 void build(gh::Builder& b) {
     static int val;
@@ -20,8 +24,8 @@ void build(gh::Builder& b) {
 void setup() {
     Serial.begin(115200);
     
-    // подключить экземпляр любого Stream-класса
-    hub.stream.config(&Serial, gh::Connection::Serial);
+    // и подключить его в хаб
+    hub.addBridge(&stream);
 
     hub.config(F("MyDevices"), F("AVR"), F(""));
     hub.onBuild(build);

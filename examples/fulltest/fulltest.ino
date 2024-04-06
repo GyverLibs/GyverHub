@@ -2,10 +2,9 @@
 #include <Arduino.h>
 // #define ATOMIC_FS_UPDATE
 
-#define AP_SSID "Alex"
-#define AP_PASS "alexpass"
+#define AP_SSID ""
+#define AP_PASS ""
 
-const char _ui[] PROGMEM = R"json({"type":"row","width":1,"data":[{"id":"inp","type":"input"},{"id":"sld","type":"slider"},{"id":"btn","type":"button"}]})json";
 const char* fetch_bytes = "fetch bytes\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi dignissim tellus ligula. Vivamus id lacus ac tortor commodo aliquam. Mauris eget faucibus nunc. Vestibulum tempus eu lorem a dapibus. Nullam ac dapibus ex. Aenean faucibus dapibus porttitor. Sed vel magna id tellus mattis semper. Fusce a finibus ligula. In est turpis, viverra eget libero ut, pretium pellentesque velit. Praesent ultrices elit quis facilisis mattis. Donec eu iaculis est. Sed tempus feugiat ligula non ultricies. Cras a auctor nibh, sed sodales sapien.\n\nSed cursus quam vel egestas rhoncus. Curabitur dignissim lorem sed metus sollicitudin, non faucibus erat interdum. Nunc vitae lobortis dui, mattis dignissim orci. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Duis vel venenatis purus. Nunc luctus leo tincidunt felis efficitur ullamcorper. Aliquam semper rhoncus odio sed porta. Quisque blandit, dui vel imperdiet ultricies, dolor arcu posuere turpis, et gravida ante libero ut ex. Vestibulum sed scelerisque nibh, nec mollis urna. Suspendisse tortor sapien, congue at aliquam vitae, venenatis placerat enim. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nam posuere metus a est commodo finibus. Donec luctus arcu purus, sit amet sodales dolor facilisis id. Nullam consectetur sapien vitae nisi gravida, sed finibus dui hendrerit. In id pretium odio, imperdiet lacinia massa. Morbi quis condimentum ligula.";
 const char fetch_pgm[] PROGMEM = "fetch pgm\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi dignissim tellus ligula. Vivamus id lacus ac tortor commodo aliquam. Mauris eget faucibus nunc. Vestibulum tempus eu lorem a dapibus. Nullam ac dapibus ex. Aenean faucibus dapibus porttitor. Sed vel magna id tellus mattis semper. Fusce a finibus ligula. In est turpis, viverra eget libero ut, pretium pellentesque velit. Praesent ultrices elit quis facilisis mattis. Donec eu iaculis est. Sed tempus feugiat ligula non ultricies. Cras a auctor nibh, sed sodales sapien.\n\nSed cursus quam vel egestas rhoncus. Curabitur dignissim lorem sed metus sollicitudin, non faucibus erat interdum. Nunc vitae lobortis dui, mattis dignissim orci. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Duis vel venenatis purus. Nunc luctus leo tincidunt felis efficitur ullamcorper. Aliquam semper rhoncus odio sed porta. Quisque blandit, dui vel imperdiet ultricies, dolor arcu posuere turpis, et gravida ante libero ut ex. Vestibulum sed scelerisque nibh, nec mollis urna. Suspendisse tortor sapien, congue at aliquam vitae, venenatis placerat enim. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nam posuere metus a est commodo finibus. Donec luctus arcu purus, sit amet sodales dolor facilisis id. Nullam consectetur sapien vitae nisi gravida, sed finibus dui hendrerit. In id pretium odio, imperdiet lacinia massa. Morbi quis condimentum ligula.";
 
@@ -13,7 +12,6 @@ const char fetch_pgm[] PROGMEM = "fetch pgm\nLorem ipsum dolor sit amet, consect
 // #define ATOMIC_FS_UPDATE         // OTA обновление сжатым .gz файлом вместо .bin (для esp)
 
 // BRIDGES
-// #define GH_NO_STREAM  // отключить встроенный модуль связи stream
 // #define GH_NO_HTTP    // отключить встроенный модуль связи http (для esp)
 // #define GH_NO_WS      // отключить встроенный модуль связи ws (для esp)
 // #define GH_NO_MQTT    // отключить встроенный модуль связи mqtt (для esp)
@@ -110,13 +108,14 @@ bool rndBool() {
     return v = !v;
 }
 
+gh::Button btn;
 gh::Log hlog;
 bool dsbl, nolbl, notab;
 
 void build_common(gh::Builder& b) {
-    b.Title("Common");
+    // b.Title("Common");
     {
-        gh::Row r(b);
+        gh::Row r(b, 1, "Common");
         b.Switch(&dsbl).label("disabled");
         b.Switch(&nolbl).label("nolabel");
         b.Switch(&notab).label("notab");
@@ -126,11 +125,11 @@ void build_common(gh::Builder& b) {
 void build_widget(gh::Builder& b) {
     static bool nolabel, notab, square;
     static String label("label"), hint("hint"), suffix("suffix");
-    b.Title("Widget test");
+    // b.Title("Widget test");
     {
-        gh::Row r(b);
+        gh::Row r(b, 1, "Widget test", gh::Colors::Aqua);
         b.Label("Some label").noTab(notab).noLabel(nolabel).square(square).label(label).hint(hint).suffix(suffix).size(3);
-        b.Switch(&notab).label("notab").size(1);
+        b.Switch(&notab).label("notab");
         b.Switch(&nolabel).label("nolabel");
         b.Switch(&square).label("square");
     }
@@ -143,25 +142,28 @@ void build_widget(gh::Builder& b) {
     if (b.changed()) b.refresh();
 }
 void build_layout(gh::Builder& b) {
-    b.Title("Layout test");
+    // b.Title("Layout test");
     {
-        gh::Row r(b);
-        b.Label("w1").size(1);
-        b.Label("w2").size(2);
-    }
-    {
-        gh::Row r(b);
-        b.Label("ww1");
-        b.Label("ww2");
+        gh::SpoilerCol s(b, 0, "Layout test", gh::Colors::Red);
         {
-            gh::Col c(b);
-            b.Label("www1");
-            b.Label("www2");
+            gh::Row r(b, 1);
+            b.Label("w1");
+            b.Label("w2").size(2);
         }
-    }
-    {
-        gh::Row r(b);
-        b.Label("wwww1");
+        {
+            gh::Row r(b);
+            b.Label("ww1");
+            b.Label("ww2");
+            {
+                gh::Col c(b);
+                b.Label("www1");
+                b.Label("www2");
+            }
+        }
+        {
+            gh::Row r(b);
+            b.Label("wwww1");
+        }
     }
 }
 void build_pairs(gh::Builder& b) {
@@ -170,7 +172,7 @@ void build_pairs(gh::Builder& b) {
         b.Input_("input", &data).size(2);
         b.Slider_("slider", &data);
         b.Spinner_("spinner", &data);
-        b.Switch_("switch", &data).size(1);
+        b.Switch_("switch", &data);
     }
     b.Text(data);
     if (b.changed()) b.refresh();
@@ -181,19 +183,19 @@ void build_passive(gh::Builder& b) {
     {
         gh::Row r(b);
         b.Title_("tit", "Some title").disabled(dsbl).noTab(notab).noLabel(nolbl).size(3);
-        if (b.Button().label("value").size(1).click()) hub.update("tit").value(rndText());
+        if (b.Button().label("value").click()) hub.update("tit").value(rndText());
         if (b.Button().label("icon").click()) hub.update("tit").icon(rndIcon());
         if (b.Button().label("color").click()) hub.update("tit").color(rndColor());
         if (b.Button().label("align").click()) hub.update("tit").align(rndAlign());
-        if (b.Button().label("fsize").click()) hub.update("tit").fontSize(random(10, 40));
+        if (b.Button().label("font_size").click()) hub.update("tit").fontSize(random(10, 40));
     }
     b.Text(data).disabled(dsbl).noTab(notab).noLabel(nolbl);
     {
         gh::Row r(b);
         b.Display_("disp", "Some\n\"display\\\"").disabled(dsbl).noTab(notab).noLabel(nolbl).size(3);
-        if (b.Button().label("value").size(1).click()) hub.update("disp").value(rndText());
+        if (b.Button().label("value").click()) hub.update("disp").value(rndText());
         if (b.Button().label("color").click()) hub.update("disp").color(rndColor());
-        if (b.Button().label("fsize").click()) hub.update("disp").fontSize(random(10, 40));
+        if (b.Button().label("font_size").click()) hub.update("disp").fontSize(random(10, 40));
         if (b.Button().label("rows").click()) hub.update("disp").rows(random(1, 5));
     }
     {
@@ -211,7 +213,7 @@ void build_passive(gh::Builder& b) {
     {
         gh::Row r(b);
         b.Gauge_("gag").disabled(dsbl).noTab(notab).noLabel(nolbl).size(2);
-        if (b.Button().label("value").size(1).click()) hub.update("gag").value(random(100));
+        if (b.Button().label("value").click()) hub.update("gag").value(random(100));
         if (b.Button().label("range").click()) hub.update("gag").range(10, 90, 5);
         if (b.Button().label("unit").click()) hub.update("gag").unit("deg");
         if (b.Button().label("color").click()) hub.update("gag").color(rndColor());
@@ -219,7 +221,7 @@ void build_passive(gh::Builder& b) {
     {
         gh::Row r(b);
         b.GaugeRound_("gagr").disabled(dsbl).noTab(notab).noLabel(nolbl).size(2);
-        if (b.Button().label("value").size(1).click()) hub.update("gagr").value(random(100));
+        if (b.Button().label("value").click()) hub.update("gagr").value(random(100));
         if (b.Button().label("range").click()) hub.update("gagr").range(10, 90, 5);
         if (b.Button().label("unit").click()) hub.update("gagr").unit("deg");
         if (b.Button().label("color").click()) hub.update("gagr").color(rndColor());
@@ -227,7 +229,7 @@ void build_passive(gh::Builder& b) {
     {
         gh::Row r(b);
         b.GaugeLinear_("gagl").disabled(dsbl).noTab(notab).noLabel(nolbl).size(2);
-        if (b.Button().label("value").size(1).click()) hub.update("gagl").value(random(100));
+        if (b.Button().label("value").click()) hub.update("gagl").value(random(100));
         if (b.Button().label("range").click()) hub.update("gagl").range(10, 90, 5);
         if (b.Button().label("unit").click()) hub.update("gagl").unit("deg");
         if (b.Button().label("color").click()) hub.update("gagl").color(rndColor());
@@ -249,7 +251,7 @@ void build_active1(gh::Builder& b) {
         gh::Row r(b);
         static String inp;
         b.Input_("inp", &inp).disabled(dsbl).noTab(notab).noLabel(nolbl).size(3);
-        if (b.Button().label("value").size(1).click()) hub.update("inp").value(rndText());
+        if (b.Button().label("value").click()) hub.update("inp").value(rndText());
         if (b.Button().label("color").click()) hub.update("inp").color(rndColor());
         if (b.Button().label("regex").click()) hub.update("inp").regex(GH_NUMBERS);
         if (b.Button().label("maxLen").click()) hub.update("inp").maxLen(5);
@@ -258,7 +260,7 @@ void build_active1(gh::Builder& b) {
         gh::Row r(b);
         static String inp;
         b.Pass_("pass", &inp).disabled(dsbl).noTab(notab).noLabel(nolbl).size(3);
-        if (b.Button().label("value").size(1).click()) hub.update("pass").value(rndText());
+        if (b.Button().label("value").click()) hub.update("pass").value(rndText());
         if (b.Button().label("color").click()) hub.update("pass").color(rndColor());
         if (b.Button().label("regex").click()) hub.update("pass").regex(GH_NUMBERS);
         if (b.Button().label("maxLen").click()) hub.update("pass").maxLen(5);
@@ -267,7 +269,7 @@ void build_active1(gh::Builder& b) {
         gh::Row r(b);
         static String inp;
         b.InputArea_("inpa", &inp).disabled(dsbl).noTab(notab).noLabel(nolbl).size(3);
-        if (b.Button().label("value").size(1).click()) hub.update("inpa").value(rndText());
+        if (b.Button().label("value").click()) hub.update("inpa").value(rndText());
         if (b.Button().label("maxLen").click()) hub.update("inpa").maxLen(5);
         if (b.Button().label("rows").click()) hub.update("inpa").rows(random(1, 5));
     }
@@ -275,14 +277,14 @@ void build_active1(gh::Builder& b) {
         gh::Row r(b);
         static uint32_t stamp;
         b.Date_("date", &stamp).disabled(dsbl).noTab(notab).noLabel(nolbl).size(3);
-        if (b.Button().label("value").size(1).click()) hub.update("date").value(random(100) * 1000000ul);
+        if (b.Button().label("value").click()) hub.update("date").value(random(100) * 1000000ul);
         if (b.Button().label("color").click()) hub.update("date").color(rndColor());
     }
     {
         gh::Row r(b);
         static uint32_t stamp;
         b.Time_("time", &stamp).disabled(dsbl).noTab(notab).noLabel(nolbl).size(3);
-        if (b.Button().label("value").size(1).click()) hub.update("time").value(random(100) * 1000000ul);
+        if (b.Button().label("value").click()) hub.update("time").value(random(100) * 1000000ul);
         if (b.Button().label("color").click()) hub.update("time").color(rndColor());
     }
 }
@@ -291,14 +293,14 @@ void build_active2(gh::Builder& b) {
         gh::Row r(b);
         static uint32_t stamp;
         b.DateTime_("datet", &stamp).disabled(dsbl).noTab(notab).noLabel(nolbl).size(3);
-        if (b.Button().label("value").size(1).click()) hub.update("datet").value(random(100) * 1000000ul);
+        if (b.Button().label("value").click()) hub.update("datet").value(random(100) * 1000000ul);
         if (b.Button().label("color").click()) hub.update("datet").color(rndColor());
     }
     {
         gh::Row r(b);
         static uint32_t sld;
         b.Slider_("sld", &sld).disabled(dsbl).noTab(notab).noLabel(nolbl).size(3);
-        if (b.Button().label("value").size(1).click()) hub.update("sld").value(random(100));
+        if (b.Button().label("value").click()) hub.update("sld").value(random(100));
         if (b.Button().label("range").click()) hub.update("sld").range(1, 5, 0.1);
         if (b.Button().label("unit").click()) hub.update("sld").unit("deg");
         if (b.Button().label("color").click()) hub.update("sld").color(rndColor());
@@ -307,7 +309,7 @@ void build_active2(gh::Builder& b) {
         gh::Row r(b);
         static uint32_t spn;
         b.Spinner_("spn", &spn).disabled(dsbl).noTab(notab).noLabel(nolbl).size(3);
-        if (b.Button().label("value").size(1).click()) hub.update("spn").value(random(100));
+        if (b.Button().label("value").click()) hub.update("spn").value(random(100));
         if (b.Button().label("range").click()) hub.update("spn").range(1, 5, 0.1);
         if (b.Button().label("unit").click()) hub.update("spn").unit("deg");
         // if (b.Button().label("color").click()) hub.update("spn").color(rndColor());
@@ -316,21 +318,20 @@ void build_active2(gh::Builder& b) {
         gh::Row r(b);
         static uint8_t num;
         b.Select_("sel", &num).text("kek;puk;123;hello;azaz").disabled(dsbl).noTab(notab).noLabel(nolbl).size(3);
-        if (b.Button().label("value").size(1).click()) hub.update("sel").value(random(5));
+        if (b.Button().label("value").click()) hub.update("sel").value(random(5));
         if (b.Button().label("text").click()) hub.update("sel").text("1;2;3;4;5");
         if (b.Button().label("color").click()) hub.update("sel").color(rndColor());
     }
     {
         gh::Row r(b);
         static uint32_t col;
-        b.Select_("col", &col).disabled(dsbl).noTab(notab).noLabel(nolbl);
-        if (b.Button().label("value").size(1).click()) hub.update("col").value(random(0xffffff));
+        b.Color_("col", &col).disabled(dsbl).noTab(notab).noLabel(nolbl);
+        if (b.Button().label("value").click()) hub.update("col").value(random(0xffffff));
     }
     {
         gh::Row r(b);
-        static gh::Button btn;
-        b.Button_("btn").disabled(dsbl).noTab(notab).noLabel(nolbl);
-        if (b.Button().label("icon").size(1).click()) hub.update("btn").icon(rndIcon());
+        b.Button_("btn", &btn).disabled(dsbl).noTab(notab).noLabel(nolbl);
+        if (b.Button().label("icon").click()) hub.update("btn").icon(rndIcon());
         if (b.Button().label("color").click()) hub.update("btn").color(rndColor());
         if (b.Button().label("fontsize").click()) hub.update("btn").fontSize(random(10, 40));
     }
@@ -340,14 +341,14 @@ void build_active3(gh::Builder& b) {
         gh::Row r(b);
         static bool sw;
         b.Switch_("sw", &sw).disabled(dsbl).noTab(notab).noLabel(nolbl);
-        if (b.Button().label("value").size(1).click()) hub.update("sw").value(rndBool());
+        if (b.Button().label("value").click()) hub.update("sw").value(rndBool());
         if (b.Button().label("color").click()) hub.update("sw").color(rndColor());
     }
     {
         gh::Row r(b);
         static bool swi;
         b.SwitchIcon_("swi", &swi).disabled(dsbl).noTab(notab).noLabel(nolbl);
-        if (b.Button().label("value").size(1).click()) hub.update("swi").value(rndBool());
+        if (b.Button().label("value").click()) hub.update("swi").value(rndBool());
         if (b.Button().label("color").click()) hub.update("swi").color(rndColor());
         if (b.Button().label("icon").click()) hub.update("swi").icon(rndIcon());
     }
@@ -355,7 +356,7 @@ void build_active3(gh::Builder& b) {
         gh::Row r(b);
         static uint8_t num;
         b.Tabs_("tab", &num).text("kek;puk;123;hello;azaz").disabled(dsbl).noTab(notab).noLabel(nolbl).size(3);
-        if (b.Button().label("value").size(1).click()) hub.update("tab").value(random(5));
+        if (b.Button().label("value").click()) hub.update("tab").value(random(5));
         if (b.Button().label("text").click()) hub.update("tab").text("1;2;3;4;5");
         if (b.Button().label("color").click()) hub.update("tab").color(rndColor());
     }
@@ -363,73 +364,74 @@ void build_active3(gh::Builder& b) {
         gh::Row r(b);
         static gh::Flags f;
         b.Flags_("flag", &f).text("kek;puk;123;hello;azaz").disabled(dsbl).noTab(notab).noLabel(nolbl).size(3);
-        // if (b.Button().label("value").size(1).click()) hub.update("flag").value(random(5));
+        // if (b.Button().label("value").click()) hub.update("flag").value(random(5));
         if (b.Button().label("text").click()) hub.update("flag").text("1;2;3;4;5");
         if (b.Button().label("color").click()) hub.update("flag").color(rndColor());
     }
     {
         gh::Row r(b);
-        b.Joystick();
-        b.Joystick(nullptr, true, true);
+        gh::Pos pos;
+        b.Joystick(&pos);
+        if (pos.changed()) Serial.println(String("joy: ") + pos.x + ',' + pos.y);
+        b.Joystick(nullptr, true, true).color(gh::Colors::Red);
     }
     {
         gh::Row r(b);
-        b.Dpad();
+        gh::Pos pos;
+        b.Dpad(&pos);
+        if (pos.changed()) Serial.println(String("joy: ") + pos.x + ',' + pos.y);
         b.Space();
     }
 }
 void build_ffile(gh::Builder& b) {
-    b.Image_("img", "/text.jpg");
+    b.Image_("img", "/image.jpg");
     if (b.beginRow()) {
-        gh::Update upd(&hub);
-        upd.update("img");
-        if (b.Button().label("refresh").click()) upd.widget.action();
-        upd.send();
+        if (b.Button().label("refresh").click()) hub.update("img").update();
+        if (b.Button().label("file").click()) hub.update("img").value("ag.png");
         b.endRow();
     }
+    b.Space();
 
-    b.Table_("table", "/table.csv", "10,20,30", "left,right,right").hint("Some hint");  // FILE
+    b.Table_("table", "/table.csv", "10,20,30", "left,right,right");
     if (b.beginRow()) {
-        gh::Update upd(&hub);
-        upd.update("table");
-        if (b.Button().label("refresh").click()) upd.widget.action();
-        if (b.Button().label("text").click()) upd.widget.value("kek,pek,hello");
-        if (b.Button().label("file").click()) upd.widget.value("/table.csv");  // FILE
-        upd.send();
+        if (b.Button().label("refresh").click()) hub.update("table").update();
+        if (b.Button().label("text").click()) hub.update("table").value("kek,pek,hello");
+        if (b.Button().label("file").click()) hub.update("table").value("/table.csv");
         b.endRow();
     }
+    b.Space();
 
-    b.TextFile_("textf", "/data.dat");
+    b.TextFile_("textf", "/text.txt").rows(6);
     if (b.beginRow()) {
-        gh::Update upd(&hub);
-        upd.update("textf");
-        if (b.Button().label("refresh").click()) upd.widget.action();
-        if (b.Button().label("file").click()) upd.widget.value("/table.csv");  // FILE
-        upd.send();
+        if (b.Button().label("refresh").click()) hub.update("textf").update();
+        if (b.Button().label("file").click()) hub.update("textf").value("/data.dat");
+        if (b.Button().label("git").click()) hub.update("textf").value("https://github.com/GyverLibs/GyverHub-plugins/blob/main/plugins/test.js");
         b.endRow();
     }
+    b.Space();
 
-    b.HTML("/html.html");  // FILE
-    b.JS("/js.js");        // FILE
-    b.CSS("/css.css");     // FILE
+    b.HTML_("html", "/html.html");
+    if (b.beginRow()) {
+        if (b.Button().label("text").click()) hub.update("html").value(R"(<div><input type="text"><button>kek</button></div>)");
+        if (b.Button().label("file").click()) hub.update("html").value("/html.html");
+        b.endRow();
+    }
+}
+void build_custom(gh::Builder& b) {
+    b.Plugin("myinput", "/myWidget.js");
+    b.Plugin("myinput_change", "https://github.com/GyverLibs/GyverHub-plugins/blob/main/plugins/test.js");
 
-    static String inp0, inp1;
-    static int sld0, sld1;
-    b.addJSON_File("/ui0.json");
-    b.addJSON_File("/ui1.json");
-    b.Hook_("inp0", &inp0);
-    b.Hook_("sld0", &sld0);
-    b.Hook_("inp1", &inp1);
-    b.Hook_("sld1", &sld1);
+    {
+        gh::Row r(b);
+        b.Widget_("myinp", "myinput").size(4);
+        if (b.Button().label("text").click()) hub.update("myinp").value("hello");
+    }
 
-    static String inp;
-    static int sld = 1234;
-    b.addJSON_P(_ui);
-    b.Hook_("inp", &inp);
-    b.Hook_("sld", &sld);
+    b.Widget_("myinp2", "myinput_change");
 }
 void build_mqtt(gh::Builder& b) {
     static String s1, s2;
+
     if (b.Input_("mqinp", &s1).click()) {
         Serial.print("mqinp set to: ");
         Serial.println(b.build.value);
@@ -438,6 +440,7 @@ void build_mqtt(gh::Builder& b) {
         Serial.print("dummy set to: ");
         Serial.println(b.build.value);
     }
+
     if (b.Button().click()) hub.sendGet("dummy", String(random(100) / 10.0, 2));
 }
 void build_popup(gh::Builder& b) {
@@ -463,19 +466,171 @@ void build_popup(gh::Builder& b) {
 }
 void build_canvas(gh::Builder& b) {
     if (b.beginRow()) {
-        gh::Canvas cv;
+        int w = 400, h = 500;
         gh::Pos pos;
-        b.BeginCanvas_("cv", 400, 300, &cv, &pos);
-        cv.stroke(0xff0000);
+        b.Canvas_("cv", w, h, &pos).size(3);
+        gh::Canvas cv(b);
+        cv.background(200, 200, 200);
+        cv.stroke(0);
+        cv.strokeWeight(1);
+        for (int x = 0; x <= w; x += 25) {
+            cv.line(x, 0, x, h);
+        }
+        cv.strokeWeight(2);
+        for (int x = 0; x <= w; x += 50) {
+            cv.line(x, 0, x, h);
+        }
+        cv.stroke(255, 255, 255);
+        cv.strokeWeight(1);
+        for (int y = 0; y <= h; y += 25) {
+            cv.line(0, y, w, y);
+        }
+        cv.strokeWeight(2);
+        for (int y = 0; y <= h; y += 50) {
+            cv.line(0, y, w, y);
+        }
+
+        cv.stroke(255, 0, 0);
+        cv.point(75, 25);
+
+        cv.noStroke();
+        cv.fill(255, 0, 0);
+
+        cv.rectMode(cv::CORNER);
+        cv.rect(0, 0, 50, 50);
+
+        cv.rectMode(cv::CORNERS);
+        cv.rect(100, 0, 150, 50, 10);
+
+        cv.rectMode(cv::CENTER);
+        cv.rect(225, 25, 50, 50, 10, 10, 20, 20);
+
+        cv.rectMode(cv::RADIUS);
+        cv.rect(325, 25, 25, 25);
+
+        cv.ellipseMode(cv::CORNER);
+        cv.ellipse(0 + 50, 0 + 50, 50, 50);
+
+        cv.ellipseMode(cv::CORNERS);
+        cv.ellipse(100 + 50, 0 + 50, 150 + 50, 50 + 50);
+
+        cv.ellipseMode(cv::CENTER);
+        cv.ellipse(225 + 50, 25 + 50, 50, 50);
+
+        cv.ellipseMode(cv::RADIUS);
+        cv.ellipse(325 + 50, 25 + 50, 25, 25);
+
+        cv.stroke(0, 255, 0);
+        cv.strokeWeight(20);
+        cv.strokeCap(cv::SQUARE);
+        cv.line(50, 100 + 25, 100, 100 + 25);
+
+        cv.strokeCap(cv::PROJECT);
+        cv.line(50 + 100, 100 + 25, 100 + 100, 100 + 25);
+
+        cv.strokeCap(cv::ROUND);
+        cv.line(50 + 100 + 100, 100 + 25, 100 + 100 + 100, 100 + 25);
+
+        cv.fill(0);
+        cv.noStroke();
+        cv.rectMode(cv::CENTER);
+        cv.push();
+        cv.translate(350, 150 + 25);
+        cv.rotate(PI / 4);
+        cv.square(0, 0, 50);
+        cv.pop();
+
+        cv.stroke(0, 0, 0, 100);
+        cv.fill(255, 255, 0);
+        cv.strokeWeight(15);
+        cv.strokeJoin(cv::MITER);
+        cv.rectMode(cv::CORNER);
+        cv.rect(50, 150, 50, 50);
+
+        cv.strokeJoin(cv::BEVEL);
+        cv.rect(50 + 100, 150, 50, 50);
+
+        cv.strokeJoin(cv::ROUND);
+        cv.rect(50 + 100 + 100, 150, 50, 50);
+
+        cv.textSize(25);
+        cv.fill(150, 0, 150);
+        cv.noStroke();
+        cv.textAlign(cv::LEFT, cv::BOTTOM);
+        cv.text("aqdAQD", 0, 250);
+
+        cv.textAlign(cv::CENTER, cv::BOTTOM);
+        cv.text("aqdAQD", 0 + 150, 250);
+
+        cv.textAlign(cv::RIGHT, cv::BOTTOM);
+        cv.text("aqdAQD", 0 + 100 + 100 + 100, 250);
+
+        //
+        cv.textAlign(cv::LEFT, cv::TOP);
+        cv.text("aqdAQD", 0, 250);
+
+        cv.textAlign(cv::CENTER, cv::TOP);
+        cv.text("aqdAQD", 0 + 150, 250);
+
+        cv.textAlign(cv::RIGHT, cv::TOP);
+        cv.text("aqdAQD", 0 + 100 + 100 + 100, 250);
+
+        //
+        cv.textAlign(cv::LEFT, cv::CENTER);
+        cv.text("aqdAQD", 0, 250 + 50);
+
+        cv.textAlign(cv::CENTER, cv::CENTER);
+        cv.text("aqdAQD", 0 + 150, 250 + 50);
+
+        cv.textAlign(cv::RIGHT, cv::CENTER);
+        cv.text("aqdAQD", 0 + 100 + 100 + 100, 250 + 50);
+
+        //
+        cv.textAlign(cv::LEFT, cv::BASELINE);
+        cv.text("aqdAQD", 0, 250 + 50 + 50);
+
+        cv.textAlign(cv::CENTER, cv::BASELINE);
+        cv.text("aqdAQD", 0 + 150, 250 + 50 + 50);
+
+        cv.textAlign(cv::RIGHT, cv::BASELINE);
+        cv.text("aqdAQD", 0 + 100 + 100 + 100, 250 + 50 + 50);
+
+        //
+        cv.noFill();
+        cv.stroke(0);
         cv.strokeWeight(5);
-        cv.line(0, 0, -1, -1);
-        cv.line(0, -1, -1, 0);
-        b.EndCanvas();
+        cv.beginShape();
+        cv.vertex(325, 225);
+        cv.vertex(375, 225);
+        cv.vertex(350, 225 + 50);
+        cv.endShape();
+
+        cv.beginShape();
+        cv.vertex(325, 225 + 50);
+        cv.vertex(375, 225 + 50);
+        cv.vertex(350, 225 + 50 + 50);
+        cv.endShape(true);
+
+        cv.beginShape();
+        cv.fill(255, 0, 0);
+        cv.vertex(325, 225 + 50 + 50);
+        cv.vertex(375, 225 + 50 + 50);
+        cv.vertex(350, 225 + 50 + 50 + 50);
+        cv.endShape(true);
+
+        cv.noFill();
+        cv.bezier(50, 400, 150, 350, 250, 450, 350, 400);
+
+        cv.beginShape();
+        cv.vertex(50, 450);
+        cv.vertex(150, 450);
+        cv.bezierVertex(200, 350, 200, 550, 250, 450);
+        cv.endShape();
+
+        cv.arc(300, 400, 75, 50, 0, HALF_PI);
 
         if (pos.changed()) {
-            Serial.print(pos.x);
-            Serial.print(',');
-            Serial.println(pos.y);
+            Serial.println(String("canvas 1: ") + pos.x + ',' + pos.y);
 
             gh::CanvasUpdate cv("cv", &hub);
             cv.circle(pos.x, pos.y, 10);
@@ -485,20 +640,25 @@ void build_canvas(gh::Builder& b) {
     }
     {
         gh::Row r(b);
-        gh::Canvas cv;
-        gh::Pos pos;
-        b.BeginCanvas_("cv2", 400, 300, &cv, &pos);
-        cv.drawImage("/image.jpg", 0, 0, 400);
-        b.EndCanvas();
-
-        if (pos.changed()) {
-            Serial.print(pos.x);
-            Serial.print(',');
-            Serial.println(pos.y);
-
-            gh::CanvasUpdate cv("cv2", &hub);
-            cv.circle(pos.x, pos.y, 10);
-            cv.send();
+        b.Canvas_("cv2", 400, 300).size(4);
+        gh::Canvas cv(b);
+        cv.image("/image.jpg", 0, 0, 400);
+        {
+            gh::Col c(b);
+            if (b.Button().label("from web").click()) {
+                gh::CanvasUpdate cv("cv2", &hub);
+                cv.clear();
+                cv.image("https://alexgyver.ru/wp-content/uploads/2021/03/kits.jpg", 0, 0, 400);
+                cv.circle(100, 100, 50);
+                cv.send();
+            }
+            if (b.Button().label("from fs").click()) {
+                gh::CanvasUpdate cv("cv2", &hub);
+                cv.clear();
+                cv.image("/image.jpg", 0, 0, 400);
+                cv.circle(100, 100, 50);
+                cv.send();
+            }
         }
     }
 }
@@ -520,8 +680,27 @@ void build_update(gh::Builder& b) {
         if (b.Button().click()) hub.sendUpdate("lbl2", "label2");
     }
 }
+void build_location(gh::Builder& b) {
+    {
+        gh::Row r(b, 3);
+        static gh::Geo geo("55.754994;37.623288");
+
+        b.Map_("map", &geo).size(3);
+        gh::Canvas map(b);
+        gh::Geo moscow("55.754994;37.623288");
+        map.circle(moscow, 200);  // круг 200 метров радиуса
+
+        if (geo.changed()) Serial.println(String("geo: ") + geo.lat + ',' + geo.lon);
+        {
+            gh::Col c(b);
+            if (b.Button().label("moscow").click()) hub.update("map").value(moscow);
+            if (b.Button().label("spb").click()) hub.update("map").value(gh::Geo("59.939769;30.310496"));
+            if (b.Button().label("request").click()) hub.requestLocation(&b.build.client);
+        }
+    }
+}
 void updateTick() {
-    if (hub.menu == 8) {
+    if (hub.menu == 9) {
         static gh::Timer tmr(2000);
         if (tmr) {
             gh::Update upd(&hub);
@@ -536,7 +715,7 @@ void updateTick() {
 
 void build(gh::Builder& b) {
     if (b.build.isSet()) hlog.println(b.build.name);
-    b.Menu(F("Basic;Passive;Active;Pairs;From file;MQTT;Popup;Canvas;Update"));
+    b.Menu(F("Basic;Passive;Active;Pairs;From file;Widget;MQTT;Popup;Canvas;Update;Location"));
 
     switch (hub.menu) {
         case 0:
@@ -558,16 +737,22 @@ void build(gh::Builder& b) {
             build_ffile(b);
             break;
         case 5:
-            build_mqtt(b);
+            build_custom(b);
             break;
         case 6:
-            build_popup(b);
+            build_mqtt(b);
             break;
         case 7:
-            build_canvas(b);
+            build_popup(b);
             break;
         case 8:
+            build_canvas(b);
+            break;
+        case 9:
             build_update(b);
+            break;
+        case 10:
+            build_location(b);
             break;
     }
 }
@@ -586,7 +771,7 @@ void setup() {
     Serial.println();
     Serial.println(WiFi.localIP());
 
-    // hub.mqtt.config("test.mosquitto.org", 1883);
+    hub.mqtt.config("test.mosquitto.org", 1883);
 #endif
 
     hub.onBuild(build);
@@ -614,9 +799,14 @@ void setup() {
         }
     });
 
+    hub.onPing([](gh::Client& client){
+        hub.sendCLI("hello!");
+    });
+
     hub.onRequest([](gh::Request& req) -> bool {
+        // return 1;
         Serial.print("Request: ");
-        Serial.print(gh::readConnection(req.client.connection()));
+        Serial.print(gh::readConnection(req.client.connection));
         Serial.print(',');
         Serial.print(req.client.id);
         Serial.print(',');
@@ -629,13 +819,19 @@ void setup() {
         return 1;
     });
 
+    hub.onLocation([](gh::Location loc) {
+        Serial.println(String("Location: ") + loc.lat + ',' + loc.lon);
+        hub.update("map").value(loc);
+    });
+
 #ifdef GH_ESP_BUILD
     hub.onReboot([](gh::Reboot r) {
+        Serial.print("Reboot: ");
         Serial.println(gh::readReboot(r));
     });
 
     hub.onFetch([](gh::Fetcher& f) {
-        // if (f.path == "/fetch_file.txt") f.fetchFile("/fetch_file.txt");
+        if (f.path == "/fetch_file.txt") f.fetchFile("/fetch_file.txt");
         if (f.path == "/fetch_bytes.txt") f.fetchBytes((uint8_t*)fetch_bytes, strlen(fetch_bytes));
         if (f.path == "/fetch_pgm.txt") f.fetchBytes_P((uint8_t*)fetch_pgm, strlen_P(fetch_pgm));
     });
@@ -658,6 +854,12 @@ void setup() {
 void loop() {
     data.tick();
     hub.tick();
+
+    if (btn.click()) Serial.println("btn click");
+    if (btn.state()) {
+        static gh::Timer tmr(500);
+        if (tmr) Serial.println("btn hold");
+    }
 
     updateTick();
 }

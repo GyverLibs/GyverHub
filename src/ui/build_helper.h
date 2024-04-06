@@ -2,6 +2,7 @@
 #include <Arduino.h>
 
 #include "builder.h"
+#include "builder_macro.h"
 
 namespace gh {
 
@@ -18,30 +19,16 @@ class Show {
     Builder& b;
 };
 
-class Row {
-   public:
-    Row(Builder& b, uint16_t width = 1) : b(b) {
-        b.beginRow(width);
-    }
-    ~Row() {
-        b.endRow();
-    }
+// строка
+GH_BUILD_CONTAINER_CLASS(Row);
 
-   private:
-    Builder& b;
-};
+// столбец
+GH_BUILD_CONTAINER_CLASS(Col);
 
-class Col {
-   public:
-    Col(Builder& b, uint16_t width = 1) : b(b) {
-        b.beginCol(width);
-    }
-    ~Col() {
-        b.endCol();
-    }
+// спойлер строка
+GH_BUILD_CONTAINER_CLASS(SpoilerRow);
 
-   private:
-    Builder& b;
-};
+// спойлер столбец
+GH_BUILD_CONTAINER_CLASS(SpoilerCol);
 
 }  // namespace gh

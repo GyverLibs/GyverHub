@@ -15,38 +15,35 @@ class Client {
     Client(void* hub = nullptr,
            ghc::SendHook hook = nullptr,
            Bridge* bridge = nullptr,
-           GHTREF id = GHTXT()) : bridge(bridge),
-                                  _hub(hub),
-                                  _send(hook) {
-        if (id.valid() && id.length() <= 8) {
-            id.toStr(_id);
-            this->id = GHTXT(_id, id.length());
-        }
+           uint32_t id = 0) : bridge(bridge),
+                              connection(bridge ? bridge->connection : Connection::System),
+                              id(id),
+                              _hub(hub),
+                              _send(hook) {
     }
+
+    // мост клиента
+    Bridge* bridge;
 
     // тип подключения
-    Connection connection() {
-        return bridge ? bridge->connection() : Connection::System;
-    }
+    const Connection connection;
 
     // id клиента
-    GHTXT id;
-
-    bool operator==(Client& client) {
-        return (client.bridge == bridge && client.id == id);
-    }
-
-    Bridge* bridge;
+    const uint32_t id = 0;
 
     // отправить текст клиенту
     void send(GHTREF text) {
         if (_hub && _send) _send(_hub, text, this);
     }
 
+    bool operator==(Client& client) {
+        return (client.bridge == bridge && client.id == id);
+    }
+
     void* _hub;
+    bool _sent = false;
 
    private:
-    char _id[9] = {0};
     ghc::SendHook _send;
 };
 

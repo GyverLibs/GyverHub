@@ -24,15 +24,13 @@ class HubMQTT : public gh::Bridge {
         mqtt.setServer("test.mosquitto.org", 1883);
         mqtt.setCallback([this](char* topic, uint8_t* data, uint16_t len) {
             uint16_t tlen = strlen(topic);
-            char topic_buf[tlen + 1];
+            char topic_buf[tlen];
             memcpy(topic_buf, topic, tlen);
-            topic_buf[tlen] = 0;
 
-            char data_buf[len + 1];
+            char data_buf[len];
             memcpy(data_buf, data, len);
-            data_buf[len] = 0;
 
-            parse(sutil::AnyText(topic_buf, tlen), sutil::AnyText(data_buf, len));
+            parse(su::Text(topic_buf, tlen), su::Text(data_buf, len));
         });
     }
     void end() {

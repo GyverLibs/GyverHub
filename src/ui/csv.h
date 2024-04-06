@@ -25,7 +25,7 @@ class CSV {
     }
 
     // добавить int/string/bool
-    CSV& add(const sutil::AnyValue& value) {
+    CSV& add(const su::Value& value) {
         if (_col < _cols) {
             _checkFirst();
             value.addString(str);
@@ -36,7 +36,7 @@ class CSV {
 
     // добавить float
     CSV& add(double value, uint8_t dec) {
-        return add(sutil::AnyValue(value, dec));
+        return add(su::Value(value, dec));
     }
 
     // завершить строку

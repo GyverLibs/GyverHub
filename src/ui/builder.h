@@ -19,8 +19,11 @@
 #include "core/packet.h"
 #include "core/types.h"
 #include "flags.h"
+#include "geo.h"
 #include "hub_macro.hpp"
 #include "log.h"
+#include "namer.h"
+#include "pos.h"
 #include "widget.h"
 
 namespace gh {
@@ -35,7 +38,8 @@ class Builder {
     Builder(Build& build,
             ghc::Packet* p = nullptr) : build(build),
                                         widget(*p, &build),
-                                        p(p) {}
+                                        p(p),
+                                        _namer(build.name) {}
 
     // ========================== SYSTEM ==========================
 
@@ -60,38 +64,9 @@ class Builder {
         return _changed;
     }
 
+    // был клик по предыдущему виджету
     bool click() {
         return widget.click();
-    }
-
-    // добавить виджеты из JSON строки
-    void addJSON(GHTREF text) {
-        if (p && build.action == Action::UI) {
-            if (_checkFirst()) p->endObj();
-            p->sendText(text);
-            p->comma();
-            p->beginObj();
-        }
-    }
-
-    // добавить виджеты из JSON строки PROGMEM
-    void addJSON_P(PGM_P text) {
-        addJSON((FSTR)text);
-    }
-
-    // добавить виджеты из JSON из файла
-    void addJSON_File(GHTREF path) {
-        _checkName();
-        switch (build.action) {
-            case Action::UI:
-                _beginName();
-                _tag(ghc::Tag::ui_file);
-                widget.value(path);
-                break;
-
-            default:
-                break;
-        }
     }
 
     // номер текущего пункта меню
@@ -99,62 +74,65 @@ class Builder {
         return _menu ? *_menu : 0;
     }
 
-    // ======================== STRUCTURE ========================
-
-    // горизонтальный контейнер
-    GH_BUILD_CONTAINER(Row, ghc::Tag::row);
-
-    // вертикальный контейнер
-    GH_BUILD_CONTAINER(Col, ghc::Tag::col);
-
-    // Пустой виджет. Параметры: size, square
-    ghc::Widget& Space() {
-        return _varAndType(ghc::Tag::space, GHTXT(), ghc::AnyPtr());
+    operator ghc::Packet*() {
+        return (build.action == Action::UI) ? p : nullptr;
     }
 
-    // установить размер для следующего виджета
-    // void size(uint8_t size) {
-    //     if (build.action != Action::UI || !widget._enabled) return;
-    //     if (_checkFirst()) p->endObj();
-    //     p->beginObj();
-    //     p->addString(ghc::Tag::type, ghc::Tag::wwidth);
-    //     widget.size(size);
-    // }
+    // ======================== CONTAINER ========================
+
+    // горизонтальный контейнер
+    GH_BUILD_CONTAINER(Row, ghc::Tag::container, ghc::Tag::row);
+
+    // вертикальный контейнер
+    GH_BUILD_CONTAINER(Col, ghc::Tag::container, ghc::Tag::col);
+
+    // горизонтальный спойлер
+    GH_BUILD_CONTAINER(SpoilerRow, ghc::Tag::spoiler, ghc::Tag::row);
+
+    // вертикальный спойлер
+    GH_BUILD_CONTAINER(SpoilerCol, ghc::Tag::spoiler, ghc::Tag::col);
+
+    // ======================== CUSTOM ========================
+
+    // начать кастомный контейнер
+    bool beginRow(GHTREF wtype, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default) {
+        return _beginContainer(ghc::Tag::none, wtype, ghc::Tag::row, width, label, color);
+    }
+    bool beginCol(GHTREF wtype, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default) {
+        return _beginContainer(ghc::Tag::none, wtype, ghc::Tag::col, width, label, color);
+    }
+
+    // следующий кастомный контейнер
+    bool nextRow(GHTREF wtype, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default) {
+        return _nextContainer(ghc::Tag::none, wtype, ghc::Tag::row, width, label, color);
+    }
+    bool nextCol(GHTREF wtype, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default) {
+        return _nextContainer(ghc::Tag::none, wtype, ghc::Tag::col, width, label, color);
+    }
+
+    // закончить любой контейнер
+    void endContainer() {
+        if (!p || !_allowContainer()) return;
+        if (_checkFirst()) p->endObj();
+        p->endArr();
+        _first = false;
+    }
+
+    // ======================== SPACE ========================
+
+    // Пустой виджет. Параметры: size, square
+    void Space(uint16_t width = 1, uint16_t height = 1) {
+        _namer.check();
+        if (build.action == Action::UI && widget._enabled) {
+            _beginName();
+            _type(ghc::Tag::space);
+            widget.size(width, height);
+        }
+    }
 
     // ========================= WIDGETS =========================
 
     // параметры виджета: noTab, label, noLabel, size, square, hint, suffix
-
-    // подключить переменную к виджету, созданному из JSON. Можно навесить attach и click на взаимодействие. Update соответственно виджету
-    ghc::Widget& Hook_(GHTREF name, const ghc::AnyPtr& data, GHTREF func = GHTXT()) {
-        _checkName(name);
-        switch (build.action) {
-            case Action::UI:
-                if (_checkFirst()) p->endObj();
-                p->beginObj();
-                p->addString(ghc::Tag::type, ghc::Tag::hook);
-                p->addString(ghc::Tag::id, name);
-                _func(func);
-                _uiHelper(name, data);
-                break;
-
-            case Action::Get:
-                _getHelper(name, data);
-                break;
-
-            case Action::Read:
-                if (_readName(name) && data.ptr) _writeValue(name, data);
-                break;
-
-            case Action::Set:
-                _setHelper(name, data);
-                break;
-
-            default:
-                break;
-        }
-        return widget;
-    }
 
     // =========== ВВОД ============
 
@@ -204,10 +182,37 @@ class Builder {
     GH_BUILD_VAR(Prompt, ghc::Tag::prompt);
 
     // Кнопка. Параметры: icon, color, fontSize, disabled, attach, click + параметры виджета
-    GH_BUILD_VAR_TYPE(Button, gh::Button*, ghc::Tag::button);
+    ghc::Widget& Button(gh::Button* btn = nullptr) {
+        return Button_(GHTXT(), btn);
+    }
 
-    // Кнопки выбора. Параметры: value (флаги), text (список), color, disabled, attach, click + параметры виджета
-    GH_BUILD_VAR_TYPE(Flags, gh::Flags*, ghc::Tag::flags);
+    ghc::Widget& Button_(GHTREF name, gh::Button* btn = nullptr) {
+        _namer.check(name);
+        switch (build.action) {
+            case Action::UI:
+                if (!widget._enabled) break;
+                _beginName(name);
+                _type(ghc::Tag::button);
+                break;
+
+            case Action::Set:
+                widget._click = 0;
+                if (_namer.equals(name)) {
+                    widget._click = (build.value[0] == '0');
+                    _needs_update = false;
+
+                    if (btn) {
+                        btn->_change();
+                        btn->_state = !widget._click;
+                        btn->_click = widget._click;
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+        return widget;
+    }
 
     // Джойстик. keep - возвращать в центр, exp - экспоненциальные значения. Параметры: color + параметры виджета
     ghc::Widget& Joystick_(GHTREF name = GHTXT(), Pos* pos = nullptr, bool keep = 0, bool exp = 0) {
@@ -245,9 +250,6 @@ class Builder {
     // Картинка. Параметры: value (путь) + параметры виджета
     GH_BUILD_VAL(Image, ghc::Tag::image);
 
-    // Лог. value(текст), rows + параметры виджета
-    GH_BUILD_VAR_TYPE(Log, gh::Log*, ghc::Tag::log);
-
     // Светодиод. Параметры: value (состояние 1/0), color + параметры виджета
     GH_BUILD_VAR(LED, ghc::Tag::led);
 
@@ -262,6 +264,12 @@ class Builder {
 
     // Индикаторная шкала линейная. Параметры: value (значение), icon, range, unit, color + параметры виджета
     GH_BUILD_VAR(GaugeLinear, ghc::Tag::gauge_l);
+
+    // Лог. value(текст), rows + параметры виджета
+    GH_BUILD_VAR_TYPE(Log, gh::Log*, ghc::Tag::log);
+
+    // Кнопки выбора. Параметры: value (флаги), text (список), color, disabled, attach, click + параметры виджета
+    GH_BUILD_VAR_TYPE(Flags, gh::Flags*, ghc::Tag::flags);
 
     // Таблица. Параметры: value (текст или путь) + параметры виджета
     // text: таблица в формате CSV - разделитель столбцов ; разделитель строк \n
@@ -280,12 +288,12 @@ class Builder {
     // httpd стрим, без параметров
     // TODO
     void Stream(uint16_t port = 82) {
-        _checkName();
+        _namer.check();
         switch (build.action) {
             case Action::UI:
                 if (!widget._enabled) break;
                 _beginName();
-                _tag(ghc::Tag::stream);
+                _type(ghc::Tag::stream);
                 widget.param(ghc::Tag::port, port);
                 break;
 
@@ -294,40 +302,36 @@ class Builder {
         }
     }
 
-    // ========================= CANVAS =========================
-    // Холст, рисование. Ширина, длина. Только араметры виджета
-    ghc::Widget& BeginCanvas(uint16_t width = 400, uint16_t height = 300, Canvas* cv = nullptr, Pos* pos = nullptr) {
-        return BeginCanvas_(GHTXT(), width, height, cv, pos);
+    // =========================== MAP ===========================
+    // Карта. Параметры: disabled, attach, click + параметры виджета
+    ghc::Widget& Map(gh::Geo* geo = nullptr, gh::Layer layer = gh::Layer::OSM) {
+        return _map(GHTXT(), geo, layer);
     }
-    ghc::Widget& BeginCanvas_(GHTREF name = GHTXT(), uint16_t width = 400, uint16_t height = 300, Canvas* cv = nullptr, Pos* pos = nullptr) {
-        return Canvas_(name, width, height, cv, pos, true);
+    ghc::Widget& Map_(GHTREF name, gh::Geo* geo = nullptr, gh::Layer layer = gh::Layer::OSM) {
+        return _map(name, geo, layer);
     }
 
-    // Холст. Ширина, длина. Только параметры виджета
-    ghc::Widget& Canvas(uint16_t width = 400, uint16_t height = 300, Canvas* cv = nullptr, Pos* pos = nullptr) {
-        return Canvas_(GHTXT(), width, height, cv, pos);
-    }
-    ghc::Widget& Canvas_(GHTREF name = GHTXT(), uint16_t width = 400, uint16_t height = 300, gh::Canvas* cv = nullptr, Pos* pos = nullptr, bool begin = false) {
-        ghc::AnyPtr data(pos);
-        _checkName(name);
-        if (cv && build.action != Action::UI) cv->setBuffer(nullptr);  // запретить запись
+    ghc::Widget& _map(GHTREF name, gh::Geo* geo = nullptr, gh::Layer layer = gh::Layer::OSM) {
+        _namer.check(name);
 
         switch (build.action) {
             case Action::UI:
                 if (!widget._enabled) break;
                 _beginName(name);
-                _tag(ghc::Tag::canvas);
-                widget.param(ghc::Tag::width, width);
-                widget.param(ghc::Tag::height, height);
-                if (pos) widget.param(ghc::Tag::active, 1);
-                p->beginArr(ghc::Tag::data);
-                if (begin && cv) cv->setBuffer(p);
-                else EndCanvas();
+                _type(ghc::Tag::map);
+                if (geo) {
+                    widget.value(*geo);
+                    widget.param(ghc::Tag::active, 1);
+                }
+                if (layer != gh::Layer::OSM) widget.param(ghc::Tag::layer, (uint8_t)layer);
                 break;
 
             case Action::Set:
-                widget._click = _parseName(name, data);
-                if (widget._click) _needs_update = false;
+                widget._click = _namer.equals(name);
+                if (widget._click) {
+                    _needs_update = false;
+                    if (geo) *geo = gh::Geo(build.value, true);
+                }
                 break;
 
             default:
@@ -336,9 +340,40 @@ class Builder {
         return widget;
     }
 
-    // завершить холст
-    void EndCanvas() {
-        if (build.action == Action::UI) p->endArr();
+    // ========================= CANVAS =========================
+    // Холст, рисование. Ширина, длина. Только араметры виджета
+    ghc::Widget& Canvas(uint16_t width = 400, uint16_t height = 300, Pos* pos = nullptr) {
+        return _canvas(GHTXT(), width, height, pos);
+    }
+    ghc::Widget& Canvas_(GHTREF name = GHTXT(), uint16_t width = 400, uint16_t height = 300, Pos* pos = nullptr) {
+        return _canvas(name, width, height, pos);
+    }
+
+    ghc::Widget& _canvas(GHTREF name = GHTXT(), uint16_t width = 400, uint16_t height = 300, Pos* pos = nullptr) {
+        _namer.check(name);
+
+        switch (build.action) {
+            case Action::UI:
+                if (!widget._enabled) break;
+                _beginName(name);
+                _type(ghc::Tag::canvas);
+                widget.param(ghc::Tag::width, width);
+                widget.param(ghc::Tag::height, height);
+                if (pos) widget.param(ghc::Tag::active, 1);
+                break;
+
+            case Action::Set:
+                widget._click = _namer.equals(name);
+                if (widget._click) {
+                    _needs_update = false;
+                    if (pos) *pos = Pos(build.value, true);
+                }
+                break;
+
+            default:
+                break;
+        }
+        return widget;
     }
 
     // ========= СИСТЕМА =========
@@ -355,88 +390,146 @@ class Builder {
         return widget;
     }
 
-    // ========= КАСТОМ =========
+    // ============== КАСТОМ ==============
 
-    // кастомный невидимый компонент. attach, click
+    // невидимый компонент для mqtt. attach, click
     GH_BUILD_VAR(Dummy, ghc::Tag::dummy);
 
     // HTML код в виджет. Параметры: (код или /путь.html) + параметры виджета
     GH_BUILD_VAL(HTML, ghc::Tag::html);
 
-    // Вставка JS кода. Параметры: (код или /путь.js)
-    GH_BUILD_VAL_NONAME(JS, ghc::Tag::js);
-
-    // Вставка CSS кода. Параметры: (код или /путь.css)
-    GH_BUILD_VAL_NONAME(CSS, ghc::Tag::css);
-
-    // кастомный виджет, имя функции из плагина. Можно использовать любые параметры виджета
-    GH_BUILD_CUSTOM(Custom, ghc::Tag::func);
-
-    // свой набор скриптов и стилей. Вызывать один раз на билдер. Принимает код в виде текста или путь к файлу .js / .css
-    void Plugin(GHTREF js, GHTREF css = GHTXT()) {
-        _checkName();
-        switch (build.action) {
-            case Action::UI:
-                if (!widget._enabled) break;
-                _beginName();
-                _tag(ghc::Tag::plugin);
-                widget.param(ghc::Tag::js, js);
-                widget.param(ghc::Tag::css, css);
-                break;
-            default:
-                break;
+    // плагин в виде js кода или путь к файлу
+    void Plugin(GHTREF wtype, GHTREF text) {
+        _namer.check();
+        if (build.action == Action::UI && widget._enabled) {
+            _beginName();
+            _type(ghc::Tag::plugin);
+            widget.param(ghc::Tag::wtype, wtype);
+            widget.param(ghc::Tag::value, text);
         }
     }
 
+    // кастомный виджет, указать тип из класса виджета. Можно использовать любые параметры виджета
+    ghc::Widget& Widget(GHTREF wtype, GHVREF text = GHVAL()) {
+        return _varAndType(ghc::Tag::none, GHTXT(), &text, wtype);
+    }
+    ghc::Widget& Widget(GHTREF wtype, ghc::AnyPtr ptr) {
+        return _varAndType(ghc::Tag::none, GHTXT(), ptr, wtype);
+    }
+    ghc::Widget& Widget_(GHTREF name, GHTREF wtype, GHVREF text = GHVAL()) {
+        return _varAndType(ghc::Tag::none, name, &text, wtype);
+    }
+    ghc::Widget& Widget_(GHTREF name, GHTREF wtype, ghc::AnyPtr ptr) {
+        return _varAndType(ghc::Tag::none, name, ptr, wtype);
+    }
+
+    /*
+        // подключить переменную к виджету, созданному из JSON. Можно навесить attach и click на взаимодействие. Update соответственно виджету
+        ghc::Widget& Hook_(GHTREF name, const ghc::AnyPtr& data, GHTREF func = GHTXT()) {
+            return _varAndType(ghc::Tag::hook, name, data, func);
+        }
+
+        // добавить виджеты из JSON строки
+        void addJSON(GHTREF text) {
+            if (p && build.action == Action::UI) {
+                if (_checkFirst()) p->endObj();
+                p->sendText(text);
+                p->comma();
+                p->beginObj();
+            }
+        }
+
+        // добавить виджеты из JSON строки PROGMEM
+        void addJSON_P(PGM_P text) {
+            addJSON((FSTR)text);
+        }
+
+        // добавить виджеты из JSON из файла
+        void addJSON_File(GHTREF path) {
+            _namer.check();
+            switch (build.action) {
+                case Action::UI:
+                    _beginName();
+                    _type(ghc::Tag::ui_file);
+                    widget.param(ghc::Tag::value, path);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+    */
     // =========================== CORE ===========================
    private:
-    ghc::Widget& _varAndType(ghc::Tag tag, GHTREF name, const ghc::AnyPtr& data, GHTREF func = GHTXT()) {
-        _checkName(name);
+    ghc::Widget& _varAndType(ghc::Tag type, GHTREF name, const ghc::AnyPtr& data, GHTREF wtype = GHTXT()) {
+        _namer.check(name);
         switch (build.action) {
             case Action::UI:
                 if (!widget._enabled) break;
                 _beginName(name);
-                _tag(tag);
-                _func(func);
-                _uiHelper(name, data);
+                if (type != ghc::Tag::none) _type(type);
+                else if (wtype.valid()) p->addString(ghc::Tag::type, wtype);
+                if (data.ptr && data.type == Type::PAIRS_T) {
+#ifndef GH_NO_PAIRS
+                    Pair pair = ((Pairs*)data.ptr)->get(name);
+                    if (pair.valid()) widget.valueVar(ghc::AnyPtr(&pair));
+#endif
+                } else {
+                    widget.valueVar(data);
+                }
                 break;
 
             case Action::Get:
-                _getHelper(name, data);
+                if (name.valid() && data.ptr) {
+                    p->addKey(name);
+                    p->quotes();
+                    _writeValue(name, data);
+                    p->quotes();
+                    p->comma();
+                }
                 break;
 
             case Action::Read:
-                if (_readName(name) && data.ptr) _writeValue(name, data);
+                if (_namer.equals(name) && data.ptr) _writeValue(name, data);
                 break;
 
             case Action::Set:
-                _setHelper(name, data);
+                if (data.type == Type::TEXT_T) break;
+                widget._click = _namer.equals(name);
+                if (widget._click) {
+                    if (data.ptr && data.type == Type::PAIRS_T) {
+#ifndef GH_NO_PAIRS
+                        ((Pairs*)data.ptr)->set(name, build.value);
+#endif
+                    } else {
+                        ghc::strToVar(build.value, data);
+                    }
+                    _changed = true;
+                }
+
                 break;
+
             default:
                 break;
         }
         return widget;
     }
-    ghc::Widget& _joy_pad(ghc::Tag tag, GHTREF name, Pos* pos = nullptr, bool keep = 0, bool exp = 0) {
-        ghc::AnyPtr data(pos);
-        _checkName(name);
+    ghc::Widget& _joy_pad(ghc::Tag wtype, GHTREF name, Pos* pos = nullptr, bool keep = 0, bool exp = 0) {
+        _namer.check(name);
         switch (build.action) {
             case Action::UI:
                 if (!widget._enabled) break;
                 _beginName(name);
-                _tag(tag);
+                _type(wtype);
                 if (keep) widget.param(ghc::Tag::keep, 1);
                 if (exp) widget.param(ghc::Tag::exp, 1);
                 break;
 
             case Action::Set:
-                widget._click = _parseName(name, data);
+                widget._click = _namer.equals(name);
                 if (widget._click) {
                     _needs_update = false;
-                    if (pos) {
-                        pos->x -= 255;
-                        pos->y -= 255;
-                    }
+                    if (pos) *pos = Pos(build.value, true);
                 }
                 break;
             default:
@@ -446,41 +539,30 @@ class Builder {
     }
     // =========================== SYS ===========================
     ghc::Packet* p;
-    uint16_t _index = 0;
+    ghc::Namer _namer;
     bool _first = true;
-    bool _stop = false;
     bool _refresh = false;
     bool _changed = false;
     bool _needs_update = true;
     uint8_t* _menu = nullptr;
 
     // system
-    void _tag(ghc::Tag tag) {
-        p->addString(ghc::Tag::type, tag);
-    }
-    void _func(GHTREF func) {
-        if (!func.valid()) return;
-        p->addString(ghc::Tag::func, func);
+    void _type(const ghc::Tag& wtype) {
+        p->addString(ghc::Tag::type, wtype);
     }
     bool _checkFirst() {
         if (_first) return _first = false;
         return 1;
     }
     void _writeValue(GHTREF name, const ghc::AnyPtr& data) {
-        switch (data.type) {
-            case Type::BTN_T:
-            case Type::NULL_T:
-                break;
+        if (data.type == Type::PAIRS_T) {
 #ifndef GH_NO_PAIRS
-            case Type::PAIRS_T: {
-                Pair pair = ((Pairs*)data.ptr)->get(name);
-                if (!pair.valid()) pair = ((Pairs*)data.ptr)->add(name, "");
-                if (pair.valid()) ghc::varToStr(*p, ghc::AnyPtr(&pair));
-            } break;
+            Pair pair = ((Pairs*)data.ptr)->get(name);
+            if (!pair.valid()) pair = ((Pairs*)data.ptr)->add(name, "");
+            if (pair.valid()) ghc::varToStr(*p, ghc::AnyPtr(&pair));
 #endif
-            default:
-                ghc::varToStr(*p, data);
-                break;
+        } else {
+            ghc::varToStr(*p, data);
         }
     }
 
@@ -493,121 +575,35 @@ class Builder {
         if (name.length()) {
             name.addString(*p);
         } else {
-            p->s += F("_n");
-            p->s += _index;
+            _namer.addIndex(p->s);
         }
         p->quotes();
         p->comma();
     }
-    void _checkName(GHTREF name = GHTXT()) {
-        if (!name.length()) _index++;
-    }
-    bool _nameEq(GHTREF name) {
-        if (name.valid()) return (name == build.name);
-        else return _autoNameEq();
-    }
-    bool _autoNameEq() {
-        return build.name[0] == '_' && build.name[1] == 'n' && ((uint16_t)atoi(build.name.str() + 2) == _index);
-    }
-    bool _readName(GHTREF name) {
-        if (_stop) return false;
-        if (name.valid()) {
-            if (name == build.name) return _stop = true;
-        } else {
-            if (_autoNameEq()) return _stop = true;
-        }
-        return false;
-    }
-    bool _parseName(GHTREF name, const ghc::AnyPtr& data) {
-        if (!_stop && _nameEq(name)) {
-            _stop = true;
-            if (!data.ptr) return 1;
-            if (data.type == Type::PAIRS_T) {
-#ifndef GH_NO_PAIRS
-                ((Pairs*)data.ptr)->set(name, build.value);
-#endif
-            } else {
-                ghc::strToVar(build.value, data);
-            }
-            return 1;
-        }
-        return 0;
-    }
 
-    // container
-    bool _beginContainer(uint16_t width, ghc::Tag tag) {
+    // container (wtype, row/col)
+    bool _beginContainer(ghc::Tag type, GHTREF wtype, ghc::Tag rowcol, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default) {
         if (!p || !_allowContainer()) return true;
         if (_checkFirst()) p->endObj();
-
         p->beginObj();
-        p->addString(ghc::Tag::type, tag);
-        p->addInt(ghc::Tag::wwidth, width);
+        if (type != ghc::Tag::none) p->addString(ghc::Tag::type, type);
+        else if (wtype.valid()) p->addString(ghc::Tag::type, wtype);
+        p->addString(ghc::Tag::rowcol, rowcol);
+        if (width) p->addInt(ghc::Tag::wwidth, width);
+        if (label.valid()) p->addString(ghc::Tag::label, label);
+        if (!color.isDefault()) p->addString(ghc::Tag::color, su::Value((uint32_t)color, HEX));
         p->beginArr(ghc::Tag::data);
         _first = true;
         return true;
     }
-    void _endContainer() {
-        if (!p || !_allowContainer()) return;
-        if (_checkFirst()) p->endObj();
-        p->endArr();
-        _first = false;
-    }
-    bool _nextContainer(uint16_t width, ghc::Tag tag) {
+    bool _nextContainer(ghc::Tag type, GHTREF wtype, ghc::Tag rowcol, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default) {
         if (!p || !_allowContainer()) return true;
-        _endContainer();
-        _beginContainer(width, tag);
+        endContainer();
+        _beginContainer(type, wtype, rowcol, width, label, color);
         return true;
     }
     bool _allowContainer() {
         return build.action == Action::UI && widget._enabled;
-    }
-
-    // helper
-    void _uiHelper(GHTREF name, const ghc::AnyPtr& data) {
-        if (data.ptr) {
-            switch (data.type) {
-                case Type::NULL_T:
-                case Type::BTN_T:
-                    break;
-#ifndef GH_NO_PAIRS
-                case Type::PAIRS_T: {
-                    Pair pair = ((Pairs*)data.ptr)->get(name);
-                    if (pair.valid()) widget.valueVar(ghc::AnyPtr(&pair));
-                } break;
-#endif
-                default:
-                    widget.valueVar(data);
-                    break;
-            }
-        }
-    }
-    void _getHelper(GHTREF name, const ghc::AnyPtr& data) {
-        if (name.valid() && data.ptr) {
-            p->addKey(name);
-            p->quotes();
-            _writeValue(name, data);
-            p->quotes();
-            p->comma();
-        }
-    }
-    void _setHelper(GHTREF name, const ghc::AnyPtr& data) {
-        switch (data.type) {
-            // case Type::NULL_T:   // TODO?
-            case Type::TEXT_T:
-                break;
-            case Type::BTN_T:
-                widget._click = 0;
-                if (_parseName(name, data)) {
-                    widget._click = (build.value[0] == '2');
-                    // if (widget._click) _changed = true;
-                    _needs_update = false;
-                }
-                break;
-            default:
-                widget._click = _parseName(name, data);
-                if (widget._click) _changed = true;
-                break;
-        }
     }
 };
 

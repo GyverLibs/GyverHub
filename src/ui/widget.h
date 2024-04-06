@@ -9,6 +9,7 @@
 #include "core/packet.h"
 #include "core/types.h"
 #include "flag.h"
+#include "geo.h"
 #include "hub_macro.hpp"
 #include "update_class.h"
 
@@ -26,9 +27,9 @@ class Widget {
 
     // ===================== CUSTOM ====================
     // int/string/bool поле
-    Widget& param(GHTREF key, const sutil::AnyValue& val) {
+    Widget& param(GHTREF key, const su::Value& val) {
         if (_ok() && val.valid()) {
-            if (val.type() == sutil::AnyText::Type::value) p.addInt(key, val);
+            if (val.type() == su::Text::Type::value) p.addInt(key, val);
             else p.addStringEsc(key, val);
         }
         return *this;
@@ -54,13 +55,22 @@ class Widget {
     }
 
     // int/string/bool значение
-    Widget& value(const sutil::AnyValue& val) {
+    Widget& value(const su::Value& val) {
         return param(Tag::value, val);
     }
 
     // float значение
     Widget& value(double val, uint8_t dec) {
         return param(Tag::value, val, dec);
+    }
+
+    // Geo значение
+    Widget& value(const gh::Geo& geo) {
+        p.beginArr(Tag::latlon);
+        p.addFloat(geo.lat, 6);
+        p.addFloat(geo.lon, 6);
+        p.endArr();
+        return *this;
     }
 
     // ===================== TEXT =====================
@@ -125,12 +135,12 @@ class Widget {
 
     // размер шрифта/кнопки
     Widget& fontSize(uint16_t size) {
-        return param(Tag::fsize, size);
+        return param(Tag::font_size, size);
     }
 
     // цвет uint32_t 24 бит
     Widget& color(uint32_t color) {
-        if (color != 0xffffffff) return param(Tag::color, color);
+        if (_ok()) p.addString(Tag::color, su::Value(color, HEX));
         return *this;
     }
 
@@ -139,9 +149,14 @@ class Widget {
         return color((uint32_t)col);
     }
 
-    // Действие (обновить файл, вызвать Confirm/Prompt)
+    // Действие (вызвать Confirm/Prompt)
     Widget& action(bool act = 1) {
         return param(Tag::action, act);
+    }
+
+    // обновить файл
+    Widget& update(bool upd = 1) {
+        return param(Tag::action, upd);
     }
 
     // ===================== WIDGET =====================
@@ -216,7 +231,7 @@ class Widget {
 
     // Подключить gh::Flag* флаг
     Widget& attach(gh::Flag* flag) {
-        if (_click) flag->_changed = true;
+        if (_click) flag->_change();
         return *this;
     }
 
@@ -237,9 +252,9 @@ class Widget {
         return _enabled && _allowed;
     }
 
-    Widget& param(Tag key, const sutil::AnyValue& val) {
+    Widget& param(Tag key, const su::Value& val) {
         if (_ok() && val.valid()) {
-            if (val.type() == sutil::AnyText::Type::value) p.addInt(key, val);
+            if (val.type() == su::Text::Type::value) p.addInt(key, val);
             else p.addStringEsc(key, val);
         }
         return *this;

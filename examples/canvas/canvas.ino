@@ -18,12 +18,11 @@ void build(gh::Builder& b) {
 
         // 1. ХОЛСТ
         // холст с рисунком, без имени и обновлений
-        gh::Canvas cv1;
-        b.BeginCanvas(300, 300, &cv1);
+        b.Canvas(300, 300);
+        gh::Canvas cv1(b);
         cv1.fill(0x00ff00);  // жёлтый
         cv1.noStroke();
         cv1.circle(150, 150, 50);  // круг в центре
-        b.EndCanvas();
 
         b.endRow();
     }
@@ -31,18 +30,17 @@ void build(gh::Builder& b) {
     if (b.beginRow()) {
         // 2. ХОЛСТ
         // холст с именем и рисунком и подключенным обработчиком кликов
-        gh::Canvas cv2;
-        b.BeginCanvas_(F("cv2"), 200, 200, &cv2, &pos2);
+        b.Canvas_(F("cv2"), 200, 200, &pos2);
+        gh::Canvas cv2(b);
         cv2.stroke(0xff0000);
         cv2.strokeWeight(5);
         cv2.line(0, 0, -1, -1);  // крест
         cv2.line(0, -1, -1, 0);
-        b.EndCanvas();
 
         // 3. ХОЛСТ
         // пустой холст с обработкой кликов в билдере
         gh::Pos pos3;
-        b.Canvas_(F("cv3"), 300, 300, nullptr, &pos3);
+        b.Canvas_(F("cv3"), 300, 300, &pos3);
 
         // был клик
         if (pos3.changed()) {

@@ -161,7 +161,7 @@ void build(gh::Builder& b) {
         b.Input(&inp).size(2);
 
         // внутри обработки действия переменная уже будет иметь новое значение:
-        if (b.Switch(&sw).size(1).click()) {
+        if (b.Switch(&sw).click()) {
             Serial.print("switch: ");
             Serial.println(sw);
         }
@@ -181,7 +181,7 @@ void build(gh::Builder& b) {
     if (b.beginRow()) {
         b.Label_(F("label")).size(2).value("default");  // с указанием стандартного значения
 
-        if (b.Button().size(1).click()) {
+        if (b.Button().click()) {
             hub.update(F("label")).value(random(100, 500));
         }
 
@@ -211,7 +211,7 @@ void build(gh::Builder& b) {
         }
 
         Serial.print("client from: ");
-        Serial.println(gh::readConnection(b.build.client.connection()));
+        Serial.println(gh::readConnection(b.build.client.connection));
         Serial.print("ID: ");
         Serial.println(b.build.client.id);
         Serial.println();

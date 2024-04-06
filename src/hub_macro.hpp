@@ -8,12 +8,17 @@
 #define FSTR const __FlashStringHelper*
 // #define GHTREF const ghc::Text&
 // #define GHTXT ghc::Text
-#define GHTREF const sutil::AnyText&
-#define GHTXT sutil::AnyText
-#define GHVREF const sutil::AnyValue&
-#define GHVAL sutil::AnyValue
-#define GHDELPTR(x) do {delete x; x = nullptr;} while (0);
+#define GHTREF const su::Text&
+#define GHTXT su::Text
+#define GHVREF const su::Value&
+#define GHVAL su::Value
+#define GHDELPTR(x)  \
+    do {             \
+        delete x;    \
+        x = nullptr; \
+    } while (0);
 
+#define GH_BROAD_ID 0xffffffff
 #define GH_NUMBERS F("^\\d+$")
 #define GH_LETTERS F("^[a-zA-Z]+$")
 #define GH_LETTERS_S F("^[a-z]+$")
@@ -26,15 +31,15 @@
 #endif
 
 // LOG
-#define GH_LOG(x)                             \
-    do {                                      \
-        Serial.print(F(">> "));               \
-        Serial.print(x);                      \
-        Serial.print(F(" in "));              \
-        Serial.print(__FUNCTION__);           \
-        Serial.print(F(" [" __FILE__ " : ")); \
-        Serial.print(__LINE__);               \
-        Serial.println(']');                  \
+#define GH_LOG(x)                               \
+    do {                                        \
+        Serial.print(F("> "));                  \
+        Serial.print(x);                        \
+        Serial.print(F(" in "));                \
+        Serial.print(__FUNCTION__);             \
+        Serial.print(F("() [" __FILE__ " : ")); \
+        Serial.print(__LINE__);                 \
+        Serial.println(']');                    \
     } while (0);
 
 // MCU family

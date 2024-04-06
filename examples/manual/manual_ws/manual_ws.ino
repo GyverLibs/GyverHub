@@ -6,7 +6,6 @@
 #define AP_PASS "alexpass"
 
 // отключаем встроенную реализацию HTTP+WS
-// #define GH_NO_STREAM
 #define GH_NO_HTTP
 #define GH_NO_WS
 // #define GH_NO_MQTT
@@ -38,7 +37,7 @@ class HubWS : public gh::Bridge {
 
                 case WStype_TEXT:
                     clientID = num;
-                    parse(sutil::AnyText((char*)data, len));
+                    parse(su::Text((char*)data, len));
                     break;
 
                 default:
@@ -55,20 +54,10 @@ class HubWS : public gh::Bridge {
         ws.loop();
     }
     void send(gh::BridgeData& data) {
-        if (data.text.pgm()) {
-            char buf[data.text.length()];
-            data.text.toStr(buf);
-            if (data.broadcast) {
-                ws.broadcastTXT((uint8_t*)buf, data.text.length());
-            } else {
-                ws.sendTXT(clientID, (uint8_t*)buf, data.text.length());
-            }
+        if (data.broadcast) {
+            ws.broadcastTXT(data.text.str(), data.text.length());
         } else {
-            if (data.broadcast) {
-                ws.broadcastTXT(data.text.str(), data.text.length());
-            } else {
-                ws.sendTXT(clientID, data.text.str(), data.text.length());
-            }
+            ws.sendTXT(clientID, data.text.str(), data.text.length());
         }
     }
 

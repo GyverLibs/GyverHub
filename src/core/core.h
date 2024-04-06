@@ -5,6 +5,7 @@
 
 #include "bridge.h"
 #include "build.h"
+#include "callbacks.h"
 #include "client.h"
 #include "cmd.h"
 #include "core_class.h"
@@ -18,7 +19,9 @@
 #include "types.h"
 #include "types_read.h"
 #include "ui/builder.h"
+#include "ui/data.h"
 #include "ui/info.h"
+#include "ui/location.h"
 
 #ifdef GH_ESP_BUILD
 
@@ -30,61 +33,40 @@
 #include <WiFi.h>
 #endif  // ESP32
 
-#include "esp/transfer/fetcher.h"
+#include "transfer/fetcher.h"
 
 #ifndef GH_NO_OTA
-#include "esp/transfer/updater.h"
+#include "transfer/updater.h"
 #endif
 
 #ifndef GH_NO_OTA_URL
-#include "esp/transfer/ota_url.h"
+#include "transfer/ota_url.h"
 #endif
 
 #ifndef GH_NO_FS
 #ifndef GH_NO_UPLOAD
-#include "esp/transfer/uploader.h"
+#include "transfer/uploader.h"
 #endif
 #endif  // GH_NO_FS
 
 #ifndef GH_NO_HTTP
-#include "esp/sync/http.h"
+#include "bridges/esp/sync/http.h"
 #endif
 #ifndef GH_NO_MQTT
-#include "esp/sync/mqtt.h"
+#include "bridges/esp/sync/mqtt.h"
 #endif
 #ifndef GH_NO_WS
-#include "esp/sync/ws.h"
+#include "bridges/esp/sync/ws.h"
 #endif
 
 #endif  // GH_ESP_BUILD
 
-#ifndef GH_NO_STREAM
-#include "stream.h"
-#endif
-
 namespace ghc {
-#ifdef GH_ESP_BUILD
-//typedef std::function<void(gh::Data data)> DataCallback;
-typedef std::function<void(String str)> CliCallback;
-typedef std::function<void(uint32_t stamp)> UnixCallback;
-typedef std::function<void(gh::Builder& builder)> BuildCallback;
-typedef std::function<bool(gh::Request& request)> RequestCallback;
-
-typedef std::function<void(gh::Reboot res)> RebootCallback;
-typedef std::function<void(gh::Fetcher& fetcher)> FetchCallback;
-typedef std::function<void(String& path)> UploadCallback;
-#else
-//typedef void (*DataCallback)(gh::Data data);
-typedef void (*CliCallback)(String str);
-typedef void (*UnixCallback)(uint32_t stamp);
-typedef void (*BuildCallback)(gh::Builder& builder);
-typedef bool (*RequestCallback)(gh::Request& request);
-#endif
 
 // ========================== CLASS ==========================
 class HubCore {
    public:
-    // добавить мост подключения
+    // добавить мост подключения. false если нет места
     bool addBridge(gh::Bridge* bridge) {
         for (uint8_t i = 0; i < GH_BRIDGE_AMOUNT; i++) {
             if (!bridges[i]) {
@@ -103,38 +85,38 @@ class HubCore {
     // отправить текст клиенту
     void _send(GHTREF text, gh::Client* client = nullptr) {
         if (!text.length()) return;
+        if (client) client->_sent = true;
+
         gh::BridgeData data(text);
         if (client && client->bridge) {
             data.broadcast = false;
-            if (client->connection() == gh::Connection::MQTT) {
+            if (client->connection == gh::Connection::MQTT) {
                 data.topic = _topicSend(client->id);
             }
-            client->bridge->send(data);
+            if (client->bridge->canSend()) client->bridge->send(data);
         } else {
             data.broadcast = true;
             data.topic = _topicSend();
             for (uint8_t i = 0; i < GH_BRIDGE_AMOUNT; i++) {
-                if (bridges[i] && bridges[i]->getFocus()) bridges[i]->send(data);
+                if (bridges[i] && bridges[i]->getFocus() && bridges[i]->canSend()) {
+                    bridges[i]->send(data);
+                }
             }
         }
     }
 
     // VARS
     uint8_t menu = 0;  // выбранный пункт меню
-    String prefix = "";
+    String net = "";
     String name = "";
     String icon = "";
     String version = "";
-    const char* id = _id;
+    uint32_t id = 0;
     gh::Bridge* bridges[GH_BRIDGE_AMOUNT] = {nullptr};
 
 // модули
 #ifndef GH_NO_MODULES
     Modules modules;
-#endif
-
-#ifndef GH_NO_STREAM
-    gh::HubStream stream;
 #endif
 
 #if defined(GH_ESP_BUILD) && !defined(GH_NO_MQTT)
@@ -145,7 +127,6 @@ class HubCore {
     // ================================= PRIVATE ================================
     // ==========================================================================
    protected:
-    char _id[9] = {'\0'};
     uint32_t _pin = 0;
 
     uint16_t _bufsize = 1000;
@@ -153,11 +134,15 @@ class HubCore {
     bool _build_busy = false;  // (билдер запущен) запрещает вызывать функции, которые вызывают билдер
     bool _allow_send = true;   // разрешает отправку sendXxx и класс Update только вне билдера + в Set билдере
     bool _autoGet_f = true;
+    bool _broadcast = true;
 
     BuildCallback _build_cb = nullptr;
+    PingCallback _ping_cb = nullptr;
     CliCallback _cli_cb = nullptr;
+    DataCallback _data_cb = nullptr;
     InfoCallback _info_cb = nullptr;
     UnixCallback _unix_cb = nullptr;
+    LocationCallback _loc_cb = nullptr;
 #ifndef GH_NO_REQUEST
     RequestCallback _req_cb = nullptr;
 #endif
@@ -198,11 +183,6 @@ class HubCore {
     // ==========================================================================
 
     void _init() {
-#ifndef GH_NO_STREAM
-        stream.setup(this, parseHook);
-        addBridge(&stream);
-#endif
-
 #ifdef GH_ESP_BUILD
 #ifndef GH_NO_HTTP
 #ifndef GH_NO_MODULES
@@ -218,7 +198,7 @@ class HubCore {
         addBridge(&ws);
 #endif
 #ifndef GH_NO_MQTT
-        mqtt.setup(this, parseHook, _id, &prefix);
+        mqtt.setup(this, parseHook, &id, &net);
         addBridge(&mqtt);
 #endif
 #endif
@@ -280,29 +260,42 @@ class HubCore {
         p.beginPacket(id);
         p.addString(Tag::type, Tag::discover);
         p.addString(Tag::name, name);
-        p.addString(Tag::prefix, prefix);
+        p.addString(Tag::prefix, net);
         p.addString(Tag::icon, icon);
         p.addInt(Tag::PIN, hash);
         p.addString(Tag::version, version);
         p.addString(Tag::platform, F(GH_PLATFORM));
-        p.addInt(Tag::max_upl, GH_UPL_CHUNK_SIZE);
+        p.addInt(Tag::max_upload, GH_UPL_CHUNK_SIZE);
         p.addInt(Tag::api_v, GH_API_VERSION);
 
-#if defined(GH_NO_HTTP_TRANSFER)
-        p.addInt(Tag::http_t, 0);
-#else
-        p.addInt(Tag::http_t, 1);
-#endif
+        for (uint8_t i = 0; i < GH_BRIDGE_AMOUNT; i++) {
+            if (bridges[i] && bridges[i]->connection == gh::Connection::UDP) {
+                p.addInt(Tag::udp_port, bridges[i]->getPort());
+                break;
+            }
+        }
+        for (uint8_t i = 0; i < GH_BRIDGE_AMOUNT; i++) {
+            if (bridges[i] && bridges[i]->connection == gh::Connection::WS) {
+                p.addInt(Tag::ws_port, bridges[i]->getPort());
+                break;
+            }
+        }
+        for (uint8_t i = 0; i < GH_BRIDGE_AMOUNT; i++) {
+            if (bridges[i] && bridges[i]->connection == gh::Connection::HTTP) {
+                p.addInt(Tag::http_port, bridges[i]->getPort());
+                p.addInt(Tag::http_transfer, bridges[i]->hasTransfer());
+                break;
+            }
+        }
+
 #ifdef ATOMIC_FS_UPDATE
-        p.addString(Tag::ota_t, F("gz"));
+        p.addString(Tag::ota_type, F("gz"));
 #else
-        p.addString(Tag::ota_t, F("bin"));
+        p.addString(Tag::ota_type, F("bin"));
 #endif
 #ifndef GH_NO_MODULES
-        p.addInt(Tag::ws_port, GH_WS_PORT);  // TODO WS
         p.addInt(Tag::modules, modules.mods);
 #else
-        p.addInt(Tag::ws_port, GH_WS_PORT);
         p.addInt(Tag::modules, 0);
 #endif
         p.endPacket();
@@ -401,42 +394,58 @@ class HubCore {
         gh::BridgeData data(text);
         data.topic = topic;
         for (uint8_t i = 0; i < GH_BRIDGE_AMOUNT; i++) {
-            if (bridges[i] && bridges[i]->connection() == gh::Connection::MQTT) {
+            if (bridges[i] && bridges[i]->connection == gh::Connection::MQTT) {
                 bridges[i]->send(data);
             }
         }
     }
-    // prefix/hub
+    // net/hub
     String _topicSend() {
-        String topic(prefix);
+        String topic(net);
         topic += F("/hub");
         return topic;
     }
-    // prefix/hub/client_id/id
-    String _topicSend(GHTREF clientID) {
+    // net/hub/client_id/id
+    String _topicSend(uint32_t client_id) {
         String topic = _topicSend();
         topic += '/';
-        clientID.addString(topic);
+        _addID(topic, client_id);
         topic += '/';
-        topic += id;
+        _addID(topic, id);
         return topic;
     }
-    // prefix/hub/id/get/name
+    // net/hub/id/get/name
     String _topicGet(GHTREF name) {
-        String topic(prefix);
+        String topic(net);
         topic += F("/hub/");
-        topic += id;
+        _addID(topic, id);
         topic += F("/get/");
         name.addString(topic);
         return topic;
     }
-    // prefix/hub/id/status
+    // net/hub/id/status
     String _topicStatus() {
-        String topic(prefix);
+        String topic(net);
         topic += F("/hub/");
-        topic += id;
+        _addID(topic, id);
         topic += F("/status");
         return topic;
+    }
+    // net/device_id/id/data/name
+    String _topicData(uint32_t device_id, GHTREF name) {
+        String topic(net);
+        topic.reserve(50);
+        topic += '/';
+        _addID(topic, device_id);
+        topic += '/';
+        _addID(topic, id);
+        topic += F("/data/");
+        name.addString(topic);
+        return topic;
+    }
+    // add id to string
+    void _addID(String& s, uint32_t& id) {
+        su::Value(id, HEX).addString(s);
     }
 
     // ==========================================================================
@@ -452,7 +461,7 @@ class HubCore {
             _build_cb(b);
             _allow_send = true;
             _build_busy = false;
-            return b._stop;
+            return b._namer.isFound();
         }
         return 0;
     }
@@ -471,17 +480,17 @@ class HubCore {
     }
 
 #ifndef GH_NO_REQUEST
-    bool _request(gh::Client& client, gh::CMD cmd, GHTREF name = GHTXT(), GHTREF value = GHTXT()) {
+    bool _request(gh::Client& client, bool broadcast, gh::CMD cmd, GHTREF name = GHTXT(), GHTREF value = GHTXT()) {
         if (!_req_cb) return 1;
-        gh::Request req(client, cmd, name, value);
+        gh::Request req(client, broadcast, cmd, name, value);
         return _req_cb(req);
     }
 #endif
 
     void _discover(gh::Bridge& bridge, GHTREF id, gh::CMD cmd) {
-        gh::Client client(this, sendHook, &bridge, id);
+        gh::Client client(this, sendHook, &bridge, id.toInt32HEX());
 #ifndef GH_NO_REQUEST
-        if (_request(client, cmd)) {
+        if (_request(client, true, cmd)) {
             _answerDiscover(client);
         } else {
             _answerError(Tag::error, gh::Error::Forbidden, client);
@@ -497,26 +506,27 @@ class HubCore {
 
     // PREFIX/ID/CLIENT_ID/CMD/NAME + VALUE
     void _parse(gh::Bridge& bridge, GHTREF url, GHTREF value) {
-        if (url == prefix) return _discover(bridge, value, gh::CMD::Search);
+        if (url == net) return _discover(bridge, value, gh::CMD::Search);
 
-        sutil::SplitterT<5> sp((char*)url.str(), '/');
-        if (prefix != sp.str(0)) return;    // wrong prefix
-        if (strcmp(sp.str(1), id)) return;  // wrong id
-        if (sp.length() == 2) return _discover(bridge, value, gh::CMD::Discover);
-        if (sp.length() == 3) return;
+        su::TextListT<5> list(url, '/');
+        if (list[0] != net) return;  // wrong net
 
-        gh::CMD cmd = getCMD(sp.str(3));
+        uint32_t device_id = list[1].toInt32HEX();
+        if (!(device_id == id || (_broadcast && device_id == GH_BROAD_ID))) return;  // wrong id
+        if (list.length() == 2) return _discover(bridge, value, gh::CMD::Discover);
+        if (list.length() == 3) return;
+
+        gh::CMD cmd = getCMD(list[3]);
         if (cmd == gh::CMD::Unknown) return;
 
-        GHTXT name = sp.get(4);
+        const su::Text& name = list[4];
 
-#ifdef GH_ESP_BUILD
-        size_t nameHash = sutil::hash(name.str());
-#endif
-        gh::Client client(this, sendHook, &bridge, sp.str(2));
+        gh::Client client(this, sendHook, &bridge, list[2].toInt32HEX());
 
 #ifndef GH_NO_REQUEST
-        if (!_request(client, cmd, name, value)) return _answerError(Tag::error, gh::Error::Forbidden, client);
+        if (!_request(client, device_id == GH_BROAD_ID, cmd, name, value)) {
+            return _answerError(Tag::error, gh::Error::Forbidden, client);
+        }
 #endif
 #ifndef GH_NO_MODULES
         if (!modules.checkCMD(cmd)) return _answerError(Tag::error, gh::Error::Disabled, client);
@@ -530,11 +540,17 @@ class HubCore {
                 break;
 
             case gh::CMD::Ping:
-                _answerCmd(Tag::OK, client);
+                if (_ping_cb) _ping_cb(client);
+                if (!client._sent) _answerCmd(Tag::OK, client);
                 break;
 
             case gh::CMD::Unfocus:
                 bridge.clearFocus();
+                _answerCmd(Tag::OK, client);
+                break;
+
+            case gh::CMD::Location:
+                if (_loc_cb) _loc_cb(gh::Location(name, value, client));
                 break;
 
             case gh::CMD::Info:
@@ -546,7 +562,7 @@ class HubCore {
                 break;
 
             case gh::CMD::Data:
-                // TODO data
+                if (_data_cb) _data_cb(gh::Data{name, value, client});
                 break;
 
             case gh::CMD::Unix:  // name = stamp
@@ -621,27 +637,27 @@ class HubCore {
                 break;
 
             case gh::CMD::Delete:
-                gh::FS.remove(name.str());
+                gh::FS.remove(name.toString());
                 _answerFiles(client);
                 break;
 
             case gh::CMD::Rename:
-                if (gh::FS.rename(name.str(), value.str())) {
-                    _answerFiles(client);
-                }
+                gh::FS.rename(name.toString(), value.toString());
+                _answerFiles(client);
                 break;
 
             case gh::CMD::Create: {  // name == path
-                gh::FS.mkdir(value.str());
-                File f = gh::FS.openWrite(name.str());
+                gh::FS.mkdir(value.toString());
+                File f = gh::FS.openWrite(name.toString());
                 f.close();
                 _answerFiles(client);
             } break;
 
             case gh::CMD::FsAbort:
-                switch (nameHash) {  // name == type
+                _answerCmd(Tag::OK, client);
+                switch (name.hash()) {  // name == type
 #ifndef GH_NO_UPLOAD
-                    case sutil::SH("upload"):
+                    case su::SH("upload"):
                         if (_upl_p && _upl_p->client == client) {
                             _upl_p->abort();
                             GHDELPTR(_upl_p);
@@ -649,8 +665,8 @@ class HubCore {
                         break;
 #endif  // GH_NO_UPLOAD
 #ifndef GH_NO_FETCH
-                    case sutil::SH("fetch"):
-                    case sutil::SH("fetch_file"):
+                    case su::SH("fetch"):
+                    case su::SH("fetch_file"):
                         if (_fet_p && _fet_p->client == client) {
                             _fet_p->abort();
                             GHDELPTR(_fet_p);
@@ -658,14 +674,14 @@ class HubCore {
                         break;
 #endif  // GH_NO_FETCH
 #ifndef GH_NO_OTA
-                    case sutil::SH("ota"):
+                    case su::SH("ota"):
                         if (_ota_p && _ota_p->client == client) {
                             _ota_p->abort();
                             GHDELPTR(_ota_p);
                         }
                         break;
 #endif  // GH_NO_OTA
-                    case sutil::SH("all"):
+                    case su::SH("all"):
 #ifndef GH_NO_UPLOAD
                         if (_upl_p && _upl_p->client == client) {
                             _upl_p->abort();
@@ -693,14 +709,14 @@ class HubCore {
 #ifndef GH_NO_FETCH
             case gh::CMD::Fetch:  // name == path
                 if (!_fet_p) {
-                    _fet_p = new gh::Fetcher(client, _fetchHook, name, _id);
+                    _fet_p = new gh::Fetcher(client, _fetchHook, name, id);
                     if (_fet_p) {
                         if (!_fet_p->begin()) GHDELPTR(_fet_p);
                     } else {
-                        gh::Fetcher::sendError(client, _id, gh::Error::Memory);
+                        gh::Fetcher::sendError(client, id, gh::Error::Memory);
                     }
                 } else {
-                    gh::Fetcher::sendError(client, _id, gh::Error::Busy);
+                    gh::Fetcher::sendError(client, id, gh::Error::Busy);
                 }
                 break;
 
@@ -708,7 +724,7 @@ class HubCore {
                 if (_fet_p && _fet_p->client == client) {
                     if (_fet_p->next()) GHDELPTR(_fet_p);  // last
                 } else {
-                    gh::Fetcher::sendError(client, _id, gh::Error::WrongClient);
+                    gh::Fetcher::sendError(client, id, gh::Error::WrongClient);
                 }
                 break;
 #endif  // GH_NO_FETCH
@@ -716,27 +732,27 @@ class HubCore {
 #ifndef GH_NO_UPLOAD
             case gh::CMD::Upload:  // name == path, value == size
                 if (!_upl_p) {
-                    _upl_p = new Uploader(client, _id, _safe_upl);
+                    _upl_p = new Uploader(client, id, _safe_upl);
                     if (_upl_p) {
                         if (!_upl_p->begin(name, value)) GHDELPTR(_upl_p);
                     } else {
-                        Uploader::sendError(client, _id, gh::Error::Memory);
+                        Uploader::sendError(client, id, gh::Error::Memory);
                     }
                 } else {
-                    Uploader::sendError(client, _id, gh::Error::Busy);
+                    Uploader::sendError(client, id, gh::Error::Busy);
                 }
                 break;
 
             case gh::CMD::UploadChunk:  // name == next/last/crc, value == data64
                 if (_upl_p && _upl_p->client == client) {
-                    _upl_p->process(nameHash, value);
+                    _upl_p->process(name.hash(), value);
 
                     if (_upl_p->last() && !_upl_p->hasError()) {
                         if (_upload_cb) _upload_cb(_upl_p->path);
                     }
                     if (_upl_p->last() || _upl_p->hasError()) GHDELPTR(_upl_p);
                 } else {
-                    Uploader::sendError(client, _id, gh::Error::WrongClient);
+                    Uploader::sendError(client, id, gh::Error::WrongClient);
                 }
                 break;
 #endif  // GH_NO_UPLOAD
@@ -745,23 +761,23 @@ class HubCore {
 #ifndef GH_NO_OTA
             case gh::CMD::Ota:  // name == flash/fs
                 if (!_ota_p) {
-                    _ota_p = new Updater(client, &_reason, _id);
+                    _ota_p = new Updater(client, &_reason, id);
                     if (_ota_p) {
                         if (!_ota_p->begin(name)) GHDELPTR(_ota_p);
                     } else {
-                        Updater::sendError(client, _id, gh::Error::Memory);
+                        Updater::sendError(client, id, gh::Error::Memory);
                     }
                 } else {
-                    Updater::sendError(client, _id, gh::Error::Busy);
+                    Updater::sendError(client, id, gh::Error::Busy);
                 }
                 break;
 
             case gh::CMD::OtaChunk:  // name == next/last, value == data
                 if (_ota_p && _ota_p->client == client) {
-                    _ota_p->process(nameHash, value);
+                    _ota_p->process(name.hash(), value);
                     if (_ota_p->hasError() || _ota_p->last()) GHDELPTR(_ota_p);
                 } else {
-                    Updater::sendError(client, _id, gh::Error::WrongClient);
+                    Updater::sendError(client, id, gh::Error::WrongClient);
                 }
                 break;
 #endif  // GH_NO_OTA
@@ -769,12 +785,12 @@ class HubCore {
 #ifndef GH_NO_OTA_URL
             case gh::CMD::OtaUrl:  // name == flash/fs, value == url
                 if (!_otaurl_p) {
-                    _otaurl_p = new OtaUrl(nameHash, value, client, _id);
+                    _otaurl_p = new OtaUrl(name.hash(), value, client, id);
                     if (!_otaurl_p) {
-                        OtaUrl::sendError(client, _id, gh::Error::Memory);
+                        OtaUrl::sendError(client, id, gh::Error::Memory);
                     }
                 } else {
-                    OtaUrl::sendError(client, _id, gh::Error::Busy);
+                    OtaUrl::sendError(client, id, gh::Error::Busy);
                 }
                 break;
 #endif  // GH_NO_OTA_URL

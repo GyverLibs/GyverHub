@@ -19,7 +19,7 @@ class Packet : public gson::string {
         else if (res) reserve(res);
     }
 
-    void beginPacket(GHTREF id = GHTXT(), gh::Client* client = nullptr) {
+    void beginPacket(uint32_t id = 0, gh::Client* client = nullptr) {
         s = F("#{");
         addID(id);
         addClient(client);
@@ -30,14 +30,19 @@ class Packet : public gson::string {
         s += F("}#");
     }
 
-    void addID(GHTREF id) {
-        addString(Tag::id, id);
+    void addID(uint32_t id) {
+        if (id) addString(Tag::id, su::Value(id, HEX));
     }
     void addClient(gh::Client* client) {
-        if (client) addString(Tag::client, client->id);
+        if (client && client->id) addString(Tag::client, su::Value(client->id, HEX));
+    }
+
+    bool endsWith(char sym) {
+        return s.length() ? (s.charAt(s.length() - 1) == sym) : 0;
     }
 
     // + tag
+    using gson::string::addBool;
     using gson::string::addFloat;
     using gson::string::addInt;
     using gson::string::addKey;
@@ -46,6 +51,12 @@ class Packet : public gson::string {
     using gson::string::beginArr;
     using gson::string::beginObj;
 
+    void replaceLast(char c) {
+        s.setCharAt(s.length() - 1, c);
+    }
+    void addChar(char c) {
+        s += c;
+    }
     void addKey(const Tag& tag) {
         addTag(tag);
         colon();
@@ -74,7 +85,12 @@ class Packet : public gson::string {
         addStringEsc(text);
     }
 
-    void addInt(const Tag& key, const sutil::AnyValue& value) {
+    void addBool(const Tag& key, const bool& value) {
+        addKey(key);
+        addBool(value);
+    }
+
+    void addInt(const Tag& key, const su::Value& value) {
         addKey(key);
         value.addString(s);
         comma();
@@ -83,10 +99,6 @@ class Packet : public gson::string {
     void addFloat(const Tag& key, const double& value, uint8_t dec = 2) {
         addKey(key);
         addFloat(value, dec);
-    }
-
-    void addIntRaw(const sutil::AnyValue& value) {
-        value.addString(s);
     }
 
     // send
@@ -121,7 +133,7 @@ class Packet : public gson::string {
         if (t >= 16) s += add16(t >> 4);
         s += add16(t);
     }
-    void escape(const sutil::AnyText& text) {
+    void escape(const su::Text& text) {
         if (text.indexOf('\"') >= 0) {
             uint16_t len = text.length();
             char p = 0;

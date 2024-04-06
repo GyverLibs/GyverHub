@@ -4,29 +4,37 @@ namespace gh {
 
 // ошибка
 enum class Error : uint8_t {
-    None,         // нет ошибки
-    OpenFile,     // ошибка открытия файла
-    FreeSpace,    // нет свободного места
-    CrcMiss,      // ошибка контрольной суммы
-    SizeMiss,     // не совпал размер
-    Start,        // ошибка старта
-    Write,        // ошибка записи
-    End,          // ошибка завершения
-    Abort,        // прервано
-    Timeout,      // таймаут соединения
-    Busy,         // загрузчик занят другим клиентом
-    Memory,       // невозможно выделить память
-    WrongClient,  // не тот клиент
-    Forbidden,    // запрещено в request
-    Disabled,     // модуль отключен
-    WrongType,    // некорректный тип
-    PacketDamage, // пакет повреждён
+    None,          // нет ошибки
+    OpenFile,      // ошибка открытия файла
+    FreeSpace,     // нет свободного места
+    CrcMiss,       // ошибка контрольной суммы
+    SizeMiss,      // не совпал размер
+    Start,         // ошибка старта
+    Write,         // ошибка записи
+    End,           // ошибка завершения
+    Abort,         // прервано
+    Timeout,       // таймаут соединения
+    Busy,          // загрузчик занят другим клиентом
+    Memory,        // невозможно выделить память
+    WrongClient,   // не тот клиент
+    Forbidden,     // запрещено в request
+    Disabled,      // модуль отключен
+    WrongType,     // некорректный тип
+    PacketDamage,  // пакет повреждён
+    CantAlloc,     // ошибка выделения памяти
 };
 
 enum class Align : uint8_t {
     Left,
     Center,
     Right,
+};
+
+enum class Layer : uint8_t {
+    OSM,
+    GoogleStreet,
+    GoogleSatellite,
+    GoogleHybrid,
 };
 
 // тип данных
@@ -47,8 +55,6 @@ enum class Type : uint8_t {
     DOUBLE_T,  // double
     COLOR_T,   // gh::Colors
     FLAGS_T,   // gh::Flags
-    POS_T,     // gh::Pos
-    BTN_T,     // gh::Button
     PAIRS_T,   // Pairs
     PAIR_T,    // Pair
     LOG_T,     // gh::Log
@@ -82,6 +88,8 @@ enum class Connection : uint8_t {
     MQTT,
     HTTP,
     Telegram,
+    UDP,
+    Custom,
     System,
 };
 
@@ -113,6 +121,7 @@ enum class CMD : uint8_t {
     Unix,
     Search,
     Discover,
+    Location,
     Unknown,
 };
 

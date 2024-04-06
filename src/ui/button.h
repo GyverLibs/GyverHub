@@ -1,13 +1,15 @@
 #pragma once
 #include <Arduino.h>
 
+#include "flag.h"
+
 namespace gh {
 
-class Button {
+class Button : public Flag {
    public:
-    // состояние кнопки изменилось
-    bool changed() {
-        return _changed ? (_changed = 0, 1) : 0;
+    // клик по кнопке
+    bool click() {
+        return _click ? (_click = 0, 1) : 0;
     }
 
     // состояние кнопки (1 нажата, 0 отпущена)
@@ -15,15 +17,11 @@ class Button {
         return _state;
     }
 
-    // клик по кнопке
-    bool clicked() {
-        return _clicked ? (_clicked = 0, 1) : 0;
-    }
+    // состояние кнопки изменилось
+    // bool changed();
 
-    //    private:
     bool _state = 0;
-    bool _changed = 0;
-    bool _clicked = 0;
+    bool _click = 0;
 };
 
 }  // namespace gh
