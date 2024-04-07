@@ -30,10 +30,10 @@ class Request {
     const CMD cmd;
 
     // имя
-    GHTREF name;
+    const GHTXT name;
 
     // значение
-    GHTREF value;
+    const GHTXT value;
 };
 
 }  // namespace gh

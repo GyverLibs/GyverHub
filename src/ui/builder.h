@@ -120,7 +120,7 @@ class Builder {
 
     // ======================== SPACE ========================
 
-    // Пустой виджет. Параметры: size, square
+    // Пустой виджет
     ghc::Widget& Space(uint16_t width = 1, uint16_t height = 1) {
         _namer.check();
         if (build.action == Action::UI && widget._enabled) {

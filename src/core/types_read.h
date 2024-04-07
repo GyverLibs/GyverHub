@@ -5,7 +5,7 @@
 #include "types.h"
 
 namespace gh {
-
+// TODO new cmd
 // получить текстовое значение типа CMD для вывода в порт
 FSTR __attribute__((weak)) readCMD(CMD cmd) {
     switch (cmd) {
@@ -35,7 +35,7 @@ FSTR __attribute__((weak)) readCMD(CMD cmd) {
         case CMD::Unix: return F("Unix");
         case CMD::Search: return F("Search");
         case CMD::Discover: return F("Discover");
-        case CMD::Unknown: return F("Unknown");
+        case CMD::Location: return F("Location");
         default: return F("Unknown");
     }
 }
@@ -51,6 +51,7 @@ FSTR __attribute__((weak)) readConnection(Connection connection) {
         case Connection::Telegram: return F("Telegram");
         case Connection::UDP: return F("UDP");
         case Connection::System: return F("System");
+        case Connection::Custom: return F("Custom");
         default: return F("Unknown");
     }
 }

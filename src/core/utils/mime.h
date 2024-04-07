@@ -2,13 +2,15 @@
 #include <Arduino.h>
 #include <StringUtils.h>
 
+#include "hub_macro.hpp"
+
 namespace ghc {
 
-String __attribute__((weak)) getMime(const String &path) {
+String __attribute__((weak)) getMime(GHTXT path) {
     int16_t pos = path.lastIndexOf('.');
     if (pos > 0) {
-        const char* ext = path.c_str() + pos + 1;
-        switch (su::hash(ext)) {
+        path = path.substring(pos + 1);
+        switch (path.hash()) {
             case su::SH("avi"): return F("video/x-msvideo");
             case su::SH("bin"): return F("application/octet-stream");
             case su::SH("bmp"): return F("image/bmp");
