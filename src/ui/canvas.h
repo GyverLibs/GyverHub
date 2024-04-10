@@ -398,7 +398,6 @@ class Canvas {
         if (!p) return;
         _api(cmd);
         p->quotes();
-        // p->comma();
         p->addChar(']');
     }
     void _cmd(api cmd, cv v) {
@@ -415,16 +414,13 @@ class Canvas {
         va_end(args);
         p->end();
         p->quotes();
-        // p->comma();
         p->addChar(']');
     }
     void _cmdText(api cmd, GHTREF text, long n, ...) {
         if (!p) return;
         _api(cmd);
         p->colon();
-
         p->addText(text);
-        p->comma();
 
         va_list args;
         va_start(args, n);
@@ -432,7 +428,6 @@ class Canvas {
         va_end(args);
         p->end();
         p->quotes();
-        // p->comma();
         p->addChar(']');
     }
 
@@ -443,7 +438,6 @@ class Canvas {
         p->s += '#';
         p->addIntRaw(su::Value(hex, HEX));
         p->quotes();
-        // p->comma();
         p->addChar(']');
     }
     void _color(api cmd, const uint32_t& hex, const uint8_t& a) {

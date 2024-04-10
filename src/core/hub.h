@@ -222,8 +222,8 @@ class GyverHub : public ghc::HubCore {
         p.beginPacket(id, client);
         p.addString(ghc::Tag::type, ghc::Tag::update);
         p.beginObj(ghc::Tag::updates);
-        p.addKey(name);
-        p.addText(F("{\"action\":1}}"));
+        p.addText(name, F("{\"action\":1}"));
+        p.endObj();
         p.endPacket();
         _send(p, client);
     }
