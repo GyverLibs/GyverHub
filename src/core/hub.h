@@ -194,7 +194,7 @@ class GyverHub : public ghc::HubCore {
         p.addString(ghc::Tag::type, ghc::Tag::update);
         p.beginObj(ghc::Tag::updates);
         p.addKey(name);
-        p.addText(F("{\"action\":1}}"));
+        p.addTextRaw(F("{\"action\":1}}"));
         p.endPacket();
         _send(p, client);
     }

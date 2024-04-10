@@ -62,7 +62,7 @@ class Canvas {
         if (!p) return *this;
         _checkFirst();
         p->quotes();
-        p->addText(text);
+        p->addTextRaw(text);
         p->quotes();
         return *this;
     }
@@ -388,7 +388,7 @@ class Canvas {
         if (!p) return *this;
         _cmd(8);
         p->colon();
-        p->addText(v);
+        p->addTextRaw(v);
         p->quotes();
         return *this;
     }

@@ -102,13 +102,13 @@ void __attribute__((weak)) varToStr(Packet& p, const AnyPtr& data) {
 
     switch (data.type) {
         case gh::Type::STR_T:
-            p.addTextEsc(*(String*)data.ptr);
+            p.addTextRawEsc(*(String*)data.ptr);
             break;
         case gh::Type::CSTR_T:
-            p.addTextEsc((const char*)data.ptr);
+            p.addTextRawEsc((const char*)data.ptr);
             break;
         case gh::Type::TEXT_T:
-            p.addTextEsc(*(const GHTXT*)data.ptr);
+            p.addTextRawEsc(*(const GHTXT*)data.ptr);
             break;
 
         case gh::Type::BOOL_T:
