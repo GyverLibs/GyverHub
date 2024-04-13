@@ -351,6 +351,8 @@ rect	KEYWORD2
 square	KEYWORD2
 arc	KEYWORD2
 ellipse	KEYWORD2
+triangle	KEYWORD2
+quadrangle	KEYWORD2
 circle	KEYWORD2
 bezier	KEYWORD2
 beginShape	KEYWORD2
