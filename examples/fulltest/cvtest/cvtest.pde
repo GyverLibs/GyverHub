@@ -161,6 +161,9 @@ void setup() {
   endShape();
 
   arc(300, 400, 75, 50, 0, HALF_PI);
+  
+  triangle(0, 500, 25, 450, 50, 500);
+  quad(25, 450, 50, 400, 25, 350, 0, 400);
 }
 void draw() {
   println(mouseX, mouseY);

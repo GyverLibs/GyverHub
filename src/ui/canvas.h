@@ -72,6 +72,9 @@ class Canvas {
         translate,
         push,
         pop,
+
+        triangle,
+        quadrangle,
     };
 
    public:
@@ -294,6 +297,24 @@ class Canvas {
     }
     void square(Geo xy, long size) {
         square(xy._latE6(), xy._lonE6(), size);
+    }
+
+    // треугольник
+    // https://processing.org/reference/triangle_.html
+    void triangle(long x0, long y0, long x1, long y1, long x2, long y2) {
+        _cmd(api::triangle, 6, x0, y0, x1, y1, x2, y2);
+    }
+    void triangle(Geo xy0, Geo xy1, Geo xy2) {
+        triangle(xy0._latE6(), xy0._lonE6(), xy1._latE6(), xy1._lonE6(), xy2._latE6(), xy2._lonE6());
+    }
+
+    // четырёхугольник
+    // https://processing.org/reference/quad_.html
+    void quadrangle(long x0, long y0, long x1, long y1, long x2, long y2, long x3, long y3) {
+        _cmd(api::quadrangle, 8, x0, y0, x1, y1, x2, y2, x3, y3);
+    }
+    void quadrangle(Geo xy0, Geo xy1, Geo xy2, Geo xy3) {
+        quadrangle(xy0._latE6(), xy0._lonE6(), xy1._latE6(), xy1._lonE6(), xy2._latE6(), xy2._lonE6(), xy3._latE6(), xy3._lonE6());
     }
 
     // дуга

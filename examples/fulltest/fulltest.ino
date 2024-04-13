@@ -299,9 +299,9 @@ void build_active2(gh::Builder& b) {
     {
         gh::Row r(b);
         static uint32_t sld;
-        b.Slider_("sld", &sld).disabled(dsbl).noTab(notab).noLabel(nolbl).size(3);
+        b.Slider_("sld", &sld).disabled(dsbl).noTab(notab).noLabel(nolbl).size(3).range(1, 500, 10);
         if (b.Button().label("value").click()) hub.update("sld").value(random(100));
-        if (b.Button().label("range").click()) hub.update("sld").range(1, 5, 0.1);
+        if (b.Button().label("range").click()) hub.update("sld").range(1, 500, 10);
         if (b.Button().label("unit").click()) hub.update("sld").unit("deg");
         if (b.Button().label("color").click()) hub.update("sld").color(rndColor());
     }
@@ -628,6 +628,9 @@ void build_canvas(gh::Builder& b) {
         cv.endShape();
 
         cv.arc(300, 400, 75, 50, 0, HALF_PI);
+
+        cv.triangle(0, 500, 25, 450, 50, 500);
+        cv.quadrangle(25, 450, 50, 400, 25, 350, 0, 400);
 
         // for update
         cv.fill(0, 255, 0);
