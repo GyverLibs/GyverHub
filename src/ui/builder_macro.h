@@ -1,4 +1,5 @@
 #pragma once
+#include "hub_macro.hpp"
 
 #define GH_ROW(b, w, code) \
     do {                   \
@@ -41,30 +42,30 @@
         return _varAndType(_wtype, name, ptr);                 \
     }
 
-#define GH_BUILD_CONTAINER(_fname, _wtype, _rowcol)                                                         \
-    bool begin##_fname(uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default) { \
-        return _beginContainer(_wtype, GHTXT(), _rowcol, width, label, color);                              \
-    }                                                                                                       \
-    void end##_fname() {                                                                                    \
-        endContainer();                                                                                     \
-    }                                                                                                       \
-    bool next##_fname(uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default) {  \
-        endContainer();                                                                                     \
-        return _beginContainer(_wtype, GHTXT(), _rowcol, width, label, color);                              \
+#define GH_BUILD_CONTAINER(_fname, _wtype, _rowcol)                                                                                               \
+    bool begin##_fname(uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default, uint8_t fontsize = GH_DEF_CONT_FSIZE) { \
+        return _beginContainer(_wtype, GHTXT(), _rowcol, width, label, color, fontsize);                                                          \
+    }                                                                                                                                             \
+    void end##_fname() {                                                                                                                          \
+        endContainer();                                                                                                                           \
+    }                                                                                                                                             \
+    bool next##_fname(uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default, uint8_t fontsize = GH_DEF_CONT_FSIZE) {  \
+        endContainer();                                                                                                                           \
+        return _beginContainer(_wtype, GHTXT(), _rowcol, width, label, color, fontsize);                                                          \
     }
 
-#define GH_BUILD_CONTAINER_CLASS(_fname)                                                                               \
-    class _fname {                                                                                                     \
-       public:                                                                                                         \
-        _fname(Builder& b, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default) : b(b) { \
-            b.begin##_fname(width, label, color);                                                                      \
-        }                                                                                                              \
-        ~_fname() {                                                                                                    \
-            b.end##_fname();                                                                                           \
-        }                                                                                                              \
-                                                                                                                       \
-       private:                                                                                                        \
-        Builder& b;                                                                                                    \
+#define GH_BUILD_CONTAINER_CLASS(_fname)                                                                                                                     \
+    class _fname {                                                                                                                                           \
+       public:                                                                                                                                               \
+        _fname(Builder& b, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default, uint8_t fontsize = GH_DEF_CONT_FSIZE) : b(b) { \
+            b.begin##_fname(width, label, color, fontsize);                                                                                                  \
+        }                                                                                                                                                    \
+        ~_fname() {                                                                                                                                          \
+            b.end##_fname();                                                                                                                                 \
+        }                                                                                                                                                    \
+                                                                                                                                                             \
+       private:                                                                                                                                              \
+        Builder& b;                                                                                                                                          \
     };
 
 #define _GH_NEWLINE_DUMMY

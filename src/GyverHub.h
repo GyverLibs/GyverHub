@@ -5,6 +5,9 @@
 #define GH_API_VERSION 2        // версия API
 
 // =================================
+// стандартный размер шрифта контейнеров
+#define GH_DEF_CONT_FSIZE 23
+
 // задержка перед перезагрузкой после OTA
 #ifndef GH_REBOOT_DELAY
 #define GH_REBOOT_DELAY 1500

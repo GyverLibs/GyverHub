@@ -95,19 +95,19 @@ class Builder {
     // ======================== CUSTOM ========================
 
     // начать кастомный контейнер
-    bool beginRow(GHTREF wtype, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default) {
-        return _beginContainer(ghc::Tag::none, wtype, ghc::Tag::row, width, label, color);
+    bool beginRow(GHTREF wtype, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default, uint8_t fontsize = GH_DEF_CONT_FSIZE) {
+        return _beginContainer(ghc::Tag::none, wtype, ghc::Tag::row, width, label, color, fontsize);
     }
-    bool beginCol(GHTREF wtype, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default) {
-        return _beginContainer(ghc::Tag::none, wtype, ghc::Tag::col, width, label, color);
+    bool beginCol(GHTREF wtype, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default, uint8_t fontsize = GH_DEF_CONT_FSIZE) {
+        return _beginContainer(ghc::Tag::none, wtype, ghc::Tag::col, width, label, color, fontsize);
     }
 
     // следующий кастомный контейнер
-    bool nextRow(GHTREF wtype, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default) {
-        return _nextContainer(ghc::Tag::none, wtype, ghc::Tag::row, width, label, color);
+    bool nextRow(GHTREF wtype, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default, uint8_t fontsize = GH_DEF_CONT_FSIZE) {
+        return _nextContainer(ghc::Tag::none, wtype, ghc::Tag::row, width, label, color, fontsize);
     }
-    bool nextCol(GHTREF wtype, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default) {
-        return _nextContainer(ghc::Tag::none, wtype, ghc::Tag::col, width, label, color);
+    bool nextCol(GHTREF wtype, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default, uint8_t fontsize = GH_DEF_CONT_FSIZE) {
+        return _nextContainer(ghc::Tag::none, wtype, ghc::Tag::col, width, label, color, fontsize);
     }
 
     // закончить любой контейнер
@@ -155,7 +155,7 @@ class Builder {
     // Дата и время. Параметры: value(stamp), color, disabled, attach, click + параметры виджета
     GH_BUILD_VAR(DateTime, ghc::Tag::datetime);
 
-    // Слайдер. Параметры: value (значение), color, range, unit, disabled, attach, click + параметры виджета
+    // Слайдер. Параметры: value (значение), color, range, unit, icon, disabled, attach, click + параметры виджета
     GH_BUILD_VAR(Slider, ghc::Tag::slider);
 
     // Спиннер. Параметры: value (значение), range, unit, disabled, attach, click + параметры виджета
@@ -596,7 +596,7 @@ class Builder {
     }
 
     // container (wtype, row/col)
-    bool _beginContainer(ghc::Tag type, GHTREF wtype, ghc::Tag rowcol, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default) {
+    bool _beginContainer(ghc::Tag type, GHTREF wtype, ghc::Tag rowcol, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default, uint8_t fontsize = GH_DEF_CONT_FSIZE) {
         if (!p || !_allowContainer()) return true;
         if (_checkFirst()) p->endObj();
         p->beginObj();
@@ -606,14 +606,15 @@ class Builder {
         if (width) p->addInt(ghc::Tag::wwidth, width);
         if (label.valid()) p->addString(ghc::Tag::label, label);
         if (!color.isDefault()) p->addString(ghc::Tag::color, su::Value((uint32_t)color, HEX));
+        if (fontsize != GH_DEF_CONT_FSIZE) p->addInt(ghc::Tag::font_size, fontsize);
         p->beginArr(ghc::Tag::data);
         _first = true;
         return true;
     }
-    bool _nextContainer(ghc::Tag type, GHTREF wtype, ghc::Tag rowcol, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default) {
+    bool _nextContainer(ghc::Tag type, GHTREF wtype, ghc::Tag rowcol, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default, uint8_t fontsize = GH_DEF_CONT_FSIZE) {
         if (!p || !_allowContainer()) return true;
         endContainer();
-        _beginContainer(type, wtype, rowcol, width, label, color);
+        _beginContainer(type, wtype, rowcol, width, label, color, fontsize);
         return true;
     }
     bool _allowContainer() {
