@@ -393,8 +393,16 @@ void build_active3(gh::Builder& b) {
 void build_ffile(gh::Builder& b) {
     {
         gh::Row r(b);
-        b.uiRow(R"([{"type":"label","value":"ui"}])");
-        b.uiCol("/ui.json").size(4);
+        b.uiRow(R"([{"id":"labelka","type":"label","value":"ui"}])");
+        b.uiRow("/ui.json").size(3);
+
+        static int spinka = 20;
+
+        if (b.Dummy_("spinka", &spinka).click()) Serial.println(b.build.value);
+        if (b.Dummy_("knopka").click()) {
+            if (b.build.value == 0) hub.update("labelka").value(rndText());
+            if (b.build.value == 0) hub.update("labelka2").value(rndText());
+        }
     }
 
     b.Image_("img", "/image.jpg");
