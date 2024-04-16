@@ -182,6 +182,9 @@ class Builder {
     // Всплывающее окно ввода. Параметры: value (значение), text (подпись), attach, click. Для активации отправь обновление action()
     GH_BUILD_VAR(Prompt, ghc::Tag::prompt);
 
+    // Теги. Параметры: value (текст-список ;), color, disabled, attach, click + параметры виджета
+    GH_BUILD_VAR(Tags, ghc::Tag::tags);
+
     // Кнопка. Параметры: icon, color, fontSize, disabled, attach, click + параметры виджета
     ghc::Widget& Button(gh::Button* btn = nullptr) {
         return Button_(GHTXT(), btn);
@@ -424,6 +427,16 @@ class Builder {
         return _varAndType(ghc::Tag::none, name, ptr, wtype);
     }
 
+    // добавить виджеты из JSON (текст или путь.json) в ряд. Можно добавить size
+    ghc::Widget& uiRow(GHTREF path) {
+        return _uiContainer(path, ghc::Tag::row);
+    }
+
+    // добавить виджеты из JSON (текст или путь.json) в колонку. Можно добавить size
+    ghc::Widget& uiCol(GHTREF path) {
+        return _uiContainer(path, ghc::Tag::col);
+    }
+
     /*
         // подключить переменную к виджету, созданному из JSON. Можно навесить attach и click на взаимодействие. Update соответственно виджету
         ghc::Widget& Hook_(GHTREF name, const ghc::AnyPtr& data, GHTREF func = GHTXT()) {
@@ -605,6 +618,21 @@ class Builder {
     }
     bool _allowContainer() {
         return build.action == Action::UI && widget._enabled;
+    }
+    ghc::Widget& _uiContainer(GHTREF path, ghc::Tag rowcol) {
+        _namer.check();
+        switch (build.action) {
+            case Action::UI:
+                _beginName();
+                _type(ghc::Tag::ui_file);
+                widget.param(ghc::Tag::value, path);
+                p->addString(ghc::Tag::rowcol, rowcol);
+                break;
+
+            default:
+                break;
+        }
+        return widget;
     }
 };
 

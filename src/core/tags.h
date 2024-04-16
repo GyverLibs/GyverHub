@@ -142,6 +142,7 @@ enum class Tag : uint8_t {
     rowcol,
     spoiler,
     http_port,
+    tags,
 };
 
 }  // namespace ghc

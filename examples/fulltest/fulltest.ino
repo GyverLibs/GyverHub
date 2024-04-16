@@ -55,7 +55,7 @@ const char fetch_pgm[] PROGMEM = "fetch pgm\nLorem ipsum dolor sit amet, consect
 // #define GH_NO_HTTP_PUBLIC         // отключить доступ к файлам по http c ip/www (для esp)
 // #define GH_NO_HTTP_FETCH          // отключить скачивание файлов по http (для esp)
 // #define GH_NO_HTTP_UPLOAD         // отключить загрузку файлов по http (для esp)
-// #define GH_NO_HTTP_UPLOAD_PORTAL  // упрощённую загрузку файлов с ip/hub/upload_portal (для esp)
+// #define GH_NO_HTTP_UPLOAD_PORTAL  // отключить упрощённую загрузку файлов с ip/hub/upload_portal (для esp)
 #endif
 
 #include <GyverHub.h>
@@ -275,6 +275,13 @@ void build_active1(gh::Builder& b) {
     }
     {
         gh::Row r(b);
+        static String tags("123;test;taggg");
+        b.Tags_("tags", &tags).disabled(dsbl).noTab(notab).noLabel(nolbl).size(3);
+        if (b.Button().label("value").click()) hub.update("tags").value("kek;pek;123");
+        if (b.Button().label("color").click()) hub.update("tags").color(rndColor());
+    }
+    {
+        gh::Row r(b);
         static uint32_t stamp;
         b.Date_("date", &stamp).disabled(dsbl).noTab(notab).noLabel(nolbl).size(3);
         if (b.Button().label("value").click()) hub.update("date").value(random(100) * 1000000ul);
@@ -384,6 +391,12 @@ void build_active3(gh::Builder& b) {
     }
 }
 void build_ffile(gh::Builder& b) {
+    {
+        gh::Row r(b);
+        b.uiRow(R"([{"type":"label","value":"ui"}])");
+        b.uiCol("/ui.json").size(4);
+    }
+
     b.Image_("img", "/image.jpg");
     if (b.beginRow()) {
         if (b.Button().label("refresh").click()) hub.update("img").update();
@@ -821,7 +834,7 @@ void setup() {
     });
 
     hub.onRequest([](gh::Request& req) -> bool {
-        // return 1;
+        return 1;
         Serial.print("Request: ");
         Serial.print(gh::readConnection(req.client.connection));
         Serial.print(',');
@@ -867,6 +880,7 @@ void setup() {
     // Serial.println(hub.getUI());
     // Serial.println(hub.getValues());
     hub.setBufferSize(2000);
+    Serial.println(hub.getUI());
 }
 
 void loop() {

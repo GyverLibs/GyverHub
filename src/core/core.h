@@ -77,11 +77,6 @@ class HubCore {
         return 0;
     }
 
-    // хук парсинга
-    static void parseHook(void* hub, gh::Bridge& bridge, GHTREF url, GHTREF data) {
-        ((HubCore*)hub)->_parse(bridge, url, data);
-    }
-
     // отправить текст клиенту
     void _send(GHTREF text, gh::Client* client = nullptr) {
         if (!text.length()) return;
@@ -104,6 +99,31 @@ class HubCore {
             }
         }
     }
+
+    // ==========================================================================
+    // ================================== HOOKS =================================
+    // ==========================================================================
+    static void parseHook(void* hub, gh::Bridge& bridge, GHTREF url, GHTREF data) {
+        ((HubCore*)hub)->_parse(bridge, url, data);
+    }
+    static void sendHook(void* hub, GHTREF text, gh::Client* client) {
+        ((HubCore*)hub)->_send(text, client);
+    }
+
+#ifdef GH_ESP_BUILD
+    static void fetchHook(void* hubptr, gh::Fetcher* fetcher) {
+        if (((HubCore*)hubptr)->_fetch_cb) ((HubCore*)hubptr)->_fetch_cb(*fetcher);
+    }
+    static void uploadHook(void* hubptr, String& path) {
+        if (((HubCore*)hubptr)->_upload_cb) ((HubCore*)hubptr)->_upload_cb(path);
+    }
+    static bool requestHook(void* hubptr, gh::Request* request) {
+#ifndef GH_NO_REQUEST
+        if (((HubCore*)hubptr)->_request_cb) return ((HubCore*)hubptr)->_request_cb(*request);
+#endif
+        return 1;
+    }
+#endif  // GH_ESP_BUILD
 
     // VARS
     uint8_t menu = 0;  // выбранный пункт меню
@@ -144,7 +164,7 @@ class HubCore {
     UnixCallback _unix_cb = nullptr;
     LocationCallback _loc_cb = nullptr;
 #ifndef GH_NO_REQUEST
-    RequestCallback _req_cb = nullptr;
+    RequestCallback _request_cb = nullptr;
 #endif
 
 #ifdef GH_ESP_BUILD
@@ -186,9 +206,9 @@ class HubCore {
 #ifdef GH_ESP_BUILD
 #ifndef GH_NO_HTTP
 #ifndef GH_NO_MODULES
-        http.setup(this, parseHook, _fetchHook, _requestHook, _uploadHook, &_safe_upl, &modules, &_reason);
+        http.setup(this, parseHook, fetchHook, requestHook, uploadHook, &_safe_upl, &modules, &_reason);
 #else
-        http.setup(this, parseHook, _fetchHook, _requestHook, _uploadHook, &_safe_upl, nullptr, &_reason);
+        http.setup(this, parseHook, fetchHook, requestHook, uploadHook, &_safe_upl, nullptr, &_reason);
 #endif
         addBridge(&http);
 #endif  // GH_NO_HTTP
@@ -203,28 +223,6 @@ class HubCore {
 #endif
 #endif
     }
-
-    // ==========================================================================
-    // ================================== HOOKS =================================
-    // ==========================================================================
-    static void sendHook(void* hub, GHTREF text, gh::Client* client) {
-        ((HubCore*)hub)->_send(text, client);
-    }
-
-#ifdef GH_ESP_BUILD
-    static void _fetchHook(void* hubptr, gh::Fetcher* fetcher) {
-        if (((HubCore*)hubptr)->_fetch_cb) ((HubCore*)hubptr)->_fetch_cb(*fetcher);
-    }
-    static void _uploadHook(void* hubptr, String& path) {
-        if (((HubCore*)hubptr)->_upload_cb) ((HubCore*)hubptr)->_upload_cb(path);
-    }
-    static bool _requestHook(void* hubptr, gh::Request* request) {
-#ifndef GH_NO_REQUEST
-        if (((HubCore*)hubptr)->_req_cb) return ((HubCore*)hubptr)->_req_cb(*request);
-#endif
-        return 1;
-    }
-#endif  // GH_ESP_BUILD
 
     // ==========================================================================
     // ================================= ANSWER =================================
@@ -481,9 +479,9 @@ class HubCore {
 
 #ifndef GH_NO_REQUEST
     bool _request(gh::Client& client, bool broadcast, gh::CMD cmd, GHTREF name = GHTXT(), GHTREF value = GHTXT()) {
-        if (!_req_cb) return 1;
+        if (!_request_cb) return 1;
         gh::Request req(client, broadcast, cmd, name, value);
-        return _req_cb(req);
+        return _request_cb(req);
     }
 #endif
 
@@ -709,7 +707,7 @@ class HubCore {
 #ifndef GH_NO_FETCH
             case gh::CMD::Fetch:  // name == path
                 if (!_fet_p) {
-                    _fet_p = new gh::Fetcher(client, _fetchHook, name, id);
+                    _fet_p = new gh::Fetcher(client, fetchHook, name, id);
                     if (_fet_p) {
                         if (!_fet_p->begin()) GHDELPTR(_fet_p);
                     } else {

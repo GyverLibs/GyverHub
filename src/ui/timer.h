@@ -6,10 +6,19 @@
 #define GHC_TMR_INTERVAL_OFF 2
 #define GHC_TMR_TIMEOUT_OFF 3
 
+#ifdef GH_ESP_BUILD
+#include <functional>
+#endif
+
 namespace gh {
 
 class Timer {
+#ifdef GH_ESP_BUILD
+    typedef std::function<void()> TimerCallback;
+#else
     typedef void (*TimerCallback)();
+#endif
+
     typedef unsigned long (*Uptime)();
 
    public:

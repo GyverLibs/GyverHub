@@ -111,7 +111,7 @@ class GyverHub : public ghc::HubCore {
     // подключить обработчик запроса клиента вида f(gh::Request& request)
     void onRequest(ghc::RequestCallback callback) {
 #ifndef GH_NO_REQUEST
-        _req_cb = callback;
+        _request_cb = callback;
 #endif
     }
 
@@ -397,7 +397,7 @@ class GyverHub : public ghc::HubCore {
     // ========================= GETTER =========================
 
     // получить полный JSON пакет панели управления. Флаг enclose true - обернуть в результат в []
-    String getUI(bool enclose = false) {
+    String getUI(bool enclose = true) {
         if (_build_busy) return String();
         gh::Client client;
         ghc::Packet p;
