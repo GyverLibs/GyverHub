@@ -7,8 +7,10 @@
 
 [![Foo](https://img.shields.io/badge/ПОДПИСАТЬСЯ-НА%20ОБНОВЛЕНИЯ-brightgreen.svg?style=social&logo=telegram&color=blue)](https://t.me/GyverLibs)
 
-# GyverHub [beta]
+# GyverHub [beta] [dev]
 Панель управления для esp8266, esp32 и других Arduino. Конструктор интерфейса, интеграция в умный дом
+
+## DEV ВЕТКА! ПРИЛОЖЕНИЕ ДОСТУПНО [ТУТ](http://hub.gyver.ru/dev/)
 
 > <br>**Документация находится в [Wiki репозитория](https://github.com/GyverLibs/GyverHub/wiki). English docs - [translate](https://github-com.translate.goog/GyverLibs/GyverHub/wiki?_x_tr_sl=ru&_x_tr_tl=en)**<br><br>
 
@@ -54,7 +56,7 @@ GyverHub - это платформа, состоящая из библиотек
 - 1000 FontAwesome иконок оформления для кнопок и списка устройств
 - Тёмная и светлая темы, несколько цветовых схем, мультиязычный интерфейс
 - Не имеет своего сервера и "личного кабинета", работает полностью автономно на ПК/смартфоне
-- Открытая [база пользовательских проектов](https://github.com/GyverLibs/GyverHub-projects)
+- Открытая база пользовательских [проектов](https://github.com/GyverLibs/GyverHub-projects) и [плагинов](https://github.com/GyverLibs/GyverHub-plugins)
 - OTA обновление проектов с GitHub, прошивка проектов из браузера по USB
 
 В отличие от аналогов (RemoteXY, Blynk) GyverHub:
