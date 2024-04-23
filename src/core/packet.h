@@ -19,7 +19,7 @@ class Packet : public gson::string {
         else if (res) reserve(res);
     }
 
-    void beginPacket(uint32_t id = 0, gh::Client* client = nullptr) {
+    void beginPacket(const uint32_t& id = 0, gh::Client* client = nullptr) {
         s = F("#{");
         addID(id);
         addClient(client);
@@ -30,7 +30,7 @@ class Packet : public gson::string {
         s += F("}#");
     }
 
-    void addID(uint32_t id) {
+    void addID(const uint32_t& id) {
         if (id) addString(Tag::id, su::Value(id, HEX));
     }
     void addClient(gh::Client* client) {

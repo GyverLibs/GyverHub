@@ -299,11 +299,12 @@ class HubCore {
         p.endPacket();
         p.send();
     }
-    void _answerAck(GHTREF name, gh::Client& client) {
+    void _answerAck(GHTREF name, gh::Client& client, GHTREF packet_id) {
         Packet p(50, &client);
         p.beginPacket(id);
         p.addString(Tag::type, Tag::ack);
         p.addString(Tag::name, name);
+        if (packet_id.valid()) p.addString(Tag::packet_id, packet_id);
         p.endPacket();
         p.send();
     }
@@ -502,24 +503,33 @@ class HubCore {
     // ================================== PARSE =================================
     // ==========================================================================
 
-    // PREFIX/ID/CLIENT_ID/CMD/NAME + VALUE
+    // net/device_id/client_id/CMD/name + value
+    // net/device_id/client_id-packet_id/CMD/name + value
     void _parse(gh::Bridge& bridge, GHTREF url, GHTREF value) {
         if (url == net) return _discover(bridge, value, gh::CMD::Search);
 
-        su::TextListT<5> list(url, '/');
+        su::Text list[5];
+        uint8_t len = url.split(list, 5, '/');
         if (list[0] != net) return;  // wrong net
 
         uint32_t device_id = list[1].toInt32HEX();
-        if (!(device_id == id || (_broadcast && device_id == GH_BROAD_ID))) return;  // wrong id
-        if (list.length() == 2) return _discover(bridge, value, gh::CMD::Discover);
-        if (list.length() == 3) return;
+        if (device_id != id && !(_broadcast && device_id == GH_BROAD_ID)) return;  // wrong id
+        if (len == 2) return _discover(bridge, value, gh::CMD::Discover);
+        if (len == 3) return;
 
         gh::CMD cmd = getCMD(list[3]);
         if (cmd == gh::CMD::Unknown) return;
 
-        const su::Text& name = list[4];
+        su::Text packet_id;
+        su::Text& client_id = list[2];
+        int dash = client_id.indexOf('-');  // <client_id>-<packet_id>
+        if (dash > 0) {
+            packet_id = client_id.substring(dash + 1);
+            client_id = client_id.substring(0, dash);
+        }
 
-        gh::Client client(this, sendHook, &bridge, list[2].toInt32HEX());
+        const su::Text& name = list[4];
+        gh::Client client(this, sendHook, &bridge, client_id.toInt32HEX());
 
 #ifndef GH_NO_REQUEST
         if (!_request(client, device_id == GH_BROAD_ID, cmd, name, value)) {
@@ -578,7 +588,7 @@ class HubCore {
                 _build_busy = false;
 
                 if (b.isRefresh()) _answerUI(client);
-                else _answerAck(name, client);
+                else _answerAck(name, client, packet_id);
 
                 if (b._needs_update) {
 #ifndef GH_NO_GET

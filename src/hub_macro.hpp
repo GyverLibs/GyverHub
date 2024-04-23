@@ -17,6 +17,7 @@
     } while (0);
 
 #define GH_BROAD_ID 0xffffffff
+#define GH_BROAD_ID_STR "ffffffff"
 #define GH_NUMBERS F("^\\d+$")
 #define GH_LETTERS F("^[a-zA-Z]+$")
 #define GH_LETTERS_S F("^[a-z]+$")

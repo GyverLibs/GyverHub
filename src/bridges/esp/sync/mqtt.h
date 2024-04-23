@@ -145,7 +145,7 @@ class HubMQTT : public gh::Bridge {
             client.subscribe(sub_topic.c_str(), qos);
 
             sub_topic = *net;
-            sub_topic += F("/ffffffff/#");
+            sub_topic += F("/" GH_BROAD_ID_STR "/#");
             client.subscribe(sub_topic.c_str(), qos);
         }
     }
