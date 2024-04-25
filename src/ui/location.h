@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include <StringUtils.h>
 
-#include "client.h"
+#include "core/client.h"
 #include "geo.h"
 #include "hub_macro.hpp"
 

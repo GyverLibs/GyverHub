@@ -172,6 +172,14 @@ nextSpoilerRow	KEYWORD2
 beginSpoilerCol	KEYWORD2
 nextSpoilerCol	KEYWORD2
 endSpoilerCol	KEYWORD2
+beginRow_	KEYWORD2
+beginCol_	KEYWORD2
+nextRow_	KEYWORD2
+nextCol_	KEYWORD2
+beginSpoilerRow_	KEYWORD2
+nextSpoilerRow_	KEYWORD2
+beginSpoilerCol_	KEYWORD2
+nextSpoilerCol_	KEYWORD2
 
 Space	KEYWORD2
 Input	KEYWORD2
@@ -256,6 +264,8 @@ Tags_	KEYWORD2
 Tags	KEYWORD2
 uiRow	KEYWORD2
 uiCol	KEYWORD2
+uiRow_	KEYWORD2
+uiCol_	KEYWORD2
 
 type	KEYWORD2
 

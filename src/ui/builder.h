@@ -94,21 +94,9 @@ class Builder {
 
     // ======================== CUSTOM ========================
 
-    // начать кастомный контейнер
-    bool beginRow(GHTREF wtype, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default, uint8_t fontsize = GH_DEF_CONT_FSIZE) {
-        return _beginContainer(ghc::Tag::none, wtype, ghc::Tag::row, width, label, color, fontsize);
-    }
-    bool beginCol(GHTREF wtype, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default, uint8_t fontsize = GH_DEF_CONT_FSIZE) {
-        return _beginContainer(ghc::Tag::none, wtype, ghc::Tag::col, width, label, color, fontsize);
-    }
-
-    // следующий кастомный контейнер
-    bool nextRow(GHTREF wtype, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default, uint8_t fontsize = GH_DEF_CONT_FSIZE) {
-        return _nextContainer(ghc::Tag::none, wtype, ghc::Tag::row, width, label, color, fontsize);
-    }
-    bool nextCol(GHTREF wtype, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default, uint8_t fontsize = GH_DEF_CONT_FSIZE) {
-        return _nextContainer(ghc::Tag::none, wtype, ghc::Tag::col, width, label, color, fontsize);
-    }
+    // кастомный контейнер
+    GH_BUILD_CUSTOM_CONTAINER(Row, ghc::Tag::row);
+    GH_BUILD_CUSTOM_CONTAINER(Col, ghc::Tag::col);
 
     // закончить любой контейнер
     void endContainer() {
@@ -429,12 +417,12 @@ class Builder {
 
     // добавить виджеты из JSON (текст или путь.json) в ряд. Можно добавить size
     ghc::Widget& uiRow(GHTREF path) {
-        return _uiContainer(path, ghc::Tag::row);
+        return _uiCont(GHTXT(), path, ghc::Tag::row);
     }
 
     // добавить виджеты из JSON (текст или путь.json) в колонку. Можно добавить size
     ghc::Widget& uiCol(GHTREF path) {
-        return _uiContainer(path, ghc::Tag::col);
+        return _uiCont(GHTXT(), path, ghc::Tag::col);
     }
 
     /*
@@ -596,10 +584,10 @@ class Builder {
     }
 
     // container (wtype, row/col)
-    bool _beginContainer(ghc::Tag type, GHTREF wtype, ghc::Tag rowcol, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default, uint8_t fontsize = GH_DEF_CONT_FSIZE) {
+    bool _beginContainer(GHTREF name, ghc::Tag type, GHTREF wtype, ghc::Tag rowcol, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default, uint8_t fontsize = GH_DEF_CONT_FSIZE) {
+        _namer.check(name);
         if (!p || !_allowContainer()) return true;
-        if (_checkFirst()) p->endObj();
-        p->beginObj();
+        _beginName(name);
         if (type != ghc::Tag::none) p->addString(ghc::Tag::type, type);
         else if (wtype.valid()) p->addString(ghc::Tag::type, wtype);
         p->addString(ghc::Tag::rowcol, rowcol);
@@ -611,20 +599,20 @@ class Builder {
         _first = true;
         return true;
     }
-    bool _nextContainer(ghc::Tag type, GHTREF wtype, ghc::Tag rowcol, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default, uint8_t fontsize = GH_DEF_CONT_FSIZE) {
+    bool _nextContainer(GHTREF name, ghc::Tag type, GHTREF wtype, ghc::Tag rowcol, uint16_t width = 0, GHTREF label = GHTXT(), gh::Color color = gh::Colors::Default, uint8_t fontsize = GH_DEF_CONT_FSIZE) {
         if (!p || !_allowContainer()) return true;
         endContainer();
-        _beginContainer(type, wtype, rowcol, width, label, color, fontsize);
+        _beginContainer(name, type, wtype, rowcol, width, label, color, fontsize);
         return true;
     }
     bool _allowContainer() {
         return build.action == Action::UI && widget._enabled;
     }
-    ghc::Widget& _uiContainer(GHTREF path, ghc::Tag rowcol) {
-        _namer.check();
+    ghc::Widget& _uiCont(GHTREF name, GHTREF path, ghc::Tag rowcol) {
+        _namer.check(name);
         switch (build.action) {
             case Action::UI:
-                _beginName();
+                _beginName(name);
                 _type(ghc::Tag::ui_file);
                 widget.param(ghc::Tag::value, path);
                 p->addString(ghc::Tag::rowcol, rowcol);
