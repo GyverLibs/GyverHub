@@ -384,6 +384,13 @@ class HubCore {
         p.endPacket();
         _send(p, client);
     }
+    void _sendRefresh(gh::Client* client = nullptr) {
+        ghc::Packet p(50);
+        p.beginPacket(id, client);
+        p.addString(ghc::Tag::type, ghc::Tag::refresh);
+        p.endPacket();
+        _send(p, client);
+    }
     void _sendGet(GHTREF name, GHTREF text) {
         if (!_running_f || !_allow_send) return;
         String topic = _topicGet(name);
@@ -587,15 +594,15 @@ class HubCore {
                 _build_cb(b);
                 _build_busy = false;
 
-                if (b.isRefresh()) _answerUI(client);
-                else _answerAck(name, client, packet_id);
-
-                if (b._needs_update) {
-#ifndef GH_NO_GET
-                    if (_autoGet_f) _sendGet(name, value);
-#endif
-                    _sendUpdate(name, value);
+                if (b.isRefresh()) _sendRefresh();  //_answerUI(client);
+                else {
+                    _answerAck(name, client, packet_id);
+                    if (b._needs_update) _sendUpdate(name, value);
                 }
+
+#ifndef GH_NO_GET
+                if (b._needs_update && _autoGet_f) _sendGet(name, value);
+#endif
             } break;
 
 #ifndef GH_NO_GET

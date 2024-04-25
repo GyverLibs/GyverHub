@@ -195,11 +195,7 @@ class GyverHub : public ghc::HubCore {
     // обновить панель управления в приложении
     void sendRefresh(gh::Client* client = nullptr) {
         if (!focused() || !_allow_send) return;
-        ghc::Packet p(50);
-        p.beginPacket(id, client);
-        p.addString(ghc::Tag::type, ghc::Tag::refresh);
-        p.endPacket();
-        _send(p, client);
+        _sendRefresh(client);
     }
 
     // выполнить js код

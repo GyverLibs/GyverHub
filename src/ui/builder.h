@@ -173,7 +173,7 @@ class Builder {
     // Выключатель. Параметры: value (состояние), icon, color, fontSize, disabled, attach, click + параметры виджета
     GH_BUILD_VAR(SwitchIcon, ghc::Tag::switch_i);
 
-    // Вкладки. Параметры: value (выбранная), text (список), color, disabled, attach, click + параметры виджета. text не обновляется
+    // Вкладки. Параметры: value (выбранная), text (список), color, fontSize (умолч. 19), disabled, attach, click + параметры виджета. text не обновляется
     GH_BUILD_VAR(Tabs, ghc::Tag::tabs);
 
     // Всплывающее окно подтверждения. Параметры: text (подпись), attach, click. Для активации отправь обновление action()
@@ -272,7 +272,7 @@ class Builder {
     // Лог. value(текст), rows + параметры виджета
     GH_BUILD_VAR_TYPE(Log, gh::Log*, ghc::Tag::log);
 
-    // Кнопки выбора. Параметры: value (флаги), text (список), color, disabled, attach, click + параметры виджета
+    // Кнопки выбора. Параметры: value (флаги), text (список), color, fontSize (умолч. 19), disabled, attach, click + параметры виджета
     GH_BUILD_VAR_TYPE(Flags, gh::Flags*, ghc::Tag::flags);
 
     // Таблица. Параметры: value (текст или путь) + параметры виджета
