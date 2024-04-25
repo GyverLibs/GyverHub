@@ -87,6 +87,7 @@ enum class Connection : uint8_t {
     WS,
     MQTT,
     HTTP,
+    HTTP_WS,
     Telegram,
     UDP,
     Custom,

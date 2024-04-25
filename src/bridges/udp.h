@@ -18,7 +18,7 @@ namespace gh {
 
 class BridgeUDP : public Bridge {
    public:
-    BridgeUDP(void* hub, WiFiMode_t wmode, IPAddress ip = INADDR_NONE, uint16_t port = 1234) : Bridge(hub, Connection::UDP, GyverHub::parseHook), wmode(wmode), ip(ip) {
+    BridgeUDP(GyverHub* hub, WiFiMode_t wmode, IPAddress ip = INADDR_NONE, uint16_t port = 1234) : Bridge(hub, Connection::UDP, GyverHub::parseHook), wmode(wmode), ip(ip) {
         setPort(port);
     }
 

@@ -10,7 +10,7 @@ namespace gh {
 
 class BridgeStream : public Bridge {
    public:
-    BridgeStream(void* hub, Stream* stream, Connection conn) : Bridge(hub, conn, GyverHub::parseHook), _stream(stream) {}
+    BridgeStream(GyverHub* hub, Stream* stream, Connection conn) : Bridge(hub, conn, GyverHub::parseHook), _stream(stream) {}
 
     // настроить Stream
     void config(Stream* stream, Connection conn) {

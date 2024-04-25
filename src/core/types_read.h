@@ -49,6 +49,7 @@ FSTR __attribute__((weak)) readConnection(Connection connection) {
         case Connection::MQTT: return F("MQTT");
         case Connection::HTTP: return F("HTTP");
         case Connection::Telegram: return F("Telegram");
+        case Connection::HTTP_WS: return F("HTTP_WS");
         case Connection::UDP: return F("UDP");
         case Connection::System: return F("System");
         case Connection::Custom: return F("Custom");

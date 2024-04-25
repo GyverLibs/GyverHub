@@ -273,13 +273,13 @@ class HubCore {
             }
         }
         for (uint8_t i = 0; i < GH_BRIDGE_AMOUNT; i++) {
-            if (bridges[i] && bridges[i]->connection == gh::Connection::WS) {
+            if (bridges[i] && (bridges[i]->connection == gh::Connection::WS || bridges[i]->connection == gh::Connection::HTTP_WS)) {
                 p.addInt(Tag::ws_port, bridges[i]->getPort());
                 break;
             }
         }
         for (uint8_t i = 0; i < GH_BRIDGE_AMOUNT; i++) {
-            if (bridges[i] && bridges[i]->connection == gh::Connection::HTTP) {
+            if (bridges[i] && (bridges[i]->connection == gh::Connection::HTTP || bridges[i]->connection == gh::Connection::HTTP_WS)) {
                 p.addInt(Tag::http_port, bridges[i]->getPort());
                 p.addInt(Tag::http_transfer, bridges[i]->hasTransfer());
                 break;

@@ -17,7 +17,7 @@ namespace gh {
 
 class BridgeTCP : public Bridge {
    public:
-    BridgeTCP(void* hub, IPAddress ip = INADDR_NONE, uint16_t port = 80) : Bridge(hub, Connection::HTTP, GyverHub::parseHook), ip(ip), port(port) {
+    BridgeTCP(GyverHub* hub, IPAddress ip = INADDR_NONE, uint16_t port = 80) : Bridge(hub, Connection::HTTP, GyverHub::parseHook), ip(ip), port(port) {
         setMode(0, 1, 0);
     }
 

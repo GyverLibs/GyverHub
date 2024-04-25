@@ -105,9 +105,12 @@ class Bridge {
         return (millis() - _focus_tmr < GH_CONN_TOUT);
     }
 
+    // http transfer
     bool hasTransfer() {
         return _transfer;
     }
+
+    // http transfer
     void setTransfer(bool transfer) {
         _transfer = transfer;
     }
