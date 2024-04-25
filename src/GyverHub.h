@@ -50,7 +50,7 @@
 
 // период переподключения MQTT
 #ifndef GH_MQTT_RECONNECT
-#define GH_MQTT_RECONNECT 10000
+#define GH_MQTT_RECONNECT 5000
 #endif
 
 // путь к папке с файлами с HTTP доступом

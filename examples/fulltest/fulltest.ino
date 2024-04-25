@@ -58,8 +58,19 @@ const char fetch_pgm[] PROGMEM = "fetch pgm\nLorem ipsum dolor sit amet, consect
 // #define GH_NO_HTTP_UPLOAD_PORTAL  // отключить упрощённую загрузку файлов с ip/hub/upload_portal (для esp)
 #endif
 
+// #define GH_NO_HTTP
+// #define GH_NO_WS
+// #define GH_NO_MQTT
 #include <GyverHub.h>
 GyverHub hub("MyDevices", "ESP", "");
+
+// async tcp
+// #include <bridges/esp/async/http_ws.h>
+// gh::BridgeHttpWs http_ws(&hub);
+
+// async mqtt
+// #include <bridges/esp/async/mqtt.h>
+// gh::BridgeMqtt mqtt(&hub);
 
 #include <PairsFile.h>
 PairsFile data(&GH_FS, "/data.dat", 3000);
@@ -127,7 +138,7 @@ void build_widget(gh::Builder& b) {
     static String label("label"), hint("hint"), suffix("suffix");
     // b.Title("Widget test");
     {
-        gh::Row r(b, 1, "Widget test", gh::Colors::Aqua);
+        gh::Row_ r("mycont", b, 1, "Widget test", gh::Colors::Aqua);
         b.Label("Some label").noTab(notab).noLabel(nolabel).square(square).label(label).hint(hint).suffix(suffix).size(3);
         b.Switch(&notab).label("notab");
         b.Switch(&nolabel).label("nolabel");
@@ -144,16 +155,16 @@ void build_widget(gh::Builder& b) {
 void build_layout(gh::Builder& b) {
     // b.Title("Layout test");
     {
-        gh::SpoilerCol s(b, 0, "Layout test", gh::Colors::Red);
+        gh::SpoilerCol s(b, 0, "f0ad Layout test", gh::Colors::Default, 20);
         {
             gh::Row r(b, 1);
-            b.Label("w1");
+            b.Label("w1").label("test stace  x2");
             b.Label("w2").size(2);
         }
         {
             gh::Row r(b);
-            b.Label("ww1");
-            b.Label("ww2");
+            b.Label("ww1").icon("");
+            b.Label("ww2").icon("f0ad");
             {
                 gh::Col c(b);
                 b.Label("www1");
@@ -311,6 +322,7 @@ void build_active2(gh::Builder& b) {
         if (b.Button().label("range").click()) hub.update("sld").range(1, 500, 10);
         if (b.Button().label("unit").click()) hub.update("sld").unit("deg");
         if (b.Button().label("color").click()) hub.update("sld").color(rndColor());
+        if (b.Button().label("icon").click()) hub.update("sld").icon(rndIcon());
     }
     {
         gh::Row r(b);
@@ -362,7 +374,7 @@ void build_active3(gh::Builder& b) {
     {
         gh::Row r(b);
         static uint8_t num;
-        b.Tabs_("tab", &num).text("kek;puk;123;hello;azaz").disabled(dsbl).noTab(notab).noLabel(nolbl).size(3);
+        b.Tabs_("tab", &num).text(";f0ad;kek;puk;123;hello;azaz").disabled(dsbl).noTab(notab).noLabel(nolbl).size(3);//.fontSize(40);
         if (b.Button().label("value").click()) hub.update("tab").value(random(5));
         if (b.Button().label("text").click()) hub.update("tab").text("1;2;3;4;5");
         if (b.Button().label("color").click()) hub.update("tab").color(rndColor());
@@ -370,7 +382,7 @@ void build_active3(gh::Builder& b) {
     {
         gh::Row r(b);
         static gh::Flags f;
-        b.Flags_("flag", &f).text("kek;puk;123;hello;azaz").disabled(dsbl).noTab(notab).noLabel(nolbl).size(3);
+        b.Flags_("flag", &f).text(";kek;puk;123;hello;azaz").disabled(dsbl).noTab(notab).noLabel(nolbl).size(3);//.fontSize(40);
         // if (b.Button().label("value").click()) hub.update("flag").value(random(5));
         if (b.Button().label("text").click()) hub.update("flag").text("1;2;3;4;5");
         if (b.Button().label("color").click()) hub.update("flag").color(rndColor());
@@ -753,7 +765,7 @@ void updateTick() {
 
 void build(gh::Builder& b) {
     if (b.build.isSet()) hlog.println(b.build.name);
-    b.Menu(F("Basic;Passive;Active;Pairs;From file;Widget;MQTT;Popup;Canvas;Update;Location"));
+    b.Menu(F("Basic;Passive;Active;Pairs;From file;Widget;MQTT;Popup;Canvas;Update;Location"));
 
     switch (hub.menu) {
         case 0:
@@ -809,11 +821,18 @@ void setup() {
     Serial.println();
     Serial.println(WiFi.localIP());
 
-    hub.mqtt.config("test.mosquitto.org", 1883);
+    // hub.mqtt.config("test.mosquitto.org", 1883);
 #endif
 
     hub.onBuild(build);
 
+    // async tcp
+    // hub.addBridge(&http_ws);
+
+    // async mqtt
+    // mqtt.config("test.mosquitto.org", 1883);
+    // hub.addBridge(&mqtt);
+    
     hub.onCLI([](String str) {
         Serial.println(str);
         hub.sendCLI(str + "!");
@@ -838,7 +857,7 @@ void setup() {
     });
 
     hub.onPing([](gh::Client& client) {
-        hub.sendCLI("hello!");
+        // hub.sendCLI("hello!");
     });
 
     hub.onRequest([](gh::Request& req) -> bool {
@@ -888,7 +907,7 @@ void setup() {
     // Serial.println(hub.getUI());
     // Serial.println(hub.getValues());
     hub.setBufferSize(2000);
-    Serial.println(hub.getUI());
+    // Serial.println(hub.getUI());
 }
 
 void loop() {

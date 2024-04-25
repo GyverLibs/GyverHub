@@ -6,11 +6,20 @@
 
 #include "core/bridge.h"
 
+// заметки: падает WS, надо выносить парсинг в loop
+
+/*
+lib_deps =
+    esphome/ESPAsyncWebServer-esphome
+    esphome/ESPAsyncTCP-esphome     ;(esp8266)
+    esphome/AsyncTCP-esphome        ;(esp32)
+*/
+
 namespace gh {
 
-class HubHttpWs : public gh::Bridge {
+class BridgeHttpWs : public gh::Bridge {
    public:
-    HubHttpWs(GyverHub* hub, uint16_t port = 80) : Bridge(hub, Connection::HTTP_WS, GyverHub::parseHook), server(port), ws("/") {
+    BridgeHttpWs(GyverHub* hub, uint16_t port = 80) : Bridge(hub, Connection::HTTP_WS, GyverHub::parseHook), server(port), ws("/") {
         setPort(port);
     }
 
@@ -25,6 +34,7 @@ class HubHttpWs : public gh::Bridge {
                     clearFocus();
                     break;
                 case WS_EVT_DATA:
+                    if (resp_p) break;  // http busy
                     clientID = client->id();
                     parse(sutil::AnyText(data, len));
                     break;
@@ -35,7 +45,6 @@ class HubHttpWs : public gh::Bridge {
         server.addHandler(&ws);
 
         // http
-        server.begin();
         server.on("/hub", HTTP_GET, [this](AsyncWebServerRequest* request) {
             String req = request->url().substring(5);
             AsyncResponseStream* response = request->beginResponseStream(F("text/plain"));
@@ -47,6 +56,7 @@ class HubHttpWs : public gh::Bridge {
             resp_p = nullptr;
             request->send(response);
         });
+        server.begin();
     }
 
     void end() {

@@ -30,7 +30,7 @@ class HubMQTT : public gh::Bridge {
     }
 
     // настроить MQTT (хост брокера, порт, логин, пароль, QoS, retained)
-    void config(IPAddress ip, uint16_t port, const String& login = "", const String& pass = "", uint8_t qos = 0, bool ret = 0) {
+    void config(const IPAddress& ip, uint16_t port, const String& login = "", const String& pass = "", uint8_t qos = 0, bool ret = 0) {
         client.setServer(ip, port);
         _config(login, pass, qos, ret);
     }
