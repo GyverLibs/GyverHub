@@ -9,14 +9,14 @@
 # GyverHub [beta]
 Панель управления для esp8266, esp32 и других Arduino. Конструктор интерфейса, интеграция в умный дом.
 
+|⚠️⚠️⚠️<br>**Бета-версия, проект в разработке!. Более подробные примеры, документация, уроки, видеоролики и прочее по GyverHub - ПОСЛЕ РЕЛИЗА. Когда - не знаю, может в этом году. [Обсуждение тут](https://github.com/GyverLibs/GyverHub/issues/44) и в [Телеграм чате](https://t.me/AlexGyverChat/441438)**<br>⚠️⚠️⚠️|
+| --- |
+
 > Если вам нужна старая версия библиотеки или приложения (2023 год) - они в ветке [old](https://github.com/GyverLibs/GyverHub/tree/old)
 
 > <br>**Документация находится в [Wiki репозитория](https://github.com/GyverLibs/GyverHub/wiki). English docs - [translate](https://github-com.translate.goog/GyverLibs/GyverHub/wiki?_x_tr_sl=ru&_x_tr_tl=en)**<br><br>
 
 > <br>**Внимание! Перед началом работы обязательны к прочтению главы по [установке библиотеки](https://github.com/GyverLibs/GyverHub/blob/main/docs/2.start.md) и [настройке приложения](https://github.com/GyverLibs/GyverHub/blob/main/docs/3.app.md)**<br><br>
-
-|⚠️⚠️⚠️<br>**Бета-версия! Проект пока что тестируется, следите за коммитами. [Обсуждение тут](https://github.com/GyverLibs/GyverHub/issues/44) и в [Телеграм чате](https://t.me/AlexGyverChat/441438)**<br>⚠️⚠️⚠️|
-| --- |
 
 ## О проекте
 ![promo](/docs/promo.png)
