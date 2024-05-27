@@ -214,14 +214,14 @@ class GyverHub : public ghc::HubCore {
     // ========================= UPDATE =========================
 
     // отправить value update на имя виджета int/string/bool
-    void sendUpdate(GHTREF name, const sutil::AnyValue& value, gh::Client* client = nullptr) {
+    void sendUpdate(GHTREF name, const su::Value& value, gh::Client* client = nullptr) {
         if (!focused() || !canSend()) return;
         _sendUpdate(name, value, client);
     }
 
     // отправить value update на имя виджета float
     void sendUpdate(GHTREF name, double value, uint8_t dec, gh::Client* client = nullptr) {
-        sendUpdate(name, sutil::AnyValue(value, dec), client);
+        sendUpdate(name, su::Value(value, dec), client);
     }
 
     // отправить value update по имени компонента (значение будет прочитано в build). Нельзя вызывать из build. Имена можно передать списком через ;
@@ -255,13 +255,13 @@ class GyverHub : public ghc::HubCore {
     }
 
     // отправить имя-значение на get-топик (MQTT) int/string/bool
-    void sendGet(GHTREF name, const sutil::AnyValue& value) {
+    void sendGet(GHTREF name, const su::Value& value) {
         _sendGet(name, value);
     }
 
     // отправить имя-значение на get-топик (MQTT) float
     void sendGet(GHTREF name, double value, uint8_t dec) {
-        sendGet(name, sutil::AnyValue(value, dec));
+        sendGet(name, su::Value(value, dec));
     }
 
     // отправить значение по имени компонента на get-топик (MQTT) (значение будет прочитано в build). Имена можно передать списком через ;
