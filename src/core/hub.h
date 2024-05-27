@@ -221,7 +221,7 @@ class GyverHub : public ghc::HubCore {
 
     // отправить value update на имя виджета float
     void sendUpdate(GHTREF name, double value, uint8_t dec, gh::Client* client = nullptr) {
-        sendUpdate(sutil::AnyValue(value, dec));
+        sendUpdate(name, sutil::AnyValue(value, dec), client);
     }
 
     // отправить value update по имени компонента (значение будет прочитано в build). Нельзя вызывать из build. Имена можно передать списком через ;
