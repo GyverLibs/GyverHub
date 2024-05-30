@@ -22,14 +22,21 @@ class BridgeMqtt : public gh::Bridge {
     BridgeMqtt(GyverHub* hub) : Bridge(hub, Connection::MQTT, GyverHub::parseHook) {}
 
     // настроить MQTT (хост брокера, порт, логин, пароль, QoS, retained)
-    void config(const String& host, uint16_t port, const String& login = "", const String& pass = "", uint8_t qos = 2, bool ret = 0) {
+    void config(const char* host, uint16_t port, const String& login = "", const String& pass = "", uint8_t qos = 2, bool ret = 0) {
         _host = host;
         mqtt.setServer(_host.c_str(), port);
         _config(login, pass, qos, ret);
     }
 
     // настроить MQTT (хост брокера, порт, логин, пароль, QoS, retained)
-    void config(const IPAddress& ip, uint16_t port, const String& login = "", const String& pass = "", uint8_t qos = 2, bool ret = 0) {
+    void config(const __FlashStringHelper* host, uint16_t port, const String& login = "", const String& pass = "", uint8_t qos = 2, bool ret = 0) {
+        _host = host;
+        mqtt.setServer(_host.c_str(), port);
+        _config(login, pass, qos, ret);
+    }
+
+    // настроить MQTT (хост брокера, порт, логин, пароль, QoS, retained)
+    void config(IPAddress ip, uint16_t port, const String& login = "", const String& pass = "", uint8_t qos = 2, bool ret = 0) {
         mqtt.setServer(ip, port);
         _config(login, pass, qos, ret);
     }

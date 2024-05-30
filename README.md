@@ -68,7 +68,7 @@ GyverHub - это платформа, состоящая из библиотек
 
 ## Благодарности
 - **neko-neko-nyan** - идеи, советы и доработки И МНОГО МНОГО ВСЕГО ЕЩЁ!
-- **ZMain**, **DiTheRX** - [мобильное приложение](https://github.com/GyverLibs/GyverHub-app) (Android, iOS)
+- **[ZMain](https://github.com/ZMain)**, **[DiTheRX](https://github.com/DiTheRX)**, **[egorash](https://github.com/egorash)** - [мобильное приложение](https://github.com/GyverLibs/GyverHub-app) (Android, iOS)
 - **neko-neko-nyan** - [десктопное приложение](https://github.com/neko-neko-nyan/gyverhub-desktop) (Windows)
 - **Serega88kos** - тестирование, идеи
 - **DenysChuhlib** - идеи
