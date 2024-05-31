@@ -23,7 +23,7 @@
 ![promo](/docs/promo.png)
 
 GyverHub - это платформа, состоящая из библиотеки для *устройства* (Arduino-совместимого микроконтроллера) и *приложения* для управления. Приложение написано на JavaScript и может работать:
-- Как онлайн версия на официальном сайте **hub.gyver.ru**: [HTTP](http://hub.gyver.ru/) и [HTTPS](https://hub.gyver.ru/) версия, есть [HTTPS](https://gyverlibs.github.io/GyverHub) зеркало на GitHub Pages
+- Как онлайн версия на официальном сайте **hub.gyver.ru**: [HTTP](http://hub.gyver.ru/) и [HTTPS](https://hub.gyver.ru/) версия, есть [HTTPS](https://alexgyver.github.io/GyverHub/) зеркало на GitHub Pages
 - Как веб-приложение (оффлайн PWA): официальный сайт можно установить на любое устройство (Android/iOS/Linux/Windows/Mac...)
 - Как [телеграм-приложение](https://t.me/GyverHUB_bot)
 - Как нативное приложение:
