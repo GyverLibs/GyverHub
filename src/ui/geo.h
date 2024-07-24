@@ -9,7 +9,7 @@ namespace gh {
 class Geo : public Flag {
    public:
     Geo() {}
-    Geo(const su::Text& text, bool change = 0) : Flag(change) {
+    explicit Geo(const su::Text& text, bool change = 0) : Flag(change) {
         float* latlon[] = {&lat, &lon};
         text.split(latlon, 2, ';');
     }
