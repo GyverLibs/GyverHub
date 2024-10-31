@@ -197,19 +197,19 @@ class Widget {
 
     // ===================== ATTACH =====================
     // Подключить функцию вида void f()
-    Widget& attach(void (*cb)()) {
+    Widget& attach(std::function<void()> cb) {
         if (_click && cb) cb();
         return *this;
     }
 
     // Подключить функцию вида void f(gh::Build& build)
-    Widget& attach(void (*cb)(gh::Build& build)) {
+    Widget& attach(std::function<void(gh::Build& build)> cb) {
         if (_click && cb && _build) cb(*_build);
         return *this;
     }
 
     // Подключить функцию вида void f(gh::Builder& build)
-    Widget& attach(void (*cb)(gh::Builder& build), gh::Builder& b) {
+    Widget& attach(std::function<void(gh::Builder& build)> cb, gh::Builder& b) {
         if (_click && cb && _build) cb(b);
         return *this;
     }
